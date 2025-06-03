@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Miguel Ferraz Guedes Website
+
+This is a clone of the website [https://theoneupwardspiral.wixsite.com/mysite](https://theoneupwardspiral.wixsite.com/mysite) built with [Next.js](https://nextjs.org) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## Getting Started
 
@@ -16,7 +18,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Important Notes
+
+### Video for Store Page
+The store page is designed with a full-page video hero section with a black overlay at 40% opacity and white title text on top. To add your video:
+
+1. Place your video file in the `public` directory
+2. Name it `video-placeholder.mp4`
+3. The video will automatically be displayed with the proper styling
+
+### Placeholder Images
+All image placeholders are currently represented by gray boxes. Replace these with your actual images by updating the components in the respective page files.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
