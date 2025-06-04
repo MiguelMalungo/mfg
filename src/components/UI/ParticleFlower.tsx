@@ -28,10 +28,21 @@ const ParticleFlower = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctxRef.current = ctx;
-    const width = canvas.width = 550;
-    const height = canvas.height = 550;
-    const centerX = width / 2;
-    const centerY = height / 2;
+    
+    // Make canvas responsive to container size
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+      
+      const width = canvas.width = container.clientWidth;
+      const height = canvas.height = container.clientHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      return { width, height, centerX, centerY };
+    };
+    
+    const { width, height, centerX, centerY } = updateCanvasSize() || { width: 300, height: 300, centerX: 150, centerY: 150 };
     
     const PARTICLE_COUNT = 30000;
     const FORM_SCALE = 2.4; // Increased by 20% from 2.0
@@ -169,20 +180,14 @@ const ParticleFlower = () => {
   }, []);
   
   return (
-    <div style={{
-      width: '550px',
-      height: '550px',
-      margin: 'auto',
+    <div className="w-full h-full" style={{
+      minHeight: '300px',
       backgroundColor: '#F0EEE6',
       overflow: 'hidden'
     }}>
       <canvas
         ref={canvasRef}
-        style={{
-          display: 'block',
-          width: '550px',
-          height: '550px'
-        }}
+        className="block w-full h-full"
       />
     </div>
   );

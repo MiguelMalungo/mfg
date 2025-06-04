@@ -44,13 +44,13 @@ export default function ProductPage() {
             </div>
             
             {/* Product Info */}
-            <div>
+            <div className="bg-white/80 p-6 rounded-lg shadow-sm">
               <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
-                <p className="text-lg font-medium mb-4">{product.collection}</p>
-                <p className="text-2xl font-bold mb-6">{product.price}</p>
+                <h1 className="text-4xl font-bold mb-2 text-black">{product.name}</h1>
+                <p className="text-lg font-medium mb-4 text-black">{product.collection}</p>
+                <p className="text-2xl font-bold mb-6 text-black">{product.price}</p>
                 <div className="mb-8">
-                  <p className="text-lg">{product.description}</p>
+                  <p className="text-lg text-black">{product.description}</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -65,8 +65,8 @@ export default function ProductPage() {
               </div>
               
               <div className="border-t border-gray-200 pt-8">
-                <h2 className="text-xl font-bold mb-4">Product Details</h2>
-                <ul className="list-disc pl-5 space-y-2">
+                <h2 className="text-xl font-bold mb-4 text-black">Product Details</h2>
+                <ul className="list-disc pl-5 space-y-2 text-black">
                   <li>Original artwork by Miguel Ferraz Guedes</li>
                   <li>Part of the {product.collection} collection</li>
                   <li>Includes certificate of authenticity</li>

@@ -42,19 +42,26 @@ export default function EventsPage() {
             <div className="space-y-8">
               {events.map((event) => (
                 <div key={event.id} className="border-b border-gray-200 pb-8">
-                  <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
+                  <h2 className="text-2xl font-bold mb-2 text-black">{event.title}</h2>
                   <div className="mb-4">
-                    <p className="text-lg">{event.date}</p>
-                    <p className="text-lg">{event.time}</p>
-                    <p className="text-lg">{event.location}</p>
+                    <p className="text-lg text-black">{event.date}</p>
+                    <p className="text-lg text-black">{event.time}</p>
+                    <p className="text-lg text-black">{event.location}</p>
                   </div>
-                  <p className="text-gray-700">{event.description}</p>
+                  <p className="text-black">{event.description}</p>
                 </div>
               ))}
             </div>
           </div>
           
-          <div className="relative h-full w-full flex justify-center items-start mt-[-40px]">
+          <div className="hidden md:block relative w-full h-full flex justify-center items-start mt-[-100px]">
+            <Artwork33 />
+          </div>
+        </div>
+        
+        {/* Animation below text on mobile, full height */}
+        <div className="md:hidden mt-8 w-full flex justify-center items-center">
+          <div className="w-full h-[500px]">
             <Artwork33 />
           </div>
         </div>

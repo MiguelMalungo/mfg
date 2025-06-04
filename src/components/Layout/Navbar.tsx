@@ -34,7 +34,7 @@ const Navbar = () => {
             variant="outline"
             className="font-bold"
           >
-            BIOGRAPHY
+            SP59
           </Button>
           <Button 
             href="/contact" 

@@ -130,7 +130,8 @@ const WaterAscii: React.FC = () => {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    width: '100%'
+    width: '100%',
+    minHeight: '300px'
   }), []);
 
   const innerContainerStyle = useMemo(() => ({
@@ -147,7 +148,7 @@ const WaterAscii: React.FC = () => {
 
   const preStyle = useMemo(() => ({
     fontFamily: 'monospace',
-    fontSize: '16px',
+    fontSize: '14px',
     lineHeight: '1',
     cursor: 'default',
     userSelect: 'none' as const,

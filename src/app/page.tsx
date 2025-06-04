@@ -53,7 +53,7 @@ export default function Home() {
               variant="outline" 
               className="text-white border-white hover:bg-white hover:text-black"
             >
-              BIOGRAPHY
+              SP59
             </Button>
           </div>
         </div>
@@ -65,14 +65,15 @@ export default function Home() {
           <h2 className="text-4xl font-bold mb-2">LATEST</h2>
           <h3 className="text-3xl font-bold mb-12">COLLECTIONS</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-col space-y-8">
             {/* CAVE Collection */}
-            <div className="group relative overflow-hidden">
-              <div className="aspect-square mb-4 relative">
+            <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
+              <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
                 <img 
                   src="/images/cave2.JPG" 
                   alt="CAVE Collection" 
                   className="w-full h-full object-cover"
+                  style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">CAVE</h3>
@@ -85,12 +86,13 @@ export default function Home() {
             </div>
             
             {/* DEFFECTS Collection */}
-            <div className="group relative overflow-hidden">
-              <div className="aspect-square mb-4 relative">
+            <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
+              <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
                 <img 
                   src="/images/carbon.JPG" 
                   alt="DEFFECTS Collection" 
                   className="w-full h-full object-cover"
+                  style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">DEFFECTS</h3>

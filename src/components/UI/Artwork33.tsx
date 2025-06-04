@@ -89,11 +89,31 @@ const Artwork33 = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const width = canvas.width = 800;
-    const height = canvas.height = 600;
+    // Make canvas responsive to container size
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (!container) return { width: 300, height: 300 };
+      
+      // Use the container's dimensions
+      const width = canvas.width = container.clientWidth;
+      const height = canvas.height = container.clientHeight;
+      
+      return { width, height };
+    };
+    
+    const { width, height } = updateCanvasSize();
+    
+    // Add resize handler
+    const handleResize = () => {
+      const { width, height } = updateCanvasSize();
+      // Redraw on resize
+      ctx.fillStyle = '#F0EEE6';
+      ctx.fillRect(0, 0, width, height);
+    };
+    
+    window.addEventListener('resize', handleResize);
 
     // Core variables
-    let time = 0;
     const particles: HelixParticle[] = [];
     let helixPoints: HelixPoint[] = [];
     const numParticles = 60; // Fewer particles
@@ -130,8 +150,6 @@ const Artwork33 = () => {
         // Clear background
         ctx.fillStyle = '#F0EEE6';
         ctx.fillRect(0, 0, width, height);
-
-        time += 0.02;
 
         // Update helix points
         helixPoints = particles.map(particle => particle.update(width, height));
@@ -218,13 +236,14 @@ const Artwork33 = () => {
       if (canvas && ctx) {
         ctx.clearRect(0, 0, width, height);
       }
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="border-0 overflow-hidden">
-        <canvas ref={canvasRef} width={800} height={600} />
+      <div className="border-0 overflow-hidden w-full h-full" style={{ minHeight: '300px' }}>
+        <canvas ref={canvasRef} className="w-full h-full" />
       </div>
     </div>
   );

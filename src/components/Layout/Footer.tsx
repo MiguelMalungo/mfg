@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const Footer = () => {
   return (
@@ -22,7 +23,7 @@ const Footer = () => {
           
           <div>
             <h3 className="text-lg font-semibold uppercase mb-4">FOLLOW US</h3>
-            <div className="flex items-center">
+            <div className="flex items-center mb-3">
               <a 
                 href="https://www.instagram.com/umgatosemnome" 
                 target="_blank" 
@@ -35,6 +36,21 @@ const Footer = () => {
                 @umgatosemnome
               </a>
             </div>
+            
+            <h3 className="text-lg font-semibold uppercase mb-4">PHONE</h3>
+            <div className="flex items-center mb-2">
+              <a 
+                href="https://wa.me/46762044037" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:opacity-80 flex items-center"
+                aria-label="Contact on WhatsApp"
+              >
+                <FaWhatsapp className="w-5 h-5 mr-2" />
+                +46 76 2044037
+              </a>
+            </div>
+            <p>+351 961 084 022</p>
           </div>
           
           <div>

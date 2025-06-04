@@ -7,49 +7,116 @@ export default function BiographyPage() {
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8">Welcome</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-8 desktop-title">Welcome</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-8 mobile-title">BIOGRAPHY</h1>
         <h2 className="text-3xl md:text-4xl font-bold mb-12">SP59</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        {/* Desktop layout - 2 columns */}
+        <div className="hidden md:grid md:grid-cols-2 md:gap-12">
           <div className="prose prose-lg max-w-none">
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               This is our workshop, the center of our creative circle, where we explore ways, forms of perception and expression, 
               driven by the intensity of our emotions and intuition. We strive to delve deeper, to feel more intensely, and to 
               explore the myriad ways of expressing the vibrant kaleidoscope of possibilities through our existence.
             </p>
             
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               The creativity source light never gets extinguished and every moment is an opportunity for a new testament 
               of the immense beauty the universe has at our disposal.
             </p>
             
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               We aim to embark in a journey into the realm of the limitless with relentless curiosity, constantly testing 
               boundaries and new ways of doing things, of seeing the world as it is in all its beauty and diversity, but 
               also the world as it could be, being expressed in the present tense. At every moment a playground of potentialities, 
               a chance for sharing the depth and a breath of human experiences.
             </p>
             
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               We invite you to our creative and explorative place, a home for ideas, a sanctuary for our imaginations to 
               roam free where the doors are always open to the curious and appreciative and take part in this exchange of views.
             </p>
             
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               Your support allows us to continue our artistic exploration, fueling the ever-burning lantern of creativity we all share.
             </p>
             
-            <p className="mb-6">
+            <p className="mb-6 text-black">
               We hope you can discover something here through personal insight or interpretation and/or recognize some shared 
               essence or inner truth, that may resonate with you as deeply as it does with us.
             </p>
           </div>
           
-          <div className="relative h-full w-full flex justify-center items-start mt-[-100px]">
+          <div className="relative w-full h-full flex justify-center items-start md:mt-[-100px]">
             <ParticleFlower />
+          </div>
+        </div>
+        
+        {/* Mobile layout - single column */}
+        <div className="md:hidden">
+          <div className="prose prose-lg max-w-none mb-8">
+            <p className="mb-6 text-black">
+              This is our workshop, the center of our creative circle, where we explore ways, forms of perception and expression, 
+              driven by the intensity of our emotions and intuition. We strive to delve deeper, to feel more intensely, and to 
+              explore the myriad ways of expressing the vibrant kaleidoscope of possibilities through our existence.
+            </p>
+            
+            <p className="mb-6 text-black">
+              The creativity source light never gets extinguished and every moment is an opportunity for a new testament 
+              of the immense beauty the universe has at our disposal.
+            </p>
+            
+            <p className="mb-6 text-black">
+              We aim to embark in a journey into the realm of the limitless with relentless curiosity, constantly testing 
+              boundaries and new ways of doing things, of seeing the world as it is in all its beauty and diversity, but 
+              also the world as it could be, being expressed in the present tense. At every moment a playground of potentialities, 
+              a chance for sharing the depth and a breath of human experiences.
+            </p>
+            
+            <p className="mb-6 text-black">
+              We invite you to our creative and explorative place, a home for ideas, a sanctuary for our imaginations to 
+              roam free where the doors are always open to the curious and appreciative and take part in this exchange of views.
+            </p>
+            
+            <p className="mb-6 text-black">
+              Your support allows us to continue our artistic exploration, fueling the ever-burning lantern of creativity we all share.
+            </p>
+            
+            <p className="mb-6 text-black">
+              We hope you can discover something here through personal insight or interpretation and/or recognize some shared 
+              essence or inner truth, that may resonate with you as deeply as it does with us.
+            </p>
+          </div>
+          
+          {/* Animation on mobile - below text, same width as text column */}
+          <div className="prose prose-lg max-w-none mt-8">
+            <div style={{ height: '400px', width: '100%' }}>
+              <ParticleFlower />
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// Add this style tag to the document head
+if (typeof document !== 'undefined') {
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    /* Mobile-only styles */
+    @media (max-width: 767px) {
+      .desktop-title {
+        display: none;
+      }
+    }
+    
+    /* Desktop-only styles */
+    @media (min-width: 768px) {
+      .mobile-title {
+        display: none;
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
 }
