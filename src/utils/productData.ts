@@ -391,6 +391,16 @@ export const products: Product[] = [
     imageUrl: '/images/tablehead.JPG',
     slug: 'tablehead'
   },
+  {
+    id: 'fam',
+    name: 'FAM',
+    collection: 'SINGLE WORKS',
+    price: '750,00 €',
+    description: 'MIXED TECHNIC',
+    imageUrl: '/images/fam.JPG',
+    slug: 'fam',
+    sold: true
+  },
   // End of DREAM ENGINE Collection
 ];
 
