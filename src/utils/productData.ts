@@ -224,6 +224,26 @@ export const products: Product[] = [
     measurements: '50 x 70 cm',
     sold: true
   },
+  {
+    id: 'noradrenalina',
+    name: 'NORADRENALINA',
+    collection: 'TRANSMITTERS',
+    price: '550,00 €',
+    description: 'MIXED TECHNIC',
+    imageUrl: '/images/noradrenalina.jpg',
+    slug: 'noradrenalina',
+    measurements: '50 x 70 cm'
+  },
+  {
+    id: 'gaba',
+    name: 'GABA',
+    collection: 'TRANSMITTERS',
+    price: '550,00 €',
+    description: 'MIXED TECHNIC',
+    imageUrl: '/images/gaba.jpg',
+    slug: 'gaba',
+    measurements: '50 x 70 cm'
+  },
   
   // BASED Collection
   {
