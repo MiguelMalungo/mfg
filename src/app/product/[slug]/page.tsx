@@ -69,6 +69,7 @@ export default function ProductPage() {
                 <ul className="list-disc pl-5 space-y-2 text-black">
                   <li>Original artwork by Miguel Ferraz Guedes</li>
                   <li>Part of the {product.collection} collection</li>
+                  {product.measurements && <li>Dimensions: {product.measurements}</li>}
                   <li>Includes certificate of authenticity</li>
                 </ul>
               </div>
