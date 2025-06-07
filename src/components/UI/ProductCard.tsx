@@ -17,8 +17,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <>
               <img 
                 src={product.imageUrl} 
-                alt={product.name} 
+                alt={`${product.name} - ${product.collection} Collection by Miguel Ferraz Guedes`} 
                 className="w-full h-full object-cover"
+                loading="lazy"
+                width={400}
+                height={400}
               />
               {product.sold && (
                 <div className="absolute top-0 right-0 bg-black text-white px-3 py-1">
