@@ -17,7 +17,7 @@ export default function SP59Page() {
             </p>
             
             <p className="mb-6 text-black">
-              The space serves as both a studio and exhibition area, where we regularly host open house events 
+              The space serves as both a studio and exhibition area, where we host open house events every Friday
               and showcase our latest works and collections.
             </p>
             

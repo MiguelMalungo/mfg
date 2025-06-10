@@ -163,7 +163,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     imageUrl: '/images/acetilcolina.JPG',
     slug: 'acetilcolina',
-    measurements: '50 x 70 cm'
+    measurements: '50 x 70 cm',
+    sold: true
   },
   {
     id: 'serotonina',
@@ -207,10 +208,9 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Inspirado pelo principal neurotransmissor excitatório do cérebro, GLUTAMATO representa a atividade neural e o pensamento.',
-    imageUrl: '/images/gaba.JPG',
+    imageUrl: '/images/gaba.jpg',
     slug: 'glutamato',
-    measurements: '50 x 70 cm',
-    sold: true
+    measurements: '50 x 70 cm'
   },
   {
     id: 'adrenalina',
@@ -240,9 +240,10 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/gaba.jpg',
+    imageUrl: '/images/glutamato.jpg',
     slug: 'gaba',
-    measurements: '50 x 70 cm'
+    measurements: '50 x 70 cm',
+    sold: true
   },
   
   // BASED Collection

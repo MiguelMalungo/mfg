@@ -9,15 +9,15 @@ export default function EventsPage() {
     {
       id: 1,
       title: "OPEN HOUSE",
-      date: "June 4, 2025",
-      time: "18:00 - 21:00",
+      date: "June 6, 2025", // Updated to Friday
+      time: "14:00 - 19:00",
       location: "Rua Serpa Pinto 59, Porto",
-      description: "Join us for our monthly open house event where we showcase our latest works and collections."
+      description: "Join us for our Friday open house event where we showcase our latest works and collections."
     },
     {
       id: 2,
       title: "EXHIBITION OPENING",
-      date: "July 27, 2025",
+      date: "July 25, 2025", // Updated to Friday
       time: "19:00 - 22:00",
       location: "Rua Serpa Pinto 59, Porto",
       description: "Opening for our new exhibition featuring the latest collections."
