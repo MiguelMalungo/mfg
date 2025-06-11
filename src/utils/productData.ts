@@ -208,7 +208,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Inspirado pelo principal neurotransmissor excitatório do cérebro, GLUTAMATO representa a atividade neural e o pensamento.',
-    imageUrl: '/images/gaba.jpg',
+    imageUrl: '/images/glutamato.jpg',
     slug: 'glutamato',
     measurements: '50 x 70 cm'
   },
@@ -240,7 +240,7 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/glutamato.jpg',
+    imageUrl: '/images/gaba.jpg',
     slug: 'gaba',
     measurements: '50 x 70 cm',
     sold: true
