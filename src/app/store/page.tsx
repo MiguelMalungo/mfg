@@ -11,11 +11,24 @@ import ProductCard from '@/components/UI/ProductCard';
 
 export default function StorePage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Handle client-side mounting for the video player
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleMuteToggle = () => {
+    setMuted((prev) => !prev);
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+      if (!videoRef.current.paused && !videoRef.current.muted) {
+        videoRef.current.volume = 1;
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen relative">
@@ -26,16 +39,33 @@ export default function StorePage() {
           {isMounted && (
             <>
               <video 
-                autoPlay 
-                muted
-                loop 
+                ref={videoRef}
+                autoPlay
+                loop
                 className="absolute w-full h-full object-cover"
                 style={{ objectFit: 'cover', objectPosition: 'top center' }}
                 playsInline
+                muted={muted}
+                onError={() => setVideoError(true)}
               >
                 <source src="/videos/MyMovie.MP4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
+              {/* Mute/Unmute Button */}
+              <button
+                onClick={handleMuteToggle}
+                className="absolute top-4 right-4 z-20 bg-black/70 text-white rounded-full px-4 py-2 focus:outline-none focus:ring"
+                aria-label={muted ? 'Unmute video' : 'Mute video'}
+                style={{ backdropFilter: 'blur(4px)' }}
+              >
+                {muted ? 'Unmute' : 'Mute'}
+              </button>
+              {/* Error message if video fails to load */}
+              {videoError && (
+                <div className="absolute inset-0 flex items-center justify-center z-30">
+                  <span className="bg-red-600 text-white px-4 py-2 rounded">Video failed to load</span>
+                </div>
+              )}
             </>
           )}
           {/* Black overlay with 50% opacity */}

@@ -29,7 +29,7 @@ export default function SP59Page() {
           
           <div className="relative w-full h-[300px] md:h-full flex justify-center items-center">
             {/* Animation at 50% size (half size) */}
-            <div className="w-[50%] h-[50%]">
+            <div className="w-full md:w-[50%] h-[50%]">
               <HankiesInTheWind initialZoom={3} />
             </div>
           </div>

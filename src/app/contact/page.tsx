@@ -109,7 +109,7 @@ export default function ContactPage() {
           
           {/* Animation on mobile - below text */}
           <div className="w-full flex justify-center items-center">
-            <div className="w-[70%] h-[400px]">
+            <div className="w-full h-[400px]">
               <WaterAscii />
             </div>
           </div>
