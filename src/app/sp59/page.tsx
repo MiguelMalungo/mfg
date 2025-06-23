@@ -7,7 +7,7 @@ export default function SP59Page() {
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-[42px] font-bold mb-12 text-left text-black">RUA SERPA PINTO 59</h1>
+        <h1 className="text-6xl md:text-8xl font-extrabold mb-12 text-left text-black">RUA SERPA PINTO 59</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="prose prose-lg max-w-none">

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 // dynamic import removed as it's not used
 // import Button from '@/components/UI/Button'; // Commented out as it's not used
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
+import TrueFocus from './TrueFocus';
 import { getProductsByCollection } from '@/utils/productData';
 import ProductCard from '@/components/UI/ProductCard';
 
@@ -85,7 +86,14 @@ export default function StorePage() {
         
         {/* Text overlay */}
         <div className="absolute inset-0 flex flex-col justify-center z-10 px-6 md:px-12 lg:px-24">
-          <h1 className="text-white text-5xl md:text-7xl font-bold mb-8">WORK/STORE</h1>
+          <TrueFocus 
+  sentence="WORK STORE"
+  manualMode={false}
+  blurAmount={5}
+  borderColor="white"
+  animationDuration={2}
+  pauseBetweenAnimations={1}
+/>
           
           <div className="text-white">
             <h3 className="text-2xl font-bold mb-4">OPEN HOUSE</h3>

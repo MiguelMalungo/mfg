@@ -3,6 +3,7 @@
 
 import Button from "@/components/UI/Button";
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
+import DecryptedText from './DecryptedText';
 
 export default function Home() {
   return (
@@ -37,21 +38,29 @@ export default function Home() {
           />
         </div>
         <div className="absolute top-0 left-0 p-8 md:p-12 lg:p-16 z-20">
-          <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">MIGUEL</h1>
+          <DecryptedText
+  text="MIGUEL"
+  animateOn="view"
+  revealDirection="center"
+  className="italic text-6xl md:text-8xl mb-2 text-white"
+  encryptedClassName="italic text-6xl md:text-8xl mb-2 text-white"
+  speed={120}
+  maxIterations={40}
+/>
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white">GUEDES</h1>
           <div className="flex space-x-4">
             <Button 
               href="/store" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+              variant="outline"
+              className="hero-button"
             >
               STORE
             </Button>
             <Button 
               href="/biography" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+              variant="outline"
+              className="hero-button"
             >
               SP59
             </Button>
@@ -77,12 +86,14 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">CAVE</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
+              <div className="flex justify-end w-full md:max-w-[300px]">
+                <Button 
+                  href="/store" 
+                  variant="outline"
+                >
+                  VIEW
+                </Button>
+              </div>
             </div>
             
             {/* DEFFECTS Collection */}
@@ -96,12 +107,14 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">DEFFECTS</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
+              <div className="flex justify-end w-full md:max-w-[300px]">
+                <Button 
+                  href="/store" 
+                  variant="outline"
+                >
+                  VIEW
+                </Button>
+              </div>
             </div>
           </div>
         </div>
