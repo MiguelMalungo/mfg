@@ -10,32 +10,22 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <div className="mb-4">
-              <video 
-                src="/videos/MyMovie.MP4" 
-                autoPlay={true}
-                loop 
-                muted 
-                playsInline
-                className="w-full"
+              <img 
+                src="/images/blocks.png" 
+                alt="Blocks" 
+                className="w-full h-auto"
               />
-              <div className="mt-4">
-                <img 
-                  src="/images/blocks.png" 
-                  alt="Blocks" 
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="mt-4 mb-8 flex items-center">
-                <h3 className="text-lg font-semibold uppercase mr-3">POETRY BOOK</h3>
-                <a 
-                  href="https://lovely-pegasus-e9f6e6.netlify.app/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-transparent text-black px-4 py-1 text-sm border border-black hover:bg-black hover:text-white transition-colors duration-200 inline-block"
-                >
-                  VIEW
-                </a>
-              </div>
+            </div>
+            <div className="mt-4 mb-8 flex items-center">
+              <h3 className="text-lg font-semibold uppercase mr-3">POETRY BOOK</h3>
+              <a 
+                href="https://lovely-pegasus-e9f6e6.netlify.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="rounded-full bg-transparent text-black px-4 py-1 text-sm border border-black hover:bg-black hover:text-white transition-colors duration-200 inline-block"
+              >
+                VIEW
+              </a>
             </div>
           </div>
           
