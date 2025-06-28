@@ -13,6 +13,17 @@ interface TrueFocusProps {
   className?: string;
 }
 
+interface TrueFocusProps {
+  sentence?: string;
+  manualMode?: boolean;
+  blurAmount?: number;
+  borderColor?: string;
+  glowColor?: string;
+  animationDuration?: number;
+  pauseBetweenAnimations?: number;
+  className?: string;
+}
+
 const TrueFocus = ({
   sentence = "True Focus",
   manualMode = false,
@@ -87,9 +98,8 @@ const TrueFocus = ({
                   : isActive
                     ? `blur(0px)`
                     : `blur(${blurAmount}px)`,
-              // @ts-ignore - CSS custom properties
+              // @ts-expect-error - CSS custom properties
               "--border-color": borderColor,
-              // @ts-ignore - CSS custom properties
               "--glow-color": glowColor,
               transition: `filter ${animationDuration}s ease`,
             }}
@@ -114,9 +124,8 @@ const TrueFocus = ({
           duration: animationDuration,
         }}
         style={{
-          // @ts-ignore - CSS custom properties
+          // @ts-expect-error - CSS custom properties
           "--border-color": borderColor,
-          // @ts-ignore - CSS custom properties
           "--glow-color": glowColor,
         }}
       >

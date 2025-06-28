@@ -12,6 +12,16 @@ interface TrueFocusProps {
   pauseBetweenAnimations?: number;
 }
 
+interface TrueFocusProps {
+  sentence?: string;
+  manualMode?: boolean;
+  blurAmount?: number;
+  borderColor?: string;
+  glowColor?: string;
+  animationDuration?: number;
+  pauseBetweenAnimations?: number;
+}
+
 const TrueFocus = ({
   sentence = "True Focus",
   manualMode = false,
@@ -75,8 +85,7 @@ const TrueFocus = ({
           <span
             key={index}
             ref={(el: HTMLSpanElement | null) => { wordRefs.current[index] = el; }}
-            className={`focus-word ${manualMode ? "manual" : ""} ${isActive && !manualMode ? "active" : ""
-              }`}
+            className={`focus-word ${manualMode ? "manual" : ""} ${isActive && !manualMode ? "active" : ""}`}
             style={{
               filter:
                 manualMode
@@ -86,9 +95,8 @@ const TrueFocus = ({
                   : isActive
                     ? `blur(0px)`
                     : `blur(${blurAmount}px)`,
-              // @ts-ignore - CSS custom properties
+              // @ts-expect-error - CSS custom properties
               "--border-color": borderColor,
-              // @ts-ignore - CSS custom properties
               "--glow-color": glowColor,
               transition: `filter ${animationDuration}s ease`,
             }}
@@ -113,9 +121,8 @@ const TrueFocus = ({
           duration: animationDuration,
         }}
         style={{
-          // @ts-ignore - CSS custom properties
+          // @ts-expect-error - CSS custom properties
           "--border-color": borderColor,
-          // @ts-ignore - CSS custom properties
           "--glow-color": glowColor,
         }}
       >
