@@ -2,6 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import "./TrueFocus.css";
 
+interface TrueFocusProps {
+  sentence?: string;
+  manualMode?: boolean;
+  blurAmount?: number;
+  borderColor?: string;
+  glowColor?: string;
+  animationDuration?: number;
+  pauseBetweenAnimations?: number;
+  className?: string;
+}
+
 const TrueFocus = ({
   sentence = "True Focus",
   manualMode = false,
@@ -11,12 +22,12 @@ const TrueFocus = ({
   animationDuration = 0.5,
   pauseBetweenAnimations = 1,
   className = ""
-}) => {
+}: TrueFocusProps) => {
   const words = sentence.split(" ");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [lastActiveIndex, setLastActiveIndex] = useState(null);
-  const containerRef = useRef(null);
-  const wordRefs = useRef([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [lastActiveIndex, setLastActiveIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   useEffect(() => {
@@ -45,7 +56,7 @@ const TrueFocus = ({
     });
   }, [currentIndex, words.length]);
 
-  const handleMouseEnter = (index) => {
+  const handleMouseEnter = (index: number) => {
     if (manualMode) {
       setLastActiveIndex(index);
       setCurrentIndex(index);
@@ -53,7 +64,7 @@ const TrueFocus = ({
   };
 
   const handleMouseLeave = () => {
-    if (manualMode) {
+    if (manualMode && lastActiveIndex !== null) {
       setCurrentIndex(lastActiveIndex);
     }
   };
@@ -65,7 +76,7 @@ const TrueFocus = ({
         return (
           <span
             key={index}
-            ref={(el) => (wordRefs.current[index] = el)}
+            ref={(el: HTMLSpanElement | null) => { wordRefs.current[index] = el; }}
             className={`focus-word ${manualMode ? "manual" : ""} ${isActive && !manualMode ? "active" : ""}`}
             style={{
               filter:
@@ -76,7 +87,9 @@ const TrueFocus = ({
                   : isActive
                     ? `blur(0px)`
                     : `blur(${blurAmount}px)`,
+              // @ts-ignore - CSS custom properties
               "--border-color": borderColor,
+              // @ts-ignore - CSS custom properties
               "--glow-color": glowColor,
               transition: `filter ${animationDuration}s ease`,
             }}
@@ -101,7 +114,9 @@ const TrueFocus = ({
           duration: animationDuration,
         }}
         style={{
+          // @ts-ignore - CSS custom properties
           "--border-color": borderColor,
+          // @ts-ignore - CSS custom properties
           "--glow-color": glowColor,
         }}
       >
