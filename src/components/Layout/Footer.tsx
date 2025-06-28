@@ -11,7 +11,7 @@ const Footer = () => {
           <div>
             <div className="mb-4">
               <video 
-                src="/videos/video.mp4" 
+                src="/videos/MyMovie.MP4" 
                 autoPlay={true}
                 loop 
                 muted 
