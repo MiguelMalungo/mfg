@@ -52,6 +52,7 @@ export default function StorePage() {
                 <source src="/videos/MyMovie.MP4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
+              
               {/* Mute/Unmute Button */}
               <button
                 onClick={handleMuteToggle}

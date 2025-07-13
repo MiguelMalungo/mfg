@@ -1,16 +1,6 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
-  "/sitemap.xml/route": "app/sitemap.xml/route.js",
-  "/robots.txt/route": "app/robots.txt/route.js",
-  "/product/[slug]/opengraph-image/route": "app/product/[slug]/opengraph-image/route.js",
-  "/biography/page": "app/biography/page.js",
-  "/contact/page": "app/contact/page.js",
-  "/events/page": "app/events/page.js",
   "/page": "app/page.js",
-  "/product/[slug]/page": "app/product/[slug]/page.js",
-  "/test-image/page": "app/test-image/page.js",
   "/store/page": "app/store/page.js",
-  "/sp59/page": "app/sp59/page.js"
+  "/events/page": "app/events/page.js",
+  "/biography/page": "app/biography/page.js"
 }
