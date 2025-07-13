@@ -1,0 +1,16 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/manifest.webmanifest/route": "/manifest.webmanifest",
+  "/sitemap.xml/route": "/sitemap.xml",
+  "/robots.txt/route": "/robots.txt",
+  "/product/[slug]/opengraph-image/route": "/product/[slug]/opengraph-image",
+  "/biography/page": "/biography",
+  "/contact/page": "/contact",
+  "/events/page": "/events",
+  "/page": "/",
+  "/product/[slug]/page": "/product/[slug]",
+  "/test-image/page": "/test-image",
+  "/store/page": "/store",
+  "/sp59/page": "/sp59"
+}
