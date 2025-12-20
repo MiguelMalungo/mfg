@@ -8,8 +8,6 @@ import TrueFocus from './TrueFocus';
 import { getProductsByCollection } from '@/utils/productData';
 import ProductCard from '@/components/UI/ProductCard';
 
-// ReactPlayer import removed as it's not used
-
 export default function StorePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [muted, setMuted] = useState(true);
