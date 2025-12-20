@@ -10,9 +10,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <div className="mb-4">
-              <img 
-                src="/images/blocks.png" 
-                alt="Blocks" 
+              <img
+                src="/images/blocks.webp"
+                alt="Blocks"
                 className="w-full h-auto"
               />
             </div>

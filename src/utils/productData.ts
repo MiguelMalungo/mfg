@@ -32,7 +32,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE ZERO explores the depths of perception and the origins of consciousness through cavernous forms and textures.',
-    imageUrl: '/images/cave0.JPG',
+    imageUrl: '/images/store/copy/cave0.webp',
     slug: 'cave-0',
     measurements: '100 x 200 cm'
   },
@@ -43,7 +43,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE ONE delves deeper into the metaphorical caverns of the mind, revealing hidden structures and patterns.',
-    imageUrl: '/images/cave1.JPG',
+    imageUrl: '/images/store/copy/cave1.webp',
     slug: 'cave-1',
     measurements: '100 x 200 cm'
   },
@@ -54,7 +54,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE TWO completes the journey through the subterranean landscape of consciousness, emerging into new understanding.',
-    imageUrl: '/images/cave2.JPG',
+    imageUrl: '/images/store/copy/cave2.webp',
     slug: 'cave-2',
     measurements: '100 x 200 cm'
   },
@@ -65,7 +65,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE THREE represents the culmination of the cave exploration series, revealing the deepest insights from within the metaphorical cavern.',
-    imageUrl: '/images/cave3.JPG',
+    imageUrl: '/images/store/copy/cave3.webp',
     slug: 'cave-3',
     measurements: '100 x 200 cm',
     sold: true
@@ -79,7 +79,7 @@ export const products: Product[] = [
     price: '1.000,00 €',
     description: 'MIXED TECHNIC',
     // 'An exploration of material and form, CARBON represents the fundamental building blocks of life.',
-    imageUrl: '/images/carbon.JPG',
+    imageUrl: '/images/store/copy/carbon.webp',
     slug: 'carbon',
     measurements: '100 x 150 cm',
     sold: true
@@ -91,7 +91,7 @@ export const products: Product[] = [
     price: '1.400,00 €',
     description: 'MIXED TECHNIC',
     // 'A stunning piece from the DEFFECTS collection that explores the intersection of technology and art.',
-    imageUrl: '/images/silicon.JPG',
+    imageUrl: '/images/store/copy/silicon.webp',
     slug: 'silicon',
     measurements: '150 x 200 cm'
   },
@@ -102,7 +102,7 @@ export const products: Product[] = [
     price: '1.000,00 €',
     description: 'MIXED TECHNIC',
     // 'SUBSTRAT explores the foundational layers beneath perception, revealing the hidden structures that support our reality.',
-    imageUrl: '/images/substract.JPG',
+    imageUrl: '/images/store/copy/substrat.webp',
     slug: 'substrat',
     measurements: '100 x 150 cm'
   },
@@ -115,7 +115,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The first in the VOID series, exploring the concept of nothingness as a starting point.',
-    imageUrl: '/images/void0.jpg',
+    imageUrl: '/images/store/copy/void0.webp',
     slug: 'void-0',
     measurements: '80 x 120 cm'
   },
@@ -126,7 +126,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The second piece in the VOID series, examining the emergence of form from emptiness.',
-    imageUrl: '/images/void1.jpg',
+    imageUrl: '/images/store/copy/void1.webp',
     slug: 'void-1',
     measurements: '80 x 120 cm'
   },
@@ -137,7 +137,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the VOID series, this piece explores the duality between presence and absence.',
-    imageUrl: '/images/void2.jpg',
+    imageUrl: '/images/store/copy/void2.webp',
     slug: 'void-2',
     measurements: '80 x 120 cm'
   },
@@ -148,7 +148,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The fourth installment in the VOID series, delving deeper into the concept of negative space.',
-    imageUrl: '/images/void4.jpg',
+    imageUrl: '/images/store/copy/void4.webp',
     slug: 'void-4',
     measurements: '80 x 120 cm',
     sold: true
@@ -161,7 +161,7 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/acetilcolina.JPG',
+    imageUrl: '/images/store/copy/acetilcolina.webp',
     slug: 'acetilcolina',
     measurements: '50 x 70 cm',
     sold: true
@@ -173,7 +173,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'SEROTONINA visualiza a base neuroquímica do bem-estar e contentamento.',
-    imageUrl: '/images/serotonina.jpg',
+    imageUrl: '/images/store/copy/serotonina.webp',
     slug: 'serotonina',
     measurements: '50 x 70 cm'
   },
@@ -184,7 +184,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Nomeada após o hormônio de ligação, OXITOCINA explora a conexão humana e intimidade.',
-    imageUrl: '/images/oxitocina.jpg',
+    imageUrl: '/images/store/copy/oxitocina.webp',
     slug: 'oxitocina',
     measurements: '50 x 70 cm',
     sold: true
@@ -196,7 +196,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'DOPAMINA explora as fundações neurológicas do prazer e recompensa.',
-    imageUrl: '/images/dopamina.jpg',
+    imageUrl: '/images/store/copy/dopamina.webp',
     slug: 'dopamina',
     measurements: '50 x 70 cm',
     sold: true
@@ -208,7 +208,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Inspirado pelo principal neurotransmissor excitatório do cérebro, GLUTAMATO representa a atividade neural e o pensamento.',
-    imageUrl: '/images/glutamato.jpg',
+    imageUrl: '/images/store/copy/glutamato.webp',
     slug: 'glutamato',
     measurements: '50 x 70 cm'
   },
@@ -219,7 +219,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Uma peça dinâmica que captura a essência da excitação, medo e resposta rápida.',
-    imageUrl: '/images/adrenalina.jpg',
+    imageUrl: '/images/store/copy/adrenalina.webp',
     slug: 'adrenalina',
     measurements: '50 x 70 cm',
     sold: true
@@ -230,7 +230,7 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/noradrenalina.jpg',
+    imageUrl: '/images/store/copy/noradrenalina.webp',
     slug: 'noradrenalina',
     measurements: '50 x 70 cm'
   },
@@ -240,7 +240,7 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/gaba.jpg',
+    imageUrl: '/images/store/copy/gaba.webp',
     slug: 'gaba',
     measurements: '50 x 70 cm',
     sold: true
@@ -254,7 +254,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'HEAD examines the relationship between consciousness and physical form.',
-    imageUrl: '/images/based0.JPG',
+    imageUrl: '/images/store/copy/head.webp',
     slug: 'head',
     measurements: '30 x 50 cm'
   },
@@ -265,7 +265,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'A commentary on digital identity and the symbolic language of the internet age.',
-    imageUrl: '/images/based1.JPG',
+    imageUrl: '/images/store/copy/hash.webp',
     slug: 'hash',
     measurements: '30 x 50 cm'
   },
@@ -276,7 +276,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'SOURCE explores origins, beginnings, and the concept of fundamental truth.',
-    imageUrl: '/images/based2.JPG',
+    imageUrl: '/images/store/copy/source.webp',
     slug: 'source',
     measurements: '30 x 50 cm'
   },
@@ -287,7 +287,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'M investigates language, symbolism, and the abstraction of meaning.',
-    imageUrl: '/images/based3.JPG',
+    imageUrl: '/images/store/copy/m.webp',
     slug: 'm',
     measurements: '30 x 50 cm',
     sold: true
@@ -299,7 +299,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'COMPRESS examines information density and the compression of meaning into minimal form.',
-    imageUrl: '/images/source.JPG',
+    imageUrl: '/images/store/copy/compress.webp',
     slug: 'compress',
     measurements: '100 x 150 cm',
     sold: true
@@ -313,7 +313,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
-    imageUrl: '/images/point4.JPG',
+    imageUrl: '/images/store/copy/point1.webp',
     slug: 'point-1',
     measurements: '30 x 30 cm'
   },
@@ -324,7 +324,7 @@ export const products: Product[] = [
     price: '600,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the exploration of singular focus and clarity.',
-    imageUrl: '/images/point9.JPG',
+    imageUrl: '/images/store/copy/point2.webp',
     slug: 'point-2',
     measurements: '30 x 30 cm'
   },
@@ -335,7 +335,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The third meditation on simplicity and essence.',
-    imageUrl: '/images/circle.JPG',
+    imageUrl: '/images/store/copy/point3.webp',
     slug: 'point-3',
     measurements: '70 x 70 cm'
   },
@@ -348,7 +348,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The foundational piece in the DREAM ENGINE series, representing the genesis of dream consciousness.',
-    imageUrl: '/images/dreamengine0.JPG',
+    imageUrl: '/images/store/copy/dream-engine-0.webp',
     slug: 'dream-engine-0',
     measurements: '70 x 90 cm'
   },
@@ -359,7 +359,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The first piece in the DREAM ENGINE series, exploring the machinery of subconscious thought.',
-    imageUrl: '/images/dreamengine1.JPG',
+    imageUrl: '/images/store/copy/dream-engine-1.webp',
     slug: 'dream-engine-1',
     measurements: '70 x 90 cm'
   },
@@ -370,7 +370,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the exploration of dream states and mental processes.',
-    imageUrl: '/images/dreamengine2.JPG',
+    imageUrl: '/images/store/copy/dream-engine-2.webp',
     slug: 'dream-engine-2',
     measurements: '70 x 90 cm',
     sold: true
@@ -382,7 +382,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The fourth installment in the DREAM ENGINE series, delving deeper into the architecture of dreams.',
-    imageUrl: '/images/dreamengine3.JPG',
+    imageUrl: '/images/store/copy/dream-engine-3.webp',
     slug: 'dream-engine-3',
     measurements: '70 x 90 cm'
   },
@@ -394,7 +394,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/aliados.JPG',
+    imageUrl: '/images/store/copy/aliados.webp',
     slug: 'aliados',
     measurements: '80 x 120 cm'
   },
@@ -404,7 +404,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/colordiptic.JPG',
+    imageUrl: '/images/store/copy/colordiptic.webp',
     slug: 'colordiptic',
     measurements: '30 x 90 cm'
   },
@@ -414,7 +414,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/dual.jpg',
+    imageUrl: '/images/store/copy/dual.webp',
     slug: 'dual',
     measurements: '130 x 150 cm'
   },
@@ -424,7 +424,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/part3.JPG',
+    imageUrl: '/images/store/copy/part3.webp',
     slug: 'part3',
     measurements: '90 x 90 cm'
   },
@@ -434,7 +434,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/source2.JPG',
+    imageUrl: '/images/store/copy/source2.webp',
     slug: 'source2',
     measurements: '100 x 150 cm'
   },
@@ -444,7 +444,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '900,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/tablehead.JPG',
+    imageUrl: '/images/store/copy/tablehead.webp',
     slug: 'tablehead',
     measurements: '150 x 180 cm'
   },
@@ -454,7 +454,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/fam.JPG',
+    imageUrl: '/images/store/copy/fam.webp',
     slug: 'fam',
     measurements: '80 x 155 cm',
     sold: true

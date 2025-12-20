@@ -10,19 +10,19 @@ export default function TestImage() {
       
       <div className="mb-6">
         <h2 className="text-xl mb-2">Using standard img tag:</h2>
-        <img 
-          src="/images/blocks.png" 
-          alt="Blocks" 
+        <img
+          src="/images/blocks.webp"
+          alt="Blocks"
           className="w-full max-w-md"
         />
       </div>
-      
+
       <div className="mb-6">
         <h2 className="text-xl mb-2">Using Next.js Image component:</h2>
         <div style={{ position: 'relative', width: '100%', maxWidth: '500px', height: '300px' }}>
-          <Image 
-            src="/images/blocks.png" 
-            alt="Blocks" 
+          <Image
+            src="/images/blocks.webp"
+            alt="Blocks"
             fill
             style={{ objectFit: 'contain' }}
           />
