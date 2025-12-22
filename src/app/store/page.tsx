@@ -37,7 +37,7 @@ export default function StorePage() {
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           {isMounted && (
             <>
-              <video 
+              <video
                 ref={videoRef}
                 autoPlay
                 loop
@@ -47,7 +47,7 @@ export default function StorePage() {
                 muted={muted}
                 onError={() => setVideoError(true)}
               >
-                <source src="/videos/MyMovie.MP4" type="video/mp4" />
+                <source src="/videos/video3.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
               
