@@ -25,15 +25,15 @@ export default function StorePage() {
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           {isMounted && (
             <>
-              <video 
-                autoPlay 
+              <video
+                autoPlay
                 muted
-                loop 
+                loop
                 className="absolute w-full h-full object-cover"
                 style={{ objectFit: 'cover', objectPosition: 'top center' }}
                 playsInline
               >
-                <source src="/videos/MyMovie.MP4" type="video/mp4" />
+                <source src="/videos/video3.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </>
