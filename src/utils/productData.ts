@@ -93,7 +93,8 @@ export const products: Product[] = [
     // 'A stunning piece from the DEFFECTS collection that explores the intersection of technology and art.',
     imageUrl: '/images/store/copy/silicon.webp',
     slug: 'silicon',
-    measurements: '150 x 200 cm'
+    measurements: '150 x 200 cm',
+    sold: true
   },
   {
     id: 'substrat',
