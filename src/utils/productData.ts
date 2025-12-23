@@ -86,7 +86,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'A stunning piece from the DEFFECTS collection that explores the intersection of technology and art.',
     imageUrl: '/images/silicon.JPG',
-    slug: 'silicon'
+    slug: 'silicon',
+    sold: true
   },
   {
     id: 'substrat',
