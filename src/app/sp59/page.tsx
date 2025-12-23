@@ -16,7 +16,7 @@ export default function SP59Page() {
             </p>
 
             <p className="mb-6 text-black">
-              The creative spark doesn't go out. Every moment offers a chance to witness the quiet beauty around us.
+              The creative spark doesn&apos;t go out. Every moment offers a chance to witness the quiet beauty around us.
             </p>
 
             <p className="mb-6 text-black">
