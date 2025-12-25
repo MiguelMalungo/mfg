@@ -3,27 +3,12 @@
 
 import Button from "@/components/UI/Button";
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
-import FluidGlass from '@/components/UI/FluidGlass';
 
 export default function Home() {
   return (
     <div className="min-h-screen relative">
       {/* Three.js Animation Background */}
       <HankiesInTheWind initialZoom={6} />
-
-      {/* Fluid Glass Cursor Effect */}
-      <div style={{ height: '100vh', position: 'fixed', top: 0, left: 0, width: '100%', pointerEvents: 'none' }}>
-        <FluidGlass
-          mode="lens"
-          lensProps={{
-            scale: 0.25,
-            ior: 1.15,
-            thickness: 5,
-            chromaticAberration: 0.1,
-            anisotropy: 0.01
-          }}
-        />
-      </div>
       {/* Hero Section */}
       <section className="relative h-screen z-10">
         {/* Image visible only on mobile, hidden on md (medium) screens and up */}
