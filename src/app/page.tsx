@@ -6,7 +6,7 @@ import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
 
 export default function Home() {
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative">      
       {/* Three.js Animation Background */}
       <HankiesInTheWind initialZoom={6} />
       {/* Hero Section */}
