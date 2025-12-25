@@ -13,9 +13,12 @@
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
     "@tailwindcss/typography": "^0.5.16",
     "@types/three": "^0.176.0",
     "framer-motion": "^12.18.1",
+    "maath": "^0.10.8",
     "next": "^15.4.10",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
