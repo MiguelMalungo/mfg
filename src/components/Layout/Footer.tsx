@@ -1,28 +1,39 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 
 const Footer = () => {
   return (
     <footer className="relative py-8 px-6 bg-white text-black">
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-lg font-semibold uppercase mb-4">STUDIO</h3>
-            <p>Porto, Rua Serpa Pinto 59</p>
-            <p>4025</p>
-            <p className="mt-2">
-              <a href="mailto:info@swedencapoeira.se" className="hover:underline">
-                info@swedencapoeira.se
+            <div className="mb-4">
+              <img
+                src="/images/blocks.webp"
+                alt="Blocks"
+                className="w-full h-auto"
+              />
+            </div>
+            <div className="mt-4 mb-8 flex items-center">
+              <h3 className="text-lg font-semibold uppercase mr-3">POETRY BOOK</h3>
+              <a 
+                href="https://lovely-pegasus-e9f6e6.netlify.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="rounded-full bg-transparent text-black px-4 py-1 text-sm border border-black hover:bg-black hover:text-white transition-colors duration-200 inline-block"
+              >
+                VIEW
               </a>
-            </p>
-            <p>+351 961084022</p>
+            </div>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold uppercase mb-4">FOLLOW US</h3>
+            <h3 className="text-lg font-semibold uppercase mb-4">STUDIO</h3>
+            <p>Porto, Rua Serpa Pinto 59</p>
+            <p className="mb-6">4025</p>
+            <h3 className="text-lg font-semibold uppercase mb-4 mt-8">FOLLOW US</h3>
             <div className="flex items-center mb-3">
               <a 
                 href="https://www.instagram.com/umgatosemnome" 
@@ -53,31 +64,7 @@ const Footer = () => {
             <p>+351 961 084 022</p>
           </div>
           
-          <div>
-            <h3 className="text-lg font-semibold uppercase mb-4">LINKS</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/store" className="hover:underline">
-                  WORK/STORE
-                </Link>
-              </li>
-              <li>
-                <Link href="/biography" className="hover:underline">
-                  SP59
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:underline">
-                  CONTACT
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="hover:underline">
-                  EVENTS
-                </Link>
-              </li>
-            </ul>
-          </div>
+
         </div>
         
         <div className="mt-8 pt-8 border-t border-gray-200">

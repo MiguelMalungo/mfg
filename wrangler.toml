@@ -1,0 +1,10 @@
+name = "mfg-website"
+compatibility_date = "2025-12-20"
+
+pages_build_output_dir = ".next"
+
+[site]
+bucket = ".next"
+
+# Compatibility flags for Next.js
+compatibility_flags = ["nodejs_compat"]

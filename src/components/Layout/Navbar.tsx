@@ -100,7 +100,6 @@ const Navbar = () => {
             <Button 
               href="/events" 
               variant="outline"
-              className="w-full"
               onClick={() => setIsOpen(false)}
             >
               EVENTS

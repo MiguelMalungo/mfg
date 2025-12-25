@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Artwork33 from '@/components/UI/Artwork33';
+import DecryptedText from './DecryptedText';
 
 export default function EventsPage() {
   // Sample events data - this would typically come from a CMS or API
@@ -9,15 +10,15 @@ export default function EventsPage() {
     {
       id: 1,
       title: "OPEN HOUSE",
-      date: "June 4, 2025",
-      time: "18:00 - 21:00",
+      date: "June 6, 2025", // Updated to Friday
+      time: "14:00 - 19:00",
       location: "Rua Serpa Pinto 59, Porto",
-      description: "Join us for our monthly open house event where we showcase our latest works and collections."
+      description: "Join us for our Friday open house event where we showcase our latest works and collections."
     },
     {
       id: 2,
       title: "EXHIBITION OPENING",
-      date: "July 27, 2025",
+      date: "July 25, 2025", // Updated to Friday
       time: "19:00 - 22:00",
       location: "Rua Serpa Pinto 59, Porto",
       description: "Opening for our new exhibition featuring the latest collections."
@@ -35,7 +36,18 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8">EVENTS</h1>
+        <span className="mb-8 inline-block uppercase">
+  <span className="italic text-5xl md:text-7xl">WELL</span>
+  <DecryptedText
+    text="COME"
+    animateOn="view"
+    revealDirection="center"
+    className="text-5xl md:text-7xl font-bold"
+    encryptedClassName="text-5xl md:text-7xl font-bold"
+    speed={120}
+    maxIterations={40}
+  />
+</span>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>

@@ -4,6 +4,7 @@
 import Button from "@/components/UI/Button";
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
 import FluidGlass from '@/components/UI/FluidGlass';
+import DecryptedText from './DecryptedText';
 
 export default function Home() {
   return (
@@ -45,28 +46,36 @@ export default function Home() {
               object-fit: cover;
             }
           `}</style>
-          <img 
-            src="/images/imageA.png" 
-            alt="Miguel Ferraz Guedes" 
+          <img
+            src="/images/imageA.webp"
+            alt="Miguel Ferraz Guedes"
             className="w-full h-full object-cover z-10 pan-image"
           />
         </div>
         <div className="absolute top-0 left-0 p-8 md:p-12 lg:p-16 z-20">
-          <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">MIGUEL</h1>
+          <DecryptedText
+  text="MIGUEL"
+  animateOn="view"
+  revealDirection="center"
+  className="italic text-6xl md:text-8xl mb-2 text-white"
+  encryptedClassName="italic text-6xl md:text-8xl mb-2 text-white"
+  speed={120}
+  maxIterations={40}
+/>
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white">GUEDES</h1>
           <div className="flex space-x-4">
             <Button 
               href="/store" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+              variant="outline"
+              className="hero-button"
             >
               STORE
             </Button>
             <Button 
               href="/biography" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+              variant="outline"
+              className="hero-button"
             >
               SP59
             </Button>
@@ -84,39 +93,43 @@ export default function Home() {
             {/* CAVE Collection */}
             <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
               <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img 
-                  src="/images/cave2.JPG" 
-                  alt="CAVE Collection" 
+                <img
+                  src="/images/cave2.webp"
+                  alt="CAVE Collection"
                   className="w-full h-full object-cover"
                   style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">CAVE</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
+              <div className="flex justify-end w-full md:max-w-[300px]">
+                <Button 
+                  href="/store" 
+                  variant="outline"
+                >
+                  VIEW
+                </Button>
+              </div>
             </div>
             
             {/* DEFFECTS Collection */}
             <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
               <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img 
-                  src="/images/carbon.JPG" 
-                  alt="DEFFECTS Collection" 
+                <img
+                  src="/images/carbon.webp"
+                  alt="DEFFECTS Collection"
                   className="w-full h-full object-cover"
                   style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />
               </div>
               <h3 className="text-xl font-semibold mb-2">DEFFECTS</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
+              <div className="flex justify-end w-full md:max-w-[300px]">
+                <Button 
+                  href="/store" 
+                  variant="outline"
+                >
+                  VIEW
+                </Button>
+              </div>
             </div>
           </div>
         </div>

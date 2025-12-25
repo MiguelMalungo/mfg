@@ -23,16 +23,10 @@ const Button = ({
   
   const variantStyles = {
     default: "bg-black text-white hover:bg-white hover:text-black border border-black border-[1px]",
-    outline: "bg-transparent text-black hover:bg-black hover:text-white border border-black border-[1px]",
+    outline: "bg-white text-black border border-black border-[1px] hover:bg-black hover:text-white hover:border-black transition-all duration-200",
     text: "bg-transparent text-black hover:underline"
   };
-  
-  // Override styles if className contains specific overrides
-  const hasWhiteBorder = className.includes('border-white');
-  if (hasWhiteBorder && variant === 'outline') {
-    variantStyles.outline = "bg-transparent text-white hover:bg-white hover:text-black border border-white border-[1px]";
-  }
-  
+
   const buttonStyles = `${baseStyles} ${variantStyles[variant]} ${className}`;
   
   if (href) {

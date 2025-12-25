@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Specific video files
+public/videos/video.mp4
+public/videos/video.mp4

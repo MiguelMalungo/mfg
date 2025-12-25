@@ -2,14 +2,25 @@
 
 import React from 'react';
 import ParticleFlower from '@/components/UI/ParticleFlower';
+import DecryptedText from './DecryptedText';
 
 export default function BiographyPage() {
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 desktop-title">Welcome</h1>
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 mobile-title">BIOGRAPHY</h1>
-        <h2 className="text-3xl md:text-4xl font-bold mb-12">SP59</h2>
+        
+        <span className="mb-12 inline-block">
+  <span className="italic text-5xl md:text-7xl">SP</span>
+  <DecryptedText
+    text="59"
+    animateOn="view"
+    revealDirection="center"
+    className="text-5xl md:text-7xl font-extrabold"
+    encryptedClassName="text-5xl md:text-7xl font-extrabold"
+    speed={120}
+    maxIterations={40}
+  />
+</span>
         
         {/* Desktop layout - 2 columns */}
         <div className="hidden md:grid md:grid-cols-2 md:gap-12">

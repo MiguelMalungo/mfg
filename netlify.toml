@@ -4,6 +4,17 @@
 
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NODE_VERSION = "18.17.0"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[headers]]
+  for = "/videos/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    Content-Type = "video/mp4"
+
+# Handle TypeScript config
+[functions]
+  node_bundler = "esbuild"

@@ -1,16 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getProductBySlug } from '@/utils/productData';
 import Button from '@/components/UI/Button';
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
+import generateProductStructuredData from './structured-data';
 
 export default function ProductPage() {
   const params = useParams();
   const slug = params?.slug as string;
   const product = getProductBySlug(slug);
+  
+  useEffect(() => {
+    // Add structured data script to head
+    if (product) {
+      const structuredData = generateProductStructuredData(slug);
+      if (structuredData) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.text = JSON.stringify(structuredData);
+        document.head.appendChild(script);
+        
+        return () => {
+          document.head.removeChild(script);
+        };
+      }
+    }
+  }, [slug, product]);
 
   if (!product) {
     return (
@@ -38,8 +56,11 @@ export default function ProductPage() {
             <div className="relative">
               <img 
                 src={product.imageUrl} 
-                alt={product.name} 
+                alt={`${product.name} - Original artwork from the ${product.collection} collection by Miguel Ferraz Guedes${product.measurements ? `, ${product.measurements}` : ''}`}
                 className="w-full h-auto object-contain"
+                loading="eager"
+                width={800}
+                height={600}
               />
             </div>
             
@@ -69,6 +90,7 @@ export default function ProductPage() {
                 <ul className="list-disc pl-5 space-y-2 text-black">
                   <li>Original artwork by Miguel Ferraz Guedes</li>
                   <li>Part of the {product.collection} collection</li>
+                  {product.measurements && <li>Dimensions: {product.measurements}</li>}
                   <li>Includes certificate of authenticity</li>
                 </ul>
               </div>

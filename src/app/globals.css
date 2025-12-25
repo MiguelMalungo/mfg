@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+.hero-button {
+  background: #000;
+  color: #fff;
+  border: 2px solid #000;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.hero-button:hover {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
