@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vercel:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm install:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: update Next.js to 15.4.10 to patch critical security vulnerabilities\n\nUpdated Next.js from 15.3.3 to 15.4.10 to address:\n- CVE-2025-66478 (RCE in React flight protocol)\n- Server Actions source code exposure\n- Denial of Service with Server Components\n\nAlso updated React to 19.2.3 and eslint-config-next to 15.4.10.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(dig:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(vercel login)",
+      "Bash(find:*)",
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(git clean:*)",
+      "Bash(git reset:*)",
+      "Bash(git rm:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git config:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(gh repo view:*)",
+      "Bash(node /Volumes/Extreme SSD 1/website/scripts/create-models.js:*)",
+      "Bash(cd:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

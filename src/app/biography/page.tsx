@@ -1,15 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ParticleFlower from '@/components/UI/ParticleFlower';
+import DecryptedText from '@/components/UI/DecryptedText';
+import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
 
 export default function BiographyPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
+      {/* Magnifying Glass Effect */}
+      {isMounted && (
+        <MagnifyingGlass
+          size={200}
+          magnification={1.8}
+          borderColor="#000000"
+          borderWidth={4}
+        />
+      )}
+
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 desktop-title">Welcome</h1>
         <h1 className="text-4xl md:text-5xl font-bold mb-8 mobile-title">BIOGRAPHY</h1>
-        <h2 className="text-3xl md:text-4xl font-bold mb-12">SP59</h2>
+        <DecryptedText
+          text="SP59"
+          animateOn="view"
+          revealDirection="center"
+          className="text-3xl md:text-4xl font-bold mb-12 text-black"
+          encryptedClassName="text-3xl md:text-4xl font-bold mb-12 text-black"
+          speed={100}
+          maxIterations={30}
+        />
         
         {/* Desktop layout - 2 columns */}
         <div className="hidden md:grid md:grid-cols-2 md:gap-12">

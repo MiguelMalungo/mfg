@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 // dynamic import removed as it's not used
 // import Button from '@/components/UI/Button'; // Commented out as it's not used
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
+import TrueFocus from '@/components/UI/TrueFocus';
+import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
 import { getProductsByCollection } from '@/utils/productData';
 import ProductCard from '@/components/UI/ProductCard';
 
@@ -19,6 +21,16 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen relative">
+      {/* Magnifying Glass Effect */}
+      {isMounted && (
+        <MagnifyingGlass
+          size={200}
+          magnification={1.8}
+          borderColor="#ffffff"
+          borderWidth={4}
+        />
+      )}
+
       {/* Video Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
         {/* Video background */}
@@ -44,9 +56,16 @@ export default function StorePage() {
         
         {/* Text overlay */}
         <div className="absolute inset-0 flex flex-col justify-center z-10 px-6 md:px-12 lg:px-24">
-          <h1 className="text-white text-5xl md:text-7xl font-bold mb-8">WORK/STORE</h1>
-          
-          <div className="text-white">
+          <TrueFocus
+            sentence="WORK STORE"
+            blurAmount={8}
+            borderColor="#ff0000"
+            glowColor="rgba(255, 0, 0, 0.6)"
+            animationDuration={0.8}
+            pauseBetweenAnimations={1.5}
+          />
+
+          <div className="text-white mt-12">
             <h3 className="text-2xl font-bold mb-4">OPEN HOUSE</h3>
             <p className="text-xl mb-2">FIRST SATURDAY</p>
             <p className="text-xl mb-6">OF EACH MONTH</p>

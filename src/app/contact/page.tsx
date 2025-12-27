@@ -1,12 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import WaterAscii from '@/components/UI/WaterAscii';
+import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
 import { FaWhatsapp } from 'react-icons/fa';
 
 export default function ContactPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
+      {/* Magnifying Glass Effect */}
+      {isMounted && (
+        <MagnifyingGlass
+          size={200}
+          magnification={1.8}
+          borderColor="#000000"
+          borderWidth={4}
+        />
+      )}
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl md:text-[42px] font-bold mb-6 text-left text-black">GET IN TOUCH</h1>
         

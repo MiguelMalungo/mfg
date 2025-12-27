@@ -1,12 +1,30 @@
 'use client';
 
-
+import { useState, useEffect } from 'react';
 import Button from "@/components/UI/Button";
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
+import DecryptedText from '@/components/UI/DecryptedText';
+import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
 
 export default function Home() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
-    <div className="min-h-screen relative">      
+    <div className="min-h-screen relative">
+      {/* Magnifying Glass Effect */}
+      {isMounted && (
+        <MagnifyingGlass
+          size={200}
+          magnification={1.8}
+          borderColor="#ffffff"
+          borderWidth={4}
+        />
+      )}
+
       {/* Three.js Animation Background */}
       <HankiesInTheWind initialZoom={6} />
       {/* Hero Section */}
@@ -37,7 +55,15 @@ export default function Home() {
           />
         </div>
         <div className="absolute top-0 left-0 p-8 md:p-12 lg:p-16 z-20">
-          <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">MIGUEL</h1>
+          <DecryptedText
+            text="MIGUEL"
+            animateOn="view"
+            revealDirection="center"
+            className="italic text-6xl md:text-8xl mb-2 text-white"
+            encryptedClassName="italic text-6xl md:text-8xl mb-2 text-white"
+            speed={120}
+            maxIterations={40}
+          />
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white">GUEDES</h1>
           <div className="flex space-x-4">
