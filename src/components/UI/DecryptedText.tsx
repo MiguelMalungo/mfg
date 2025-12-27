@@ -55,10 +55,10 @@ export default function DecryptedText({
   const containerRef = useRef(null);
 
   useEffect(() => {
-    let interval
+    let interval: NodeJS.Timeout | undefined
     let currentIteration = 0
 
-    const getNextIndex = (revealedSet) => {
+    const getNextIndex = (revealedSet: Set<number>): number => {
       const textLength = text.length
       switch (revealDirection) {
         case 'start':
@@ -91,7 +91,7 @@ export default function DecryptedText({
       ? Array.from(new Set(text.split(''))).filter((char) => char !== ' ')
       : characters.split('')
 
-    const shuffleText = (originalText, currentRevealed) => {
+    const shuffleText = (originalText: string, currentRevealed: Set<number>): string => {
       if (useOriginalCharsOnly) {
         const positions = originalText.split('').map((char, i) => ({
           char,
