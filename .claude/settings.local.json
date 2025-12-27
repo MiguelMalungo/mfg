@@ -29,7 +29,8 @@
       "Bash(git branch:*)",
       "Bash(gh repo view:*)",
       "Bash(node /Volumes/Extreme SSD 1/website/scripts/create-models.js:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(1)"
     ],
     "deny": [],
     "ask": []

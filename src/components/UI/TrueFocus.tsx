@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import "./TrueFocus.css";
 
+interface TrueFocusProps {
+  sentence?: string;
+  manualMode?: boolean;
+  blurAmount?: number;
+  borderColor?: string;
+  glowColor?: string;
+  animationDuration?: number;
+  pauseBetweenAnimations?: number;
+}
+
 const TrueFocus = ({
   sentence = "True Focus",
   manualMode = false,
@@ -12,12 +22,12 @@ const TrueFocus = ({
   glowColor = "rgba(0, 255, 0, 0.6)",
   animationDuration = 0.5,
   pauseBetweenAnimations = 1,
-}) => {
+}: TrueFocusProps) => {
   const words = sentence.split(" ");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [lastActiveIndex, setLastActiveIndex] = useState(null);
-  const containerRef = useRef(null);
-  const wordRefs = useRef([]);
+  const [lastActiveIndex, setLastActiveIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   useEffect(() => {
@@ -46,7 +56,7 @@ const TrueFocus = ({
     });
   }, [currentIndex, words.length]);
 
-  const handleMouseEnter = (index) => {
+  const handleMouseEnter = (index: number) => {
     if (manualMode) {
       setLastActiveIndex(index);
       setCurrentIndex(index);

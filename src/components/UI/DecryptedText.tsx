@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, CSSProperties } from 'react'
 import { motion } from 'framer-motion'
 
 interface DecryptedTextProps {
@@ -16,7 +16,7 @@ interface DecryptedTextProps {
   [key: string]: unknown;
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     display: 'inline-block',
     whiteSpace: 'pre-wrap',
