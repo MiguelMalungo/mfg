@@ -31,7 +31,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE ZERO explores the depths of perception and the origins of consciousness through cavernous forms and textures.',
-    imageUrl: '/images/cave0.JPG',
+    imageUrl: '/images/cave0.webp',
     slug: 'cave-0'
   },
   {
@@ -41,7 +41,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE ONE delves deeper into the metaphorical caverns of the mind, revealing hidden structures and patterns.',
-    imageUrl: '/images/cave1.JPG',
+    imageUrl: '/images/cave1.webp',
     slug: 'cave-1'
   },
   {
@@ -51,7 +51,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE TWO completes the journey through the subterranean landscape of consciousness, emerging into new understanding.',
-    imageUrl: '/images/cave2.JPG',
+    imageUrl: '/images/cave2.webp',
     slug: 'cave-2'
   },
   {
@@ -61,7 +61,7 @@ export const products: Product[] = [
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
     // 'CAVE THREE represents the culmination of the cave exploration series, revealing the deepest insights from within the metaphorical cavern.',
-    imageUrl: '/images/cave3.JPG',
+    imageUrl: '/images/cave3.webp',
     slug: 'cave-3',
     sold: true
   },
@@ -74,7 +74,7 @@ export const products: Product[] = [
     price: '1.000,00 €',
     description: 'MIXED TECHNIC',
     // 'An exploration of material and form, CARBON represents the fundamental building blocks of life.',
-    imageUrl: '/images/carbon.JPG',
+    imageUrl: '/images/carbon.webp',
     slug: 'carbon',
     sold: true
   },
@@ -85,7 +85,7 @@ export const products: Product[] = [
     price: '1.400,00 €',
     description: 'MIXED TECHNIC',
     // 'A stunning piece from the DEFFECTS collection that explores the intersection of technology and art.',
-    imageUrl: '/images/silicon.JPG',
+    imageUrl: '/images/silicon.webp',
     slug: 'silicon',
     sold: true
   },
@@ -96,7 +96,7 @@ export const products: Product[] = [
     price: '1.000,00 €',
     description: 'MIXED TECHNIC',
     // 'SUBSTRAT explores the foundational layers beneath perception, revealing the hidden structures that support our reality.',
-    imageUrl: '/images/substract.JPG',
+    imageUrl: '/images/substract.webp',
     slug: 'substrat'
   },
   
@@ -108,7 +108,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The first in the VOID series, exploring the concept of nothingness as a starting point.',
-    imageUrl: '/images/void0.jpg',
+    imageUrl: '/images/void0.webp',
     slug: 'void-0'
   },
   {
@@ -118,7 +118,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The second piece in the VOID series, examining the emergence of form from emptiness.',
-    imageUrl: '/images/void1.jpg',
+    imageUrl: '/images/void1.webp',
     slug: 'void-1'
   },
   {
@@ -128,7 +128,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the VOID series, this piece explores the duality between presence and absence.',
-    imageUrl: '/images/void2.jpg',
+    imageUrl: '/images/void2.webp',
     slug: 'void-2'
   },
   {
@@ -138,7 +138,7 @@ export const products: Product[] = [
     price: '650,00 €',
     description: 'MIXED TECHNIC',
     // 'The fourth installment in the VOID series, delving deeper into the concept of negative space.',
-    imageUrl: '/images/void4.jpg',
+    imageUrl: '/images/void4.webp',
     slug: 'void-4',
     sold: true
   },
@@ -150,7 +150,7 @@ export const products: Product[] = [
     collection: 'TRANSMITTERS',
     price: '550,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/acetilcolina.JPG',
+    imageUrl: '/images/acetilcolina.webp',
     slug: 'acetilcolina'
   },
   {
@@ -160,7 +160,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'SEROTONINA visualiza a base neuroquímica do bem-estar e contentamento.',
-    imageUrl: '/images/serotonina.jpg',
+    imageUrl: '/images/serotonina.webp',
     slug: 'serotonina'
   },
   {
@@ -170,7 +170,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Nomeada após o hormônio de ligação, OXITOCINA explora a conexão humana e intimidade.',
-    imageUrl: '/images/oxitocina.jpg',
+    imageUrl: '/images/oxitocina.webp',
     slug: 'oxitocina',
     sold: true
   },
@@ -181,7 +181,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'DOPAMINA explora as fundações neurológicas do prazer e recompensa.',
-    imageUrl: '/images/dopamina.jpg',
+    imageUrl: '/images/dopamina.webp',
     slug: 'dopamina',
     sold: true
   },
@@ -192,7 +192,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Inspirado pelo principal neurotransmissor excitatório do cérebro, GLUTAMATO representa a atividade neural e o pensamento.',
-    imageUrl: '/images/gaba.JPG',
+    imageUrl: '/images/gaba.webp',
     slug: 'glutamato',
     sold: true
   },
@@ -203,7 +203,7 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     // 'Uma peça dinâmica que captura a essência da excitação, medo e resposta rápida.',
-    imageUrl: '/images/adrenalina.jpg',
+    imageUrl: '/images/adrenalina.webp',
     slug: 'adrenalina',
     sold: true
   },
@@ -216,7 +216,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'HEAD examines the relationship between consciousness and physical form.',
-    imageUrl: '/images/based0.JPG',
+    imageUrl: '/images/based0.webp',
     slug: 'head'
   },
   {
@@ -226,7 +226,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'A commentary on digital identity and the symbolic language of the internet age.',
-    imageUrl: '/images/based1.JPG',
+    imageUrl: '/images/based1.webp',
     slug: 'hash'
   },
   {
@@ -236,7 +236,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'SOURCE explores origins, beginnings, and the concept of fundamental truth.',
-    imageUrl: '/images/based2.JPG',
+    imageUrl: '/images/based2.webp',
     slug: 'source'
   },
   {
@@ -246,7 +246,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'M investigates language, symbolism, and the abstraction of meaning.',
-    imageUrl: '/images/based3.JPG',
+    imageUrl: '/images/based3.webp',
     slug: 'm',
     sold: true
   },
@@ -257,7 +257,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'COMPRESS examines information density and the compression of meaning into minimal form.',
-    imageUrl: '/images/source.JPG',
+    imageUrl: '/images/source.webp',
     slug: 'compress',
     sold: true
   },
@@ -270,7 +270,7 @@ export const products: Product[] = [
     price: '200,00 €',
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
-    imageUrl: '/images/point4.JPG',
+    imageUrl: '/images/point4.webp',
     slug: 'point-1'
   },
   {
@@ -280,7 +280,7 @@ export const products: Product[] = [
     price: '600,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the exploration of singular focus and clarity.',
-    imageUrl: '/images/point9.JPG',
+    imageUrl: '/images/point9.webp',
     slug: 'point-2'
   },
   {
@@ -290,7 +290,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The third meditation on simplicity and essence.',
-    imageUrl: '/images/circle.JPG',
+    imageUrl: '/images/circle.webp',
     slug: 'point-3'
   },
   
@@ -302,7 +302,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The foundational piece in the DREAM ENGINE series, representing the genesis of dream consciousness.',
-    imageUrl: '/images/dreamengine0.JPG',
+    imageUrl: '/images/dreamengine0.webp',
     slug: 'dream-engine-0'
   },
   {
@@ -312,7 +312,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The first piece in the DREAM ENGINE series, exploring the machinery of subconscious thought.',
-    imageUrl: '/images/dreamengine1.JPG',
+    imageUrl: '/images/dreamengine1.webp',
     slug: 'dream-engine-1'
   },
   {
@@ -322,7 +322,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'Continuing the exploration of dream states and mental processes.',
-    imageUrl: '/images/dreamengine2.JPG',
+    imageUrl: '/images/dreamengine2.webp',
     slug: 'dream-engine-2',
     sold: true
   },
@@ -333,7 +333,7 @@ export const products: Product[] = [
     price: '350,00 €',
     description: 'MIXED TECHNIC',
     // 'The fourth installment in the DREAM ENGINE series, delving deeper into the architecture of dreams.',
-    imageUrl: '/images/dreamengine3.JPG',
+    imageUrl: '/images/dreamengine3.webp',
     slug: 'dream-engine-3'
   },
 
@@ -344,7 +344,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/aliados.JPG',
+    imageUrl: '/images/aliados.webp',
     slug: 'aliados'
   },
   {
@@ -353,7 +353,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/colordiptic.JPG',
+    imageUrl: '/images/colordiptic.webp',
     slug: 'colordiptic'
   },
   {
@@ -362,7 +362,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/dual.jpg',
+    imageUrl: '/images/dual.webp',
     slug: 'dual'
   },
   {
@@ -371,7 +371,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/part3.JPG',
+    imageUrl: '/images/part3.webp',
     slug: 'part3'
   },
   {
@@ -380,7 +380,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/source2.JPG',
+    imageUrl: '/images/source2.webp',
     slug: 'source2'
   },
   {
@@ -389,7 +389,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '900,00 €',
     description: 'MIXED TECHNIC',
-    imageUrl: '/images/tablehead.JPG',
+    imageUrl: '/images/tablehead.webp',
     slug: 'tablehead'
   },
   // End of DREAM ENGINE Collection

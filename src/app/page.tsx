@@ -48,9 +48,9 @@ export default function Home() {
               object-fit: cover;
             }
           `}</style>
-          <img 
-            src="/images/imageA.png" 
-            alt="Miguel Ferraz Guedes" 
+          <img
+            src="/images/imageA.webp"
+            alt="Miguel Ferraz Guedes - Porto Based Artist"
             className="w-full h-full object-cover z-10 pan-image"
           />
         </div>
@@ -95,9 +95,9 @@ export default function Home() {
             {/* CAVE Collection */}
             <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
               <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img 
-                  src="/images/cave2.JPG" 
-                  alt="CAVE Collection" 
+                <img
+                  src="/images/cave2.webp"
+                  alt="CAVE Collection artwork by Miguel Ferraz Guedes"
                   className="w-full h-full object-cover"
                   style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />
@@ -114,9 +114,9 @@ export default function Home() {
             {/* DEFFECTS Collection */}
             <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
               <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img 
-                  src="/images/carbon.JPG" 
-                  alt="DEFFECTS Collection" 
+                <img
+                  src="/images/carbon.webp"
+                  alt="DEFFECTS Collection artwork by Miguel Ferraz Guedes"
                   className="w-full h-full object-cover"
                   style={{ maxWidth: '100%', maxHeight: '300px' }}
                 />

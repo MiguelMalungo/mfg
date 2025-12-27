@@ -16,6 +16,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Miguel Ferraz Guedes | Porto Based Artist",
   description: "Miguel Ferraz Guedes - Porto Based Artist - Artwork and Collections",
+  metadataBase: new URL('https://miguelfguedes.pt'),
+  openGraph: {
+    title: "Miguel Ferraz Guedes | Porto Based Artist",
+    description: "Miguel Ferraz Guedes - Porto Based Artist - Artwork and Collections",
+    url: "https://miguelfguedes.pt",
+    siteName: "Miguel Ferraz Guedes",
+    locale: "pt_PT",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Miguel Ferraz Guedes | Porto Based Artist",
+    description: "Miguel Ferraz Guedes - Porto Based Artist - Artwork and Collections",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
