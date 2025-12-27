@@ -59,25 +59,25 @@ export default function Home() {
             text="MIGUEL"
             animateOn="view"
             revealDirection="center"
-            className="italic text-6xl md:text-8xl mb-2 text-white"
-            encryptedClassName="italic text-6xl md:text-8xl mb-2 text-white"
+            className="italic text-6xl md:text-8xl mb-2 text-white md:text-black"
+            encryptedClassName="italic text-6xl md:text-8xl mb-2 text-white md:text-black"
             speed={120}
             maxIterations={40}
           />
-          <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white">FERRAZ</h1>
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white">GUEDES</h1>
+          <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white md:text-black">FERRAZ</h1>
+          <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white md:text-black">GUEDES</h1>
           <div className="flex space-x-4">
-            <Button 
-              href="/store" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+            <Button
+              href="/store"
+              variant="outline"
+              className="text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               STORE
             </Button>
-            <Button 
-              href="/biography" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-black"
+            <Button
+              href="/biography"
+              variant="outline"
+              className="text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               SP59
             </Button>
