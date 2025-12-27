@@ -180,7 +180,7 @@ export default function DecryptedText({
   useEffect(() => {
     if (animateOn !== 'view') return
 
-    const observerCallback = (entries) => {
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting && !hasAnimated) {
           setIsHovering(true)
