@@ -12,7 +12,6 @@ interface MagnifyingGlassProps {
 export default function MagnifyingGlass({
   size = 200,
   magnification = 2,
-  borderColor = '#ffffff',
   borderWidth = 4
 }: MagnifyingGlassProps) {
   const [position, setPosition] = useState({ x: -1000, y: -1000 });
@@ -38,11 +37,6 @@ export default function MagnifyingGlass({
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2 - borderWidth, 0, Math.PI * 2);
       ctx.clip();
-
-      // Calculate source rectangle
-      const sourceSize = size / magnification;
-      const sourceX = e.pageX - sourceSize / 2;
-      const sourceY = e.pageY - sourceSize / 2;
 
       // Draw magnified content (simulated with gradient for now)
       // In a real implementation, you'd use html2canvas or similar to capture actual content
