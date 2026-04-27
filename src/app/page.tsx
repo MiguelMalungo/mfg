@@ -67,7 +67,7 @@ export default function Home() {
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white md:text-black">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white md:text-black">GUEDES</h1>
           <div className="flex flex-wrap gap-3">
-            <
+            <a
               href="https://www.instagram.com/1gato100futuro/"
               target="_blank"
               rel="noopener noreferrer"
