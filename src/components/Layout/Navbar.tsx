@@ -22,22 +22,15 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button 
-            href="/store" 
+          <Button
+            href="/store"
             variant="outline"
             className="font-bold"
           >
             STORE
           </Button>
-          <Button 
-            href="/biography" 
-            variant="outline"
-            className="font-bold"
-          >
-            SP59
-          </Button>
-          <Button 
-            href="/contact" 
+          <Button
+            href="/contact"
             variant="outline"
             className="font-bold"
           >
@@ -76,22 +69,15 @@ const Navbar = () => {
         <div className="md:hidden mt-4 bg-white py-2">
           <div className="flex flex-col space-y-4 px-6">
             {/* Home link is now the MFG text in the header */}
-            <Button 
-              href="/store" 
+            <Button
+              href="/store"
               variant="outline"
               onClick={() => setIsOpen(false)}
             >
               WORK/STORE
             </Button>
-            <Button 
-              href="/biography" 
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
-              SP59
-            </Button>
-            <Button 
-              href="/contact" 
+            <Button
+              href="/contact"
               variant="outline"
               onClick={() => setIsOpen(false)}
             >

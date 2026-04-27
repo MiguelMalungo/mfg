@@ -66,21 +66,23 @@ export default function Home() {
           />
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white md:text-black">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white md:text-black">GUEDES</h1>
-          <div className="flex space-x-4">
-            <Button
-              href="/store"
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+          <div className="flex flex-wrap gap-3">
+            <
+              href="https://www.instagram.com/1gato100futuro/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              STORE
-            </Button>
-            <Button
-              href="/biography"
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              INSTAGRAM
+            </a>
+            <a
+              href="https://www.tiktok.com/@miguelfguedes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              SP59
-            </Button>
+              TIKTOK
+            </a>
           </div>
         </div>
       </section>
