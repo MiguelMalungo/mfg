@@ -272,7 +272,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
     imageUrl: '/images/point4.webp',
-    slug: 'point-1'
+    slug: 'point-1',
+    sold: true
   },
   {
     id: 'point-2',
@@ -287,7 +288,7 @@ export const products: Product[] = [
   },
   {
     id: 'point-3',
-    name: 'POINT III',
+    name: 'POINT I',
     collection: 'POINTS',
     price: '350,00 €',
     description: 'MIXED TECHNIC',
