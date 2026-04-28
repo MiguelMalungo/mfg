@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Events | Miguel Ferraz Guedes",
-  description: "Upcoming events at Miguel Ferraz Guedes studio. Join us for open house events, exhibitions, and artist talks at Rua Serpa Pinto 59, Porto.",
+  title: "Exhibitions | Miguel Ferraz Guedes",
+  description: "Current exhibitions by Miguel Ferraz Guedes in Porto — at Alice in Brewland Café and Patio da Almada on Rua do Almada.",
   openGraph: {
-    title: "Events | Miguel Ferraz Guedes",
-    description: "Upcoming events at Miguel Ferraz Guedes studio. Join us for open house events, exhibitions, and artist talks at Rua Serpa Pinto 59, Porto.",
+    title: "Exhibitions | Miguel Ferraz Guedes",
+    description: "Current exhibitions by Miguel Ferraz Guedes in Porto — at Alice in Brewland Café and Patio da Almada on Rua do Almada.",
     url: "https://miguelfguedes.pt/events",
     type: "website",
   },

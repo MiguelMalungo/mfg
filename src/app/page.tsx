@@ -68,6 +68,14 @@ export default function Home() {
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white md:text-black">GUEDES</h1>
           <div className="flex flex-wrap gap-3">
             <a
+              href="https://influc.my.canva.site/mfg"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+            >
+              DIGITAL ART
+            </a>
+            <a
               href="https://www.instagram.com/1gato100futuro/"
               target="_blank"
               rel="noopener noreferrer"

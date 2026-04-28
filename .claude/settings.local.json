@@ -30,7 +30,11 @@
       "Bash(gh repo view:*)",
       "Bash(node /Volumes/Extreme SSD 1/website/scripts/create-models.js:*)",
       "Bash(cd:*)",
-      "Bash(1)"
+      "Bash(1)",
+      "Bash(ln -s \"/Volumes/Extreme SSD 1/website/node_modules\" \"/Volumes/Extreme SSD 1/website/.claude/worktrees/gracious-shirley-9cc9e4/node_modules\")",
+      "Bash(npx next *)",
+      "Bash(vercel --version)",
+      "Bash(npm cache *)"
     ],
     "deny": [],
     "ask": []

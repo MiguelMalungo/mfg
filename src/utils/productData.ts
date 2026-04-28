@@ -272,8 +272,7 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
     imageUrl: '/images/point4.webp',
-    slug: 'point-1',
-    sold: true
+    slug: 'point-1'
   },
   {
     id: 'point-2',
@@ -294,8 +293,7 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The third meditation on simplicity and essence.',
     imageUrl: '/images/circle.webp',
-    slug: 'point-3',
-    sold: true
+    slug: 'point-3'
   },
   
   // DREAM ENGINE Collection

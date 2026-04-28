@@ -24,7 +24,10 @@ export default function ContactPage() {
         />
       )}
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-[42px] font-bold mb-6 text-left text-black">GET IN TOUCH</h1>
+        <h1 className="text-4xl md:text-[42px] font-bold mb-3 text-left text-black">GET IN TOUCH</h1>
+        <p className="text-lg font-bold text-black mb-8 max-w-lg">
+          For purchase inquiries, pricing, and delivery conditions, reach out through any of the channels below — we&apos;ll get back to you as soon as possible.
+        </p>
         
         {/* Desktop layout - 2 columns */}
         <div className="hidden md:grid md:grid-cols-2 md:gap-12">
