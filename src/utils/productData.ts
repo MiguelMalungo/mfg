@@ -5,6 +5,7 @@ export interface Product {
   collection: string;
   price: string;
   description: string;
+  dimensions?: string;
   imageUrl: string;
   slug: string;
   sold?: boolean;
@@ -30,6 +31,7 @@ export const products: Product[] = [
     collection: 'CAVE',
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
+    dimensions: '2000 x 1000 cm',
     // 'CAVE ZERO explores the depths of perception and the origins of consciousness through cavernous forms and textures.',
     imageUrl: '/images/cave0.webp',
     slug: 'cave-0'
@@ -40,6 +42,7 @@ export const products: Product[] = [
     collection: 'CAVE',
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
+    dimensions: '2200 x 1000 cm',
     // 'CAVE ONE delves deeper into the metaphorical caverns of the mind, revealing hidden structures and patterns.',
     imageUrl: '/images/cave1.webp',
     slug: 'cave-1'
@@ -50,6 +53,7 @@ export const products: Product[] = [
     collection: 'CAVE',
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
+    dimensions: '2200 x 1000 cm',
     // 'CAVE TWO completes the journey through the subterranean landscape of consciousness, emerging into new understanding.',
     imageUrl: '/images/cave2.webp',
     slug: 'cave-2'

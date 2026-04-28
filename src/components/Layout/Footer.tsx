@@ -23,7 +23,7 @@ const Footer = () => {
                     VIEW
                   </a>
                 </div>
-                <div className="flex items-center">
+                <div className="hidden md:flex items-center">
                   <h3 className="text-lg font-semibold uppercase mr-3">DIGITAL ART</h3>
                   <a
                     href="https://influc.my.canva.site/mfg"
@@ -100,6 +100,18 @@ const Footer = () => {
             </div>
             <p className="mb-6">+351 961 084 022</p>
           </div>
+        </div>
+
+        <div className="md:hidden mt-8 flex items-center">
+          <h3 className="text-lg font-semibold uppercase mr-3">DIGITAL ART</h3>
+          <a
+            href="https://influc.my.canva.site/mfg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-transparent text-black px-4 py-1 text-sm border border-black hover:bg-black hover:text-white transition-colors duration-200 inline-block"
+          >
+            VIEW
+          </a>
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200">

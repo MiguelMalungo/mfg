@@ -51,6 +51,9 @@ export default function ProductPage() {
                 <p className="text-2xl font-bold mb-6 text-black">{product.price}</p>
                 <div className="mb-8">
                   <p className="text-lg text-black">{product.description}</p>
+                  {product.dimensions && (
+                    <p className="text-lg text-black mt-1">{product.dimensions}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-4">
