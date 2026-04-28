@@ -41,7 +41,7 @@ const Navbar = () => {
             variant="outline"
             className="font-bold"
           >
-            EXHIBITIONS
+            EVENTS
           </Button>
         </div>
 
@@ -89,7 +89,7 @@ const Navbar = () => {
               className="w-full"
               onClick={() => setIsOpen(false)}
             >
-              EXHIBITIONS
+              EVENTS
             </Button>
           </div>
         </div>
