@@ -65,12 +65,6 @@ export default function StorePage() {
             pauseBetweenAnimations={1.5}
           />
 
-          <div className="text-white mt-12">
-            <h3 className="text-2xl font-bold mb-4">OPEN HOUSE</h3>
-            <p className="text-xl mb-2">FIRST SATURDAY</p>
-            <p className="text-xl mb-6">OF EACH MONTH</p>
-            <p className="text-lg font-semibold">RUA SERPA PINTO 59</p>
-          </div>
         </div>
       </section>
 

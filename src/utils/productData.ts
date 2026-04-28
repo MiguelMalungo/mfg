@@ -56,7 +56,7 @@ export const products: Product[] = [
   },
   {
     id: 'cave-3',
-    name: 'CAVE THREE',
+    name: 'FREEDOM',
     collection: 'CAVE',
     price: '450,00 € (unframed)',
     description: 'MIXED TECHNIC',
