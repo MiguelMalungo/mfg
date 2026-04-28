@@ -151,7 +151,8 @@ export const products: Product[] = [
     price: '550,00 €',
     description: 'MIXED TECHNIC',
     imageUrl: '/images/acetilcolina.webp',
-    slug: 'acetilcolina'
+    slug: 'acetilcolina',
+    sold: true
   },
   {
     id: 'serotonina',
@@ -271,7 +272,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
     imageUrl: '/images/point4.webp',
-    slug: 'point-1'
+    slug: 'point-1',
+    sold: true
   },
   {
     id: 'point-2',
@@ -281,7 +283,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'Continuing the exploration of singular focus and clarity.',
     imageUrl: '/images/point9.webp',
-    slug: 'point-2'
+    slug: 'point-2',
+    sold: true
   },
   {
     id: 'point-3',
@@ -291,7 +294,8 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The third meditation on simplicity and essence.',
     imageUrl: '/images/circle.webp',
-    slug: 'point-3'
+    slug: 'point-3',
+    sold: true
   },
   
   // DREAM ENGINE Collection
