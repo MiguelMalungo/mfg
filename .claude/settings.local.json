@@ -34,7 +34,12 @@
       "Bash(ln -s \"/Volumes/Extreme SSD 1/website/node_modules\" \"/Volumes/Extreme SSD 1/website/.claude/worktrees/gracious-shirley-9cc9e4/node_modules\")",
       "Bash(npx next *)",
       "Bash(vercel --version)",
-      "Bash(npm cache *)"
+      "Bash(npm cache *)",
+      "Bash(timeout 10 npm run dev:*)",
+      "Bash(ls:*)",
+      "Bash(git log:*)",
+      "Bash(chmod:*)",
+      "Bash(/tmp/convert-to-webp.sh)"
     ],
     "deny": [],
     "ask": []
