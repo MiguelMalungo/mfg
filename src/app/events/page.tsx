@@ -17,12 +17,14 @@ export default function ExhibitionsPage() {
       title: "ALICE IN BREWLAND CAFÉ",
       since: "Since May 3, 2026",
       location: "Rua do Almada 334, Porto",
+      url: "https://www.google.com/maps/search/?api=1&query=Rua+do+Almada+334+Porto",
     },
     {
       id: 2,
       title: "PATIO DA ALMADA",
       since: "Since May 10, 2026",
       location: "Rua do Almada 580, Porto",
+      url: "https://www.google.com/maps/search/?api=1&query=Rua+do+Almada+580+Porto",
     },
   ];
 
@@ -33,6 +35,7 @@ export default function ExhibitionsPage() {
       subtitle: "Contemporary Art Auction",
       date: "May 2026",
       location: "Rua Engenheiro Ezequiel de Campos 186, Porto",
+      url: "https://www.google.com/maps/search/?api=1&query=Rua+Engenheiro+Ezequiel+de+Campos+186+Porto",
     },
   ];
 
@@ -55,22 +58,66 @@ export default function ExhibitionsPage() {
             <h2 className="text-2xl font-bold mb-6 text-black">ON VIEW</h2>
             <div className="space-y-8 mb-12">
               {onView.map((item) => (
-                <div key={item.id} className="border-b border-gray-200 pb-8">
-                  <h3 className="text-xl font-bold mb-2 text-black">{item.title}</h3>
+                <a
+                  key={item.id}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block border-b border-gray-200 pb-8 hover:opacity-70 transition-opacity cursor-pointer"
+                >
+                  <h3 className="text-xl font-bold mb-2 text-black underline underline-offset-4 inline-flex items-center gap-2">
+                    {item.title}
+                    <svg
+                      className="inline-block"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="9 7 17 7 17 15" />
+                    </svg>
+                  </h3>
                   <p className="text-lg text-black">{item.since}</p>
                   <p className="text-lg text-black">{item.location}</p>
-                </div>
+                </a>
               ))}
             </div>
 
             <h2 className="text-2xl font-bold mb-6 text-black">CONTEMPORARY ART AUCTION</h2>
             <div className="space-y-8">
               {auctions.map((auction) => (
-                <div key={auction.id} className="border-b border-gray-200 pb-8">
-                  <h3 className="text-xl font-bold mb-2 text-black">{auction.title}</h3>
+                <a
+                  key={auction.id}
+                  href={auction.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block border-b border-gray-200 pb-8 hover:opacity-70 transition-opacity cursor-pointer"
+                >
+                  <h3 className="text-xl font-bold mb-2 text-black underline underline-offset-4 inline-flex items-center gap-2">
+                    {auction.title}
+                    <svg
+                      className="inline-block"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="9 7 17 7 17 15" />
+                    </svg>
+                  </h3>
                   <p className="text-lg text-black">{auction.date}</p>
                   <p className="text-lg text-black">{auction.location}</p>
-                </div>
+                </a>
               ))}
             </div>
           </div>
