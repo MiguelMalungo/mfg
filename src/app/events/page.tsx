@@ -11,17 +11,17 @@ export default function ExhibitionsPage() {
     setIsMounted(true);
   }, []);
 
-  const exhibitions = [
+  const onView = [
     {
       id: 1,
       title: "ALICE IN BREWLAND CAFÉ",
-      date: "May 3, 2026",
+      since: "Since May 3, 2026",
       location: "Rua do Almada 334, Porto",
     },
     {
       id: 2,
       title: "PATIO DA ALMADA",
-      date: "May 3, 2026",
+      since: "Since May 10, 2026",
       location: "Rua do Almada 580, Porto",
     },
   ];
@@ -52,13 +52,13 @@ export default function ExhibitionsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <h2 className="text-2xl font-bold mb-6 text-black">EXHIBITIONS</h2>
+            <h2 className="text-2xl font-bold mb-6 text-black">ON VIEW</h2>
             <div className="space-y-8 mb-12">
-              {exhibitions.map((exhibition) => (
-                <div key={exhibition.id} className="border-b border-gray-200 pb-8">
-                  <h3 className="text-xl font-bold mb-2 text-black">{exhibition.title}</h3>
-                  <p className="text-lg text-black">{exhibition.date}</p>
-                  <p className="text-lg text-black">{exhibition.location}</p>
+              {onView.map((item) => (
+                <div key={item.id} className="border-b border-gray-200 pb-8">
+                  <h3 className="text-xl font-bold mb-2 text-black">{item.title}</h3>
+                  <p className="text-lg text-black">{item.since}</p>
+                  <p className="text-lg text-black">{item.location}</p>
                 </div>
               ))}
             </div>
