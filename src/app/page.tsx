@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Button from "@/components/UI/Button";
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
 import DecryptedText from '@/components/UI/DecryptedText';
 import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
@@ -66,84 +65,34 @@ export default function Home() {
           />
           <h1 className="text-6xl md:text-8xl font-bold mb-2 text-white md:text-black">FERRAZ</h1>
           <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white md:text-black">GUEDES</h1>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col items-start gap-3">
             <a
-              href="https://influc.my.canva.site/mfg"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/store"
               className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              DIGITAL ART
+              WORK
             </a>
             <a
-              href="https://www.instagram.com/1gato100futuro/"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/contact"
               className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              INSTAGRAM
+              CONTACT
             </a>
             <a
-              href="https://www.tiktok.com/@miguelfguedes"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/events"
               className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              TIKTOK
+              EVENTS
+            </a>
+            <a
+              href="/projects"
+              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+            >
+              PROJECTS
             </a>
           </div>
         </div>
       </section>
-
-      {/* Latest Collections Section */}
-      <section className="py-16 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold mb-2">LATEST</h2>
-          <h3 className="text-3xl font-bold mb-12">COLLECTIONS</h3>
-          
-          <div className="flex flex-col space-y-8">
-            {/* CAVE Collection */}
-            <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
-              <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img
-                  src="/images/cave2.webp"
-                  alt="CAVE Collection artwork by Miguel Ferraz Guedes"
-                  className="w-full h-full object-cover"
-                  style={{ maxWidth: '100%', maxHeight: '300px' }}
-                />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">CAVE</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
-            </div>
-            
-            {/* DEFFECTS Collection */}
-            <div className="group relative overflow-hidden w-full md:w-1/3 self-start">
-              <div className="aspect-square mb-4 relative w-full md:max-w-[300px]">
-                <img
-                  src="/images/carbon.webp"
-                  alt="DEFFECTS Collection artwork by Miguel Ferraz Guedes"
-                  className="w-full h-full object-cover"
-                  style={{ maxWidth: '100%', maxHeight: '300px' }}
-                />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">DEFFECTS</h3>
-              <Button 
-                href="/store" 
-                variant="outline"
-              >
-                VIEW
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Open House information removed as requested */}
     </div>
   );
 }

@@ -346,6 +346,26 @@ export const products: Product[] = [
 
   // SINGLE WORKS Collection
   {
+    id: 'paths',
+    name: 'PATHS',
+    collection: 'SINGLE WORKS',
+    price: '750,00 €',
+    description: 'MIXED TECHNIC',
+    dimensions: '160 x 90 cm',
+    imageUrl: '/images/paths.webp',
+    slug: 'paths'
+  },
+  {
+    id: 'stars',
+    name: 'STARS',
+    collection: 'SINGLE WORKS',
+    price: '500,00 €',
+    description: 'MIXED TECHNIC',
+    dimensions: '195 x 55 cm',
+    imageUrl: '/images/stars.webp',
+    slug: 'stars'
+  },
+  {
     id: 'aliados',
     name: 'ALIADOS',
     collection: 'SINGLE WORKS',

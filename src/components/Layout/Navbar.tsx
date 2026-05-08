@@ -12,7 +12,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white py-4 px-6 w-full">
+    <nav className="bg-white py-4 px-6 w-full" style={{ position: 'sticky', top: 0, zIndex: 50 }}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="text-xl font-bold text-black">
@@ -27,7 +27,7 @@ const Navbar = () => {
             variant="outline"
             className="font-bold"
           >
-            STORE
+            WORK
           </Button>
           <Button
             href="/contact"
@@ -36,12 +36,19 @@ const Navbar = () => {
           >
             CONTACT
           </Button>
-          <Button 
-            href="/events" 
+          <Button
+            href="/events"
             variant="outline"
             className="font-bold"
           >
             EVENTS
+          </Button>
+          <Button
+            href="/projects"
+            variant="outline"
+            className="font-bold"
+          >
+            PROJECTS
           </Button>
         </div>
 
@@ -74,7 +81,7 @@ const Navbar = () => {
               variant="outline"
               onClick={() => setIsOpen(false)}
             >
-              WORK/STORE
+              WORK
             </Button>
             <Button
               href="/contact"
@@ -83,13 +90,20 @@ const Navbar = () => {
             >
               CONTACT
             </Button>
-            <Button 
-              href="/events" 
+            <Button
+              href="/events"
               variant="outline"
               className="w-full"
               onClick={() => setIsOpen(false)}
             >
               EVENTS
+            </Button>
+            <Button
+              href="/projects"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
+              PROJECTS
             </Button>
           </div>
         </div>
