@@ -222,7 +222,7 @@ export const products: Product[] = [
   // BASED Collection
   {
     id: 'head',
-    name: 'HEAD',
+    name: 'B',
     collection: 'BASED',
     price: '200,00 €',
     description: 'MIXED TECHNIC',
@@ -242,7 +242,7 @@ export const products: Product[] = [
   },
   {
     id: 'source',
-    name: 'SOURCE',
+    name: 'S',
     collection: 'BASED',
     price: '200,00 €',
     description: 'MIXED TECHNIC',
