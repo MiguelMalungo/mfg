@@ -8,6 +8,7 @@ export interface Product {
   dimensions?: string;
   imageUrl: string;
   secondaryImageUrl?: string;
+  extraImages?: string[];
   slug: string;
   sold?: boolean;
 }
@@ -350,14 +351,25 @@ export const products: Product[] = [
 
   // SINGLE WORKS Collection
   {
+    id: 'blossom',
+    name: 'BLOSSOM',
+    collection: 'SINGLE WORKS',
+    price: '800,00 €',
+    description: 'MIXED TECHNIC',
+    dimensions: '120 x 120 cm (2 pieces)',
+    imageUrl: '/images/blossom.webp',
+    extraImages: ['/images/blossom1.webp', '/images/blossom2.webp'],
+    slug: 'blossom'
+  },
+  {
     id: 'paths',
     name: 'PATHS',
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
     dimensions: '160 x 90 cm',
-    imageUrl: '/images/paths.webp',
-    secondaryImageUrl: '/images/paths_2.webp',
+    imageUrl: '/images/paths_2.webp',
+    secondaryImageUrl: '/images/paths.webp',
     slug: 'paths'
   },
   {
@@ -367,8 +379,8 @@ export const products: Product[] = [
     price: '500,00 €',
     description: 'MIXED TECHNIC',
     dimensions: '195 x 55 cm',
-    imageUrl: '/images/stars.webp',
-    secondaryImageUrl: '/images/stars_2.webp',
+    imageUrl: '/images/stars_2.webp',
+    secondaryImageUrl: '/images/stars.webp',
     slug: 'stars'
   },
   {

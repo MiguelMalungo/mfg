@@ -15,10 +15,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="aspect-square mb-3 relative overflow-hidden">
           {product.imageUrl ? (
             <>
-              <img 
-                src={product.imageUrl} 
-                alt={product.name} 
+              <img
+                src={product.imageUrl}
+                alt={product.name}
                 className="w-full h-full object-cover"
+                style={{ objectPosition: 'top' }}
               />
               {product.sold && (
                 <div className="absolute top-0 right-0 bg-black text-white px-3 py-1">

@@ -15,7 +15,7 @@ export default function ExhibitionsPage() {
     {
       id: 1,
       title: "ALICE IN BREWLAND CAFÉ",
-      since: "Since May 3, 2026",
+      since: "Since May 10, 2026",
       location: "Rua do Almada 334, Porto",
       url: "https://www.google.com/maps/search/?api=1&query=Rua+do+Almada+334+Porto",
     },

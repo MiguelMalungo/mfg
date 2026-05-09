@@ -37,7 +37,11 @@ export default function ProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Product Image(s) */}
             {(() => {
-              const images = [product.imageUrl, ...(product.secondaryImageUrl ? [product.secondaryImageUrl] : [])];
+              const images = [
+                product.imageUrl,
+                ...(product.secondaryImageUrl ? [product.secondaryImageUrl] : []),
+                ...(product.extraImages || []),
+              ];
               const hasMultiple = images.length > 1;
               const safeIndex = ((currentImage % images.length) + images.length) % images.length;
               const prev = () => setCurrentImage((i) => i - 1);
