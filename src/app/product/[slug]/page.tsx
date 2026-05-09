@@ -25,13 +25,48 @@ export default function ProductPage() {
     );
   }
 
+  const allImages = [
+    product.imageUrl,
+    ...(product.secondaryImageUrl ? [product.secondaryImageUrl] : []),
+    ...(product.extraImages || []),
+  ].map((u) => (u.startsWith('http') ? u : `https://miguelfguedes.pt${u}`));
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VisualArtwork",
+    name: product.name,
+    artform: product.description,
+    artMedium: "Mixed technique",
+    creator: {
+      "@type": "Person",
+      name: "Miguel Ferraz Guedes",
+      url: "https://miguelfguedes.pt",
+    },
+    image: allImages,
+    url: `https://miguelfguedes.pt/product/${product.slug}`,
+    ...(product.dimensions && { size: product.dimensions }),
+    offers: {
+      "@type": "Offer",
+      price: product.price.replace(/[^0-9.,]/g, '').replace(',', '.'),
+      priceCurrency: "EUR",
+      availability: product.sold
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      url: `https://miguelfguedes.pt/product/${product.slug}`,
+    },
+  };
+
   return (
     <div className="min-h-screen relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       {/* Animation background */}
       <div className="fixed inset-0 z-0">
         <HankiesInTheWind initialZoom={6} />
       </div>
-      
+
       <div className="relative z-10 py-16 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">

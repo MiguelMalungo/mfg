@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     url: "https://miguelfguedes.pt/contact",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact | Miguel Ferraz Guedes",
+    description: "Get in touch with Miguel Ferraz Guedes — Porto studio at Rua Serpa Pinto 59.",
+  },
   alternates: {
     canonical: "https://miguelfguedes.pt/contact",
   },

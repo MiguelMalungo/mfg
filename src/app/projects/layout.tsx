@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     url: "https://miguelfguedes.pt/projects",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Projects | Miguel Ferraz Guedes",
+    description: "NFTs, AI-leveraged digital art, and BLEND by KaleidoKonscious — projects by Miguel Ferraz Guedes.",
+  },
   alternates: {
     canonical: "https://miguelfguedes.pt/projects",
   },

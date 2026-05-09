@@ -36,6 +36,32 @@ export const metadata: Metadata = {
   },
 };
 
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Miguel Ferraz Guedes",
+  alternateName: "MFG",
+  url: "https://miguelfguedes.pt",
+  image: "https://miguelfguedes.pt/images/imageA.webp",
+  jobTitle: "Artist",
+  description: "Porto-based artist working in mixed technique paintings, NFTs and AI-leveraged digital art.",
+  worksFor: {
+    "@type": "Organization",
+    name: "Miguel Ferraz Guedes",
+  },
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Rua Serpa Pinto 59",
+    addressLocality: "Porto",
+    addressCountry: "PT",
+  },
+  sameAs: [
+    "https://www.instagram.com/1gato100futuro/",
+    "https://www.tiktok.com/@miguelfguedes",
+    "https://linktr.ee/miguelfguedes",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,6 +72,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        />
         <Layout>
           {children}
         </Layout>

@@ -31,6 +31,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         },
       ],
     },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} - ${product.collection} | Miguel Ferraz Guedes`,
+      description: `${product.name} from the ${product.collection} collection by Miguel Ferraz Guedes. ${product.description}. ${product.price}.`,
+      images: [product.imageUrl],
+    },
     alternates: {
       canonical: `https://miguelfguedes.pt/product/${slug}`,
     },

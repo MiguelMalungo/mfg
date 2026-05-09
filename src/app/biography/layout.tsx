@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     url: "https://miguelfguedes.pt/biography",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Biography - SP59 | Miguel Ferraz Guedes",
+    description: "Learn about Miguel Ferraz Guedes and SP59, the creative workshop in Porto.",
+  },
   alternates: {
     canonical: "https://miguelfguedes.pt/biography",
   },

@@ -39,8 +39,59 @@ export default function ExhibitionsPage() {
     },
   ];
 
+  const eventsJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      ...onView.map((item) => ({
+        "@type": "ExhibitionEvent",
+        name: `${item.title} — Miguel Ferraz Guedes on view`,
+        startDate: "2026-05-10",
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        eventStatus: "https://schema.org/EventScheduled",
+        location: {
+          "@type": "Place",
+          name: item.title,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: item.location.split(',')[0].trim(),
+            addressLocality: "Porto",
+            addressCountry: "PT",
+          },
+        },
+        organizer: {
+          "@type": "Person",
+          name: "Miguel Ferraz Guedes",
+          url: "https://miguelfguedes.pt",
+        },
+        url: item.url,
+      })),
+      ...auctions.map((auction) => ({
+        "@type": "Event",
+        name: `${auction.title} — ${auction.subtitle}`,
+        startDate: "2026-05-01",
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        eventStatus: "https://schema.org/EventScheduled",
+        location: {
+          "@type": "Place",
+          name: auction.title,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: auction.location.split(',')[0].trim(),
+            addressLocality: "Porto",
+            addressCountry: "PT",
+          },
+        },
+        url: auction.url,
+      })),
+    ],
+  };
+
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsJsonLd) }}
+      />
       {/* Magnifying Glass Effect */}
       {isMounted && (
         <MagnifyingGlass

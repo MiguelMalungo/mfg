@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     url: "https://miguelfguedes.pt/store",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Store | Miguel Ferraz Guedes",
+    description: "Browse and purchase original artworks by Miguel Ferraz Guedes.",
+  },
   alternates: {
     canonical: "https://miguelfguedes.pt/store",
   },
