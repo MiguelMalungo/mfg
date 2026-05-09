@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getProductBySlug } from '@/utils/productData';
@@ -11,6 +11,7 @@ export default function ProductPage() {
   const params = useParams();
   const slug = params?.slug as string;
   const product = getProductBySlug(slug);
+  const [currentImage, setCurrentImage] = useState(0);
 
   if (!product) {
     return (
@@ -34,23 +35,63 @@ export default function ProductPage() {
       <div className="relative z-10 py-16 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {/* Product Image */}
-            <div className="relative space-y-6">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="max-h-[80vh] w-auto mx-auto block object-contain"
-                style={{ maxHeight: '80vh' }}
-              />
-              {product.secondaryImageUrl && (
-                <img
-                  src={product.secondaryImageUrl}
-                  alt={`${product.name} — additional view`}
-                  className="max-h-[80vh] w-auto mx-auto block object-contain"
-                  style={{ maxHeight: '80vh' }}
-                />
-              )}
-            </div>
+            {/* Product Image(s) */}
+            {(() => {
+              const images = [product.imageUrl, ...(product.secondaryImageUrl ? [product.secondaryImageUrl] : [])];
+              const hasMultiple = images.length > 1;
+              const safeIndex = ((currentImage % images.length) + images.length) % images.length;
+              const prev = () => setCurrentImage((i) => i - 1);
+              const next = () => setCurrentImage((i) => i + 1);
+              return (
+                <div className="relative">
+                  <img
+                    src={images[safeIndex]}
+                    alt={product.name}
+                    className="max-h-[80vh] w-auto mx-auto block object-contain"
+                    style={{ maxHeight: '80vh' }}
+                  />
+                  {hasMultiple && (
+                    <>
+                      <button
+                        onClick={prev}
+                        aria-label="Previous image"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors"
+                        style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)' }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={next}
+                        aria-label="Next image"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors"
+                        style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)' }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </button>
+                      <div className="flex justify-center gap-2 mt-4">
+                        {images.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentImage(i)}
+                            aria-label={`Go to image ${i + 1}`}
+                            className="rounded-full transition-colors"
+                            style={{
+                              width: '10px',
+                              height: '10px',
+                              backgroundColor: i === safeIndex ? 'black' : 'rgba(0,0,0,0.3)',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
             
             {/* Product Info */}
             <div className="bg-white/80 p-6 rounded-lg shadow-sm">

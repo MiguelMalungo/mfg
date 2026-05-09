@@ -24,6 +24,12 @@ export default function ProjectsPage() {
       subtitle: "An interactive book of poems with AI generated Art & Media",
       url: "https://miguelmalungo.github.io/kept/",
     },
+    {
+      id: 3,
+      title: "BLOCKS",
+      subtitle: "Interactive poetry book",
+      url: "https://lovely-pegasus-e9f6e6.netlify.app/",
+    },
   ];
 
   return (

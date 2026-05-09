@@ -85,7 +85,7 @@ const Footer = () => {
               </a>
             </div>
 
-            <h3 className="text-lg font-semibold uppercase mb-4">PHONE</h3>
+            <h3 className="text-lg font-semibold uppercase mb-4">GET IN TOUCH</h3>
             <div className="flex items-center mb-2">
               <a
                 href="https://wa.me/46762044037"
@@ -98,7 +98,15 @@ const Footer = () => {
                 +46 76 2044037
               </a>
             </div>
-            <p className="mb-6">+351 961 084 022</p>
+            <p className="mb-2">+351 961 084 022</p>
+            <p className="mb-6">
+              <a
+                href="mailto:info@swedencapoeira.se"
+                className="hover:opacity-80"
+              >
+                info@swedencapoeira.se
+              </a>
+            </p>
           </div>
         </div>
 
