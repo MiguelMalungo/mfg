@@ -15,6 +15,7 @@ export default function ProjectsPage() {
     {
       id: 1,
       title: "NFTs & DIGITAL ART LEVERAGED BY AI",
+      subtitle: "Reach out to have your own interactive gamified museum mobile App to display Digital Art and NFTs",
       url: "https://influc.my.canva.site/mfg",
     },
     {

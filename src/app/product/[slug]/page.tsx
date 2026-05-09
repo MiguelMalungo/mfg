@@ -35,12 +35,21 @@ export default function ProductPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Product Image */}
-            <div className="relative">
-              <img 
-                src={product.imageUrl} 
-                alt={product.name} 
-                className="w-full h-auto object-contain"
+            <div className="relative space-y-6">
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="max-h-[80vh] w-auto mx-auto block object-contain"
+                style={{ maxHeight: '80vh' }}
               />
+              {product.secondaryImageUrl && (
+                <img
+                  src={product.secondaryImageUrl}
+                  alt={`${product.name} — additional view`}
+                  className="max-h-[80vh] w-auto mx-auto block object-contain"
+                  style={{ maxHeight: '80vh' }}
+                />
+              )}
             </div>
             
             {/* Product Info */}

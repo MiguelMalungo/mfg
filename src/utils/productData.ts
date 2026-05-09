@@ -7,6 +7,7 @@ export interface Product {
   description: string;
   dimensions?: string;
   imageUrl: string;
+  secondaryImageUrl?: string;
   slug: string;
   sold?: boolean;
 }
@@ -111,6 +112,7 @@ export const products: Product[] = [
     collection: 'VOID',
     price: '650,00 €',
     description: 'MIXED TECHNIC',
+    dimensions: '120 x 90 cm',
     // 'The first in the VOID series, exploring the concept of nothingness as a starting point.',
     imageUrl: '/images/void0.webp',
     slug: 'void-0'
@@ -121,6 +123,7 @@ export const products: Product[] = [
     collection: 'VOID',
     price: '650,00 €',
     description: 'MIXED TECHNIC',
+    dimensions: '120 x 90 cm',
     // 'The second piece in the VOID series, examining the emergence of form from emptiness.',
     imageUrl: '/images/void1.webp',
     slug: 'void-1'
@@ -131,6 +134,7 @@ export const products: Product[] = [
     collection: 'VOID',
     price: '650,00 €',
     description: 'MIXED TECHNIC',
+    dimensions: '120 x 90 cm',
     // 'Continuing the VOID series, this piece explores the duality between presence and absence.',
     imageUrl: '/images/void2.webp',
     slug: 'void-2'
@@ -141,6 +145,7 @@ export const products: Product[] = [
     collection: 'VOID',
     price: '650,00 €',
     description: 'MIXED TECHNIC',
+    dimensions: '120 x 90 cm',
     // 'The fourth installment in the VOID series, delving deeper into the concept of negative space.',
     imageUrl: '/images/void4.webp',
     slug: 'void-4',
@@ -276,8 +281,7 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     // 'The first in the POINTS series, exploring minimalism and focused attention.',
     imageUrl: '/images/point4.webp',
-    slug: 'point-1',
-    sold: true
+    slug: 'point-1'
   },
   {
     id: 'point-2',
@@ -353,6 +357,7 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     dimensions: '160 x 90 cm',
     imageUrl: '/images/paths.webp',
+    secondaryImageUrl: '/images/paths_2.webp',
     slug: 'paths'
   },
   {
@@ -363,6 +368,7 @@ export const products: Product[] = [
     description: 'MIXED TECHNIC',
     dimensions: '195 x 55 cm',
     imageUrl: '/images/stars.webp',
+    secondaryImageUrl: '/images/stars_2.webp',
     slug: 'stars'
   },
   {
@@ -407,6 +413,7 @@ export const products: Product[] = [
     collection: 'SINGLE WORKS',
     price: '750,00 €',
     description: 'MIXED TECHNIC',
+    dimensions: '150 x 100 cm',
     imageUrl: '/images/source2.webp',
     slug: 'source2'
   },

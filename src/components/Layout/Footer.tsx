@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="relative py-8 px-6 bg-white text-black">
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '64px' }}>
           <div>
             <div className="mb-4">
               <div className="mb-2 flex items-center justify-between">
@@ -46,7 +46,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold uppercase mb-4">FOLLOW US</h3>
+            <h3 className="text-lg font-semibold uppercase mb-4">FOLLOW TO KNOW WHAT&apos;S NEW</h3>
             <div className="flex items-center mb-3">
               <a
                 href="https://www.instagram.com/1gato100futuro/"
