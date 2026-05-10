@@ -28,7 +28,7 @@ export default function ProjectsPage() {
       id: 3,
       title: "BLOCKS",
       subtitle: "Interactive poetry book",
-      url: "https://lovely-pegasus-e9f6e6.netlify.app/",
+      url: "https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/",
     },
   ];
 

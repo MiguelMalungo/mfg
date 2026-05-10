@@ -15,7 +15,7 @@ const Footer = () => {
                 <div className="flex items-center">
                   <h3 className="text-lg font-semibold uppercase mr-3">POETRY BOOK</h3>
                   <a
-                    href="https://lovely-pegasus-e9f6e6.netlify.app/"
+                    href="https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-full bg-transparent text-black px-4 py-1 text-sm border border-black hover:bg-black hover:text-white transition-colors duration-200 inline-block"
