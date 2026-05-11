@@ -68,27 +68,27 @@ export default function Home() {
           <div className="flex flex-col items-start gap-3">
             <a
               href="/store"
-              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               WORK
             </a>
             <a
-              href="/contact"
-              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              href="/projects"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              CONTACT
+              PROJECTS
             </a>
             <a
               href="/events"
-              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               EVENTS
             </a>
             <a
-              href="/projects"
-              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              href="/contact"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
-              PROJECTS
+              CONTACT
             </a>
           </div>
         </div>
