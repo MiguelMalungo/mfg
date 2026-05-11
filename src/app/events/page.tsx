@@ -47,12 +47,12 @@ export default function ExhibitionsPage() {
       url: "https://www.google.com/maps/search/?api=1&query=Rua+do+Almada+334+Porto",
       instagram: "https://www.instagram.com/alice_brewland/",
       images: [
-        "/images/alice1.jpg",
-        "/images/alice2.jpg",
-        "/images/alice3.jpg",
-        "/images/alice4.jpg",
-        "/images/alice5.JPG",
-        "/images/alice%206.jpg",
+        "/images/alice1.webp",
+        "/images/alice2.webp",
+        "/images/alice3.webp",
+        "/images/alice4.webp",
+        "/images/alice5.webp",
+        "/images/alice_6.webp",
       ],
     },
     {
@@ -64,10 +64,10 @@ export default function ExhibitionsPage() {
       url: "https://www.google.com/maps/search/?api=1&query=Rua+do+Almada+580+Porto",
       instagram: "https://www.instagram.com/patiodoalmada.porto/",
       images: [
-        "/images/patio1.jpg",
-        "/images/patio2.jpg",
-        "/images/patio3.jpg",
-        "/images/patio4.jpg",
+        "/images/patio1.webp",
+        "/images/patio2.webp",
+        "/images/patio3.webp",
+        "/images/patio4.webp",
       ],
     },
   ];
