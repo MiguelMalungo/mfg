@@ -73,12 +73,6 @@ export default function Home() {
               WORK
             </a>
             <a
-              href="/projects"
-              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
-            >
-              PROJECTS
-            </a>
-            <a
               href="/events"
               className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
@@ -89,6 +83,12 @@ export default function Home() {
               className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               CONTACT
+            </a>
+            <a
+              href="/garden"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+            >
+              DIGITAL GARDEN
             </a>
           </div>
         </div>

@@ -30,13 +30,6 @@ const Navbar = () => {
             WORK
           </Button>
           <Button
-            href="/projects"
-            variant="outline"
-            className="font-bold"
-          >
-            PROJECTS
-          </Button>
-          <Button
             href="/events"
             variant="outline"
             className="font-bold"
@@ -49,6 +42,13 @@ const Navbar = () => {
             className="font-bold"
           >
             CONTACT
+          </Button>
+          <Button
+            href="/garden"
+            variant="outline"
+            className="font-bold"
+          >
+            Digital Garden
           </Button>
         </div>
 
@@ -84,13 +84,6 @@ const Navbar = () => {
               WORK
             </Button>
             <Button
-              href="/projects"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
-              PROJECTS
-            </Button>
-            <Button
               href="/events"
               variant="outline"
               className="w-full"
@@ -104,6 +97,13 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               CONTACT
+            </Button>
+            <Button
+              href="/garden"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
+              Digital Garden
             </Button>
           </div>
         </div>
