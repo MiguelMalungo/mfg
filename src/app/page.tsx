@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import HankiesInTheWind from '@/components/UI/HankiesInTheWind';
 import DecryptedText from '@/components/UI/DecryptedText';
 import MagnifyingGlass from '@/components/UI/MagnifyingGlass';
@@ -84,12 +85,12 @@ export default function Home() {
             >
               CONTACT
             </a>
-            <a
+            <Link
               href="/garden"
               className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
             >
               DIGITAL GARDEN
-            </a>
+            </Link>
           </div>
         </div>
       </section>
