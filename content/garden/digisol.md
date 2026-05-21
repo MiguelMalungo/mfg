@@ -2,13 +2,13 @@
 title: DigiSol
 stage: evergreen
 topics: [Code, AI]
-description: My web work — sites and digital things I build.
+description: My web work — sites and apps I build.
 tended: '2026'
 href: https://www.digisol.pt
 external: true
 ---
 
-My web work — sites and digital things I build for other people. If you
+My web work — sites and apps I build for other people. If you
 need something on the web that feels considered, this is the door.
 
 The companion to the more experimental things like [[blocks]] and
