@@ -49,7 +49,7 @@ export default async function NotePage({ params }: { params: Params }) {
       <article className="max-w-3xl mx-auto">
         <Link
           href="/garden"
-          className="text-xs uppercase tracking-widest text-black/60 hover:text-black"
+          className="text-xs uppercase tracking-widest font-bold text-black hover:opacity-70"
         >
           ← Back to the Garden
         </Link>
