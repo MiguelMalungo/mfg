@@ -15,6 +15,7 @@ export type IndexPlot = {
   tended?: string;
   href?: string;
   external?: boolean;
+  order?: number;
 };
 
 const STAGE_META: Record<GrowthStage, { label: string; note: string }> = {
@@ -50,7 +51,14 @@ export default function GardenIndex({
     const list = plots
       .filter((p) => (topic === 'all' ? true : p.topics.includes(topic)))
       .filter((p) => (stage === 'all' ? true : p.stage === stage));
-    return list.sort((a, b) => STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage]);
+    return list.sort((a, b) => {
+      // Notes with explicit order come first, sorted ascending
+      const aOrder = a.order ?? Infinity;
+      const bOrder = b.order ?? Infinity;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      // Then by stage (evergreen → budding → seedling)
+      return STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage];
+    });
   }, [plots, topic, stage]);
 
   return (

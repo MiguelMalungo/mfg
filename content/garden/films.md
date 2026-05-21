@@ -1,7 +1,7 @@
 ---
 title: Films
 stage: budding
-topics: [Film, AI]
+topics: [Film]
 description: Shorts I've made and I'm making. My small theater.
 planted: '2026'
 ---

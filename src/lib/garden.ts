@@ -22,6 +22,7 @@ export type NoteFrontmatter = {
   tended?: string;
   href?: string;
   external?: boolean;
+  order?: number; // lower = appears first; overrides stage sort
 };
 
 export type Note = NoteFrontmatter & {
@@ -113,6 +114,7 @@ export function getAllNotes(): NoteWithHtml[] {
       tended: fm.tended ? String(fm.tended) : undefined,
       href: fm.href,
       external: fm.external,
+      order: typeof fm.order === 'number' ? fm.order : undefined,
       body: parsed.content,
     };
 

@@ -1,7 +1,7 @@
 ---
 title: DigiSol
 stage: evergreen
-topics: [Code]
+topics: [Code, AI]
 description: My web work — sites and digital things I build.
 tended: '2026'
 href: https://www.digisol.pt

@@ -6,6 +6,7 @@ description: An interactive book of poems with AI-generated art and media. A boo
 tended: '2024'
 href: https://miguelmalungo.github.io/kept/
 external: true
+order: 1
 ---
 
 An interactive book of poems with AI-generated art and media. A book that

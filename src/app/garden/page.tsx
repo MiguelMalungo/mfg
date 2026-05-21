@@ -14,6 +14,7 @@ export default function GardenPage() {
     tended: n.tended,
     href: n.href,
     external: n.external,
+    order: n.order,
   }));
 
   return <GardenIndex plots={plots} topics={getAllTopics()} />;
