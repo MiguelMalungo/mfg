@@ -59,7 +59,7 @@ export default function GardenIndex({
       <section className="px-6 pt-16 pb-12">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-start">
           <div className="space-y-8">
-            <p className="text-2xl font-bold uppercase leading-snug text-black text-justify md:text-left">
+            <p className="text-2xl font-bold uppercase leading-snug text-black text-left">
               A PLACE FOR THINGS I AM TENDING. SOME ARE MATURE, SOME ARE SPROUTING, SOME ARE
               JUST SEEDS. NOT EVERYTHING HERE IS FINISHED — A GARDEN GETS WATERED, NOT SHIPPED.
             </p>
