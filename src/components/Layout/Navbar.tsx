@@ -43,13 +43,12 @@ const Navbar = () => {
           >
             CONTACT
           </Button>
-          <Button
+          <Link
             href="/garden"
-            variant="outline"
-            className="font-bold"
+            className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-[#C8FF00] text-black border border-black border-[1px] hover:bg-black hover:text-[#C8FF00]"
           >
             Digital Garden
-          </Button>
+          </Link>
         </div>
 
         {/* Mobile Navigation Button */}
@@ -98,13 +97,13 @@ const Navbar = () => {
             >
               CONTACT
             </Button>
-            <Button
+            <Link
               href="/garden"
-              variant="outline"
               onClick={() => setIsOpen(false)}
+              className="inline-block px-6 py-2 uppercase text-sm tracking-wide transition-colors rounded-full font-bold text-center bg-[#C8FF00] text-black border border-black border-[1px] hover:bg-black hover:text-[#C8FF00]"
             >
               Digital Garden
-            </Button>
+            </Link>
           </div>
         </div>
       )}

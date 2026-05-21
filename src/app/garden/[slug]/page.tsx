@@ -63,7 +63,7 @@ export default async function NotePage({ params }: { params: Params }) {
             )}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-black bg-white/70 inline-block px-3 py-1">
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-black bg-[#C8FF00] inline-block px-3 py-1">
             {note.title.toUpperCase()}
           </h1>
 

@@ -87,7 +87,7 @@ export default function Home() {
             </a>
             <Link
               href="/garden"
-              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-transparent border border-[1px] text-white border-white hover:bg-white hover:text-black md:text-black md:border-black md:hover:bg-black md:hover:text-white"
+              className="inline-block px-12 py-4 uppercase text-lg tracking-wide transition-colors rounded-full font-bold text-center bg-[#C8FF00] text-black border border-black border-[1px] hover:bg-black hover:text-[#C8FF00]"
             >
               DIGITAL GARDEN
             </Link>
