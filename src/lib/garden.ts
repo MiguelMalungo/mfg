@@ -10,6 +10,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { visit } from 'unist-util-visit';
 import type { Root, Text } from 'mdast';
+import type { Root as HastRoot, Element as HastElement, Text as HastText } from 'hast';
 
 export type GrowthStage = 'seedling' | 'budding' | 'evergreen';
 
@@ -71,6 +72,44 @@ const remarkWikiLinks: Plugin<[], Root> = () => (tree) => {
     }
     parent.children.splice(index, 1, ...newChildren);
     return index + newChildren.length;
+  });
+};
+
+// Promote a paragraph containing only an image into a <figure>.
+// If the image has a title (markdown: ![alt](src "Caption")), use it as <figcaption>.
+const rehypeImageFigures: Plugin<[], HastRoot> = () => (tree) => {
+  visit(tree, 'element', (node: HastElement, index, parent) => {
+    if (!parent || typeof index !== 'number') return;
+    if (node.tagName !== 'p') return;
+
+    const meaningful = node.children.filter(
+      (c) => !(c.type === 'text' && /^\s*$/.test((c as HastText).value)),
+    );
+    if (meaningful.length !== 1) return;
+    const img = meaningful[0];
+    if (img.type !== 'element' || (img as HastElement).tagName !== 'img') return;
+
+    const imgEl = img as HastElement;
+    const title = (imgEl.properties?.title as string | undefined) ?? undefined;
+
+    const figureChildren: HastElement[] = [imgEl];
+    if (title) {
+      figureChildren.push({
+        type: 'element',
+        tagName: 'figcaption',
+        properties: {},
+        children: [{ type: 'text', value: title } as HastText],
+      });
+    }
+
+    const figure: HastElement = {
+      type: 'element',
+      tagName: 'figure',
+      properties: {},
+      children: figureChildren,
+    };
+
+    parent.children[index] = figure;
   });
 };
 
@@ -154,6 +193,7 @@ function renderMarkdownSync(body: string): string {
     .use(remarkRehype)
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, { behavior: 'wrap' })
+    .use(rehypeImageFigures)
     .use(rehypeStringify)
     .processSync(body);
   return String(file);
