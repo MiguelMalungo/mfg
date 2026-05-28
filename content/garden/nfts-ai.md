@@ -13,7 +13,7 @@ idea: collectors and artists should be able to walk through their own work,
 not scroll past it.
 
 I built this alongside [[blend]] — both came out of the same period of
-playing with [[ai-as-collaborator|AI as a collaborator]] rather than as a
+playing with AI as a collaborator rather than as a
 tool.
 
 If you'd like your own version of this — your collection, your space — get

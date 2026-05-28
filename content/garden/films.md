@@ -20,5 +20,5 @@ YouTube channel.
 
 - [[platos-cat]] — an AI-assisted film, seedling stage
 
-This is also where I think out loud about [[ai-as-collaborator|working
-with AI]] in moving image.
+This is also where I think out loud about working
+with AI in moving image.

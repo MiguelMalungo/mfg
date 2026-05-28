@@ -14,6 +14,6 @@ listens back.
 
 BLEND sits in the same neighbourhood as [[blocks]] — small typographic
 worlds you can move through. It's the most direct piece I've made about
-[[ai-as-collaborator|using AI as a co-author]] rather than a tool.
+using AI as a co-author rather than a tool.
 
 Still tending. Pages still get rewritten when I find a new one I like.
