@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Raw photo originals (commit only optimized .webp)
+/public/images/bus/*.jpg
+/public/images/bus/*.JPG
