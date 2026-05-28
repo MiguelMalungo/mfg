@@ -11,6 +11,9 @@ external: true
 My web work — sites and apps I build for other people. If you
 need something on the web that feels considered, this is the door.
 
+Recent client work: [[sotkis|Sotkis]] — the website, mobile app and
+management platform for an intelligent waste system.
+
 The companion to the more experimental things like [[blocks]] and
 [[blend]]: this one is craft for clients, those ones are craft for
 themselves.
