@@ -5,6 +5,7 @@ topics: [Travel, Life]
 description: Converting a truck into a home on wheels — the moving project.
 planted: '2026'
 tended: '2026'
+order: 1
 ---
 
 The current chapter: I'm converting a truck into a home on wheels. Bed,
