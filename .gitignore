@@ -47,3 +47,5 @@ next-env.d.ts
 # Raw photo originals (commit only optimized .webp)
 /public/images/bus/*.jpg
 /public/images/bus/*.JPG
+/public/images/sotkis/*.png
+/public/images/sotkis/*.PNG
