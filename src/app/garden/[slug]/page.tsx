@@ -129,7 +129,7 @@ export default async function NotePage({ params }: { params: Params }) {
                       size={14}
                       className="text-black self-center"
                     />
-                    <span className="font-bold text-lg md:text-xl text-black">{b.title}</span>
+                    <span className="font-bold text-lg md:text-xl text-black bg-[#C8FF00] px-2 py-0.5">{b.title}</span>
                     {b.description && (
                       <span className="text-black/60 text-base">— {b.description}</span>
                     )}
