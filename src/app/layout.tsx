@@ -57,7 +57,7 @@ const personJsonLd = {
   },
   sameAs: [
     "https://www.instagram.com/1gato100futuro/",
-    "https://www.tiktok.com/@miguelfguedes",
+    "https://www.tiktok.com/@1gato100vidas",
     "https://linktr.ee/miguelfguedes",
   ],
 };
