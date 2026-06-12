@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import { products } from '@/utils/productData';
-import { getAllSlugs } from '@/lib/garden';
 
 const BASE_URL = 'https://miguelfguedes.pt';
 
@@ -17,13 +16,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.6 },
   ];
 
-  const gardenRoutes: MetadataRoute.Sitemap = getAllSlugs().map((slug) => ({
-    url: `${BASE_URL}/garden/${slug}`,
-    lastModified: now,
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  }));
-
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${BASE_URL}/product/${p.slug}`,
     lastModified: now,
@@ -31,5 +23,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...gardenRoutes, ...productRoutes];
+  return [...staticRoutes, ...productRoutes];
 }

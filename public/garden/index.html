@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Garden — Miguel Ferraz Guedes</title>
+  <meta name="description" content="A digital garden, tended slowly. Notes on the truck, the bus, films, code, capoeira, surfing — some mature, some sprouting, some just seeds." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23C8FF00'/%3E%3Cpath d='M16 26V14M16 17c0-5-3-8-8-8 0 5 3 8 8 8Zm0 0c0-5 3-8 8-8 0 5-3 8-8 8Z' stroke='%230A0A0A' stroke-width='2.4' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Spline+Sans+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/garden/css/style.css" />
+</head>
+<body>
+
+  <!-- ═══ Loader ═══ -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__inner">
+      <svg class="loader__seed" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path class="seed-stem" d="M24 40V22" />
+        <path class="seed-leaf" d="M24 26c0-7-4.5-11-12-11 0 7 4.5 11 12 11Z" />
+        <path class="seed-leaf" d="M24 26c0-7 4.5-11 12-11 0 7-4.5 11-12 11Z" />
+      </svg>
+      <div class="loader__row">
+        <span class="loader__label">GERMINATING</span>
+        <span class="loader__pct" id="loaderPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Spore field (three.js) ═══ -->
+  <canvas id="field-canvas" aria-hidden="true"></canvas>
+
+  <!-- ═══ Grain ═══ -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ═══ Custom cursor ═══ -->
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <div class="cursor__dot"></div>
+    <div class="cursor__ring"><span class="cursor__label" id="cursorLabel"></span></div>
+  </div>
+
+  <!-- ═══ Header ═══ -->
+  <header class="site-head">
+    <a class="site-head__brand" href="#top" data-scramble>MFG — THE GARDEN</a>
+    <nav class="site-head__nav">
+      <a href="#field" data-scramble data-cursor="">THE FIELD</a>
+      <a href="/" data-scramble>MAIN SITE ↗</a>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- ═══ Hero ═══ -->
+    <section class="hero">
+      <p class="hero__kicker mono" data-reveal>MIGUEL FERRAZ GUEDES — PORTO, PT</p>
+      <h1 class="hero__title" aria-label="A Digital Garden">
+        <span class="hero__line"><span class="split" data-split>A&nbsp;DIGITAL</span></span>
+        <span class="hero__line hero__line--accent"><span class="split split--italic" data-split>GARDEN</span><span class="hero__swipe" aria-hidden="true"></span></span>
+      </h1>
+      <div class="hero__foot">
+        <p class="hero__sub" data-reveal>Notes on living small, moving slowly, and making things —<br/>some mature, some sprouting, some just seeds.</p>
+        <a class="hero__cta mono" href="#field" data-magnetic data-cursor="">ENTER THE FIELD <span class="hero__cta-arrow">↓</span></a>
+      </div>
+      <div class="hero__badge" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <defs><path id="circ" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" /></defs>
+          <text><textPath href="#circ">TENDED SLOWLY · WATERED, NOT SHIPPED · TENDED SLOWLY ·</textPath></text>
+        </svg>
+        <svg class="hero__badge-glyph" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <path d="M24 40V22" /><path d="M24 26c0-7-4.5-11-12-11 0 7 4.5 11 12 11Z" /><path d="M24 26c0-7 4.5-11 12-11 0 7-4.5 11-12 11Z" />
+        </svg>
+      </div>
+    </section>
+
+    <!-- ═══ Marquee ═══ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track" id="marqueeTrack"></div>
+    </div>
+
+    <!-- ═══ Manifesto ═══ -->
+    <section class="manifesto">
+      <p class="manifesto__text" id="manifesto">A place for things I am tending. Some are mature, some are sprouting, some are just seeds. Not everything here is finished — a garden gets watered, not shipped.</p>
+    </section>
+
+    <!-- ═══ The Field ═══ -->
+    <section class="field" id="field">
+      <div class="field__head">
+        <h2 class="field__title"><span class="mono field__count" id="fieldCount"></span>THE FIELD</h2>
+        <div class="field__legend mono" id="legend"></div>
+      </div>
+      <div class="field__filters mono" id="filters"></div>
+      <div class="field__grid" id="grid"></div>
+    </section>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="foot">
+      <div class="foot__cols">
+        <p class="foot__time mono" id="footTime"></p>
+        <nav class="foot__links mono">
+          <a href="/" data-scramble>MIGUELFGUEDES.PT ↗</a>
+          <a href="https://www.instagram.com/1gato100futuro/" target="_blank" rel="noopener noreferrer" data-scramble>INSTAGRAM ↗</a>
+          <a href="https://www.tiktok.com/@1gato100vidas" target="_blank" rel="noopener noreferrer" data-scramble>TIKTOK ↗</a>
+        </nav>
+        <p class="foot__c mono">© 2026 MIGUEL FERRAZ GUEDES</p>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- ═══ Note overlay ═══ -->
+  <div class="note" id="note" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="note__bar">
+      <button class="note__back mono" id="noteBack" data-cursor="">← THE GARDEN</button>
+      <button class="note__close mono" id="noteClose" aria-label="Close note" data-cursor="">CLOSE [ESC]</button>
+    </div>
+    <div class="note__scroll" id="noteScroll">
+      <article class="note__article" id="noteArticle"></article>
+      <div class="note__pager" id="notePager"></div>
+    </div>
+  </div>
+
+  <!-- Floating hover image -->
+  <div class="peek" id="peek" aria-hidden="true"><img id="peekImg" alt="" /></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
+  <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js" } }</script>
+  <script src="/garden/js/data.js"></script>
+  <script src="/garden/js/app.js" defer></script>
+  <script src="/garden/js/scene.js" type="module"></script>
+</body>
+</html>
