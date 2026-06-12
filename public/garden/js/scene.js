@@ -113,7 +113,7 @@ const mat = new THREE.ShaderMaterial({
 
       vec4 mv = modelViewMatrix * vec4(p, 1.0);
       gl_Position = projectionMatrix * mv;
-      gl_PointSize = aSize * uDpr * (24.0 / -mv.z);
+      gl_PointSize = aSize * uDpr * (60.0 / -mv.z);
 
       // gentle twinkle
       vFade = 0.5 + 0.5 * sin(uTime * 0.55 + aSeed * 81.0);

@@ -165,7 +165,7 @@
 
   /* legend */
   document.getElementById("legend").innerHTML = Object.entries(stages)
-    .map(([k, s]) => `<span>${glyphs[k]} ${s.label} — ${s.hint}</span>`)
+    .map(([k, s]) => `<span>${glyphs[k]}<em>${s.label} — ${s.hint}</em></span>`)
     .join("");
 
   /* ─── filters ─────────────────────────────────────────── */

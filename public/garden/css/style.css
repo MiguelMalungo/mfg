@@ -102,8 +102,8 @@ a { color: inherit; text-decoration: none; }
 }
 .cursor--active .cursor__ring {
   width: 72px; height: 72px;
-  background: var(--lime); border-color: var(--lime);
-  mix-blend-mode: multiply; /* text stays readable under the lime disc */
+  background: rgba(200, 255, 0, 0.35); /* see-through — text behind stays readable */
+  border-color: var(--lime);
 }
 .cursor--active .cursor__label { opacity: 1; }
 .cursor--active .cursor__dot { opacity: 0; }
@@ -146,12 +146,15 @@ main { position: relative; z-index: 1; }
   text-transform: uppercase;
 }
 .hero__line { display: block; overflow: hidden; padding-bottom: 0.06em; }
-.hero__line--accent { position: relative; display: inline-block; }
+.hero__line--accent {
+  position: relative; display: inline-block;
+  padding-right: 0.14em; /* italic N overhang would clip on overflow:hidden */
+}
 .split { display: inline-block; }
 .split .ch { display: inline-block; will-change: transform; }
 .split--italic { font-style: italic; font-weight: 480; }
 .hero__swipe {
-  position: absolute; inset: 0.04em -0.08em -0.02em -0.08em;
+  position: absolute; inset: 0.04em 0 -0.02em -0.08em;
   background: var(--lime); z-index: -1;
   transform: scaleX(0); transform-origin: left;
 }
@@ -229,12 +232,13 @@ main { position: relative; z-index: 1; }
   display: flex; align-items: baseline; gap: 18px;
 }
 .field__count { color: var(--ink-40); font-weight: 400; }
-.field__legend { display: flex; gap: 14px; color: var(--ink); flex-wrap: wrap; }
-.field__legend span {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--lime); padding: 8px 16px;
+.field__legend { display: flex; gap: 18px; color: var(--ink); flex-wrap: wrap; }
+.field__legend span { display: inline-flex; align-items: center; gap: 10px; }
+.field__legend em {
+  font-style: normal;
+  background: var(--lime); padding: 8px 14px;
 }
-.field__legend svg { width: 32px; height: 32px; stroke: var(--ink); }
+.field__legend svg { width: 32px; height: 32px; stroke: var(--ink); flex-shrink: 0; }
 
 .field__filters {
   display: flex; flex-wrap: wrap; gap: 10px;
