@@ -46,7 +46,7 @@ export default async function NotePage({ params }: { params: Params }) {
 
   return (
     <div className="min-h-screen py-16 px-6" style={{ backgroundColor: '#F0EEE6' }}>
-      <article className="max-w-3xl mx-auto">
+      <article className={`max-w-3xl mx-auto garden-note-${note.slug}`}>
         <Link
           href="/garden"
           className="text-xs uppercase tracking-widest font-bold text-black hover:opacity-70"
