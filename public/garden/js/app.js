@@ -121,7 +121,7 @@
 
   /* ─── manifesto words ─────────────────────────────────── */
   const manifesto = document.getElementById("manifesto");
-  const HL = ["mature,", "sprouting,", "seeds.", "watered,", "shipped."];
+  const HL = ["mature,", "sprouting,", "seeds.", "watering."];
   manifesto.innerHTML = manifesto.textContent
     .split(" ")
     .map((w) => `<span class="w${HL.includes(w) ? " w--hl" : ""}">${w}</span>`)
