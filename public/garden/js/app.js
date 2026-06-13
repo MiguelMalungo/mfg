@@ -215,6 +215,10 @@
     const py = gsap.quickTo(peek, "top", { duration: 0.45, ease: "power3" });
     let cycle = null;
 
+    // Preload every peek image up front so the first one shown on hover is
+    // already decoded — otherwise it loads on-demand and flashes in last.
+    sorted.forEach((n) => (n.media || []).forEach((src) => { new Image().src = src; }));
+
     grid.addEventListener("pointermove", (e) => { px(e.clientX); py(e.clientY); }, { passive: true });
     grid.addEventListener("pointerover", (e) => {
       const card = e.target.closest(".plot");
