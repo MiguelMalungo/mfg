@@ -322,30 +322,30 @@ main { position: relative; z-index: 1; }
   transition: opacity 0.3s, transform 0.4s var(--ease-out);
 }
 
-/* ─── Bus card: noir photo by default, reverts to the paper look on hover ─ */
-.plot[data-slug="bus"]::before {
+/* ─── Cover cards: noir photo by default, revert to the paper look on hover ─ */
+.plot--cover::before {
   content: ""; position: absolute; inset: 0; z-index: 0;
   background:
     linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.5)),
-    url("/garden/assets/bus10.webp") center / cover no-repeat;
+    var(--cover) center / cover no-repeat;
   filter: grayscale(1) contrast(1.12);
   transition: opacity 0.55s var(--ease-out);
 }
-.plot[data-slug="bus"]:hover::before { opacity: 0; }
+.plot--cover:hover::before { opacity: 0; }
 /* text white over the noir photo */
-.plot[data-slug="bus"] .plot__idx { color: rgba(255, 255, 255, 0.85); }
-.plot[data-slug="bus"] .plot__title,
-.plot[data-slug="bus"] .plot__desc,
-.plot[data-slug="bus"] .plot__topics { color: #fff; }
-.plot[data-slug="bus"] .plot__glyph { stroke: #fff; }
-.plot[data-slug="bus"] .plot__year { -webkit-text-stroke-color: rgba(255, 255, 255, 0.75); }
+.plot--cover .plot__idx { color: rgba(255, 255, 255, 0.85); }
+.plot--cover .plot__title,
+.plot--cover .plot__desc,
+.plot--cover .plot__topics { color: #fff; }
+.plot--cover .plot__glyph { stroke: #fff; }
+.plot--cover .plot__year { -webkit-text-stroke-color: rgba(255, 255, 255, 0.75); }
 /* hover → back to exactly the normal card (ink text, lime sweep) */
-.plot[data-slug="bus"]:hover .plot__idx,
-.plot[data-slug="bus"]:hover .plot__title,
-.plot[data-slug="bus"]:hover .plot__desc,
-.plot[data-slug="bus"]:hover .plot__topics { color: var(--ink); }
-.plot[data-slug="bus"]:hover .plot__glyph { stroke: var(--ink); }
-.plot[data-slug="bus"]:hover .plot__year { -webkit-text-stroke-color: var(--ink); }
+.plot--cover:hover .plot__idx,
+.plot--cover:hover .plot__title,
+.plot--cover:hover .plot__desc,
+.plot--cover:hover .plot__topics { color: var(--ink); }
+.plot--cover:hover .plot__glyph { stroke: var(--ink); }
+.plot--cover:hover .plot__year { -webkit-text-stroke-color: var(--ink); }
 
 /* spans (desktop) */
 @media (min-width: 861px) {
@@ -541,50 +541,53 @@ main { position: relative; z-index: 1; }
   text-transform: uppercase; letter-spacing: -0.01em;
 }
 
-/* ─── Bus note: noir photo backdrop + white text (matches the card) ───── */
-.note[data-slug="bus"] { background: #0a0a0a; }
-.note[data-slug="bus"]::before {
+/* ─── Cover notes: noir photo backdrop + white text (matches the card) ─── */
+.note--cover { background: #0a0a0a; }
+.note--cover::before {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
     linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.66)),
-    url("/garden/assets/bus10.webp") center / cover no-repeat;
+    var(--cover) center / cover no-repeat;
   filter: grayscale(1) contrast(1.08);
 }
-.note[data-slug="bus"] .note__bar,
-.note[data-slug="bus"] .note__scroll { position: relative; z-index: 1; }
-.note[data-slug="bus"] .note__bar {
+.note--cover .note__bar,
+.note--cover .note__scroll { position: relative; z-index: 1; }
+.note--cover .note__bar {
   background: transparent; border-bottom-color: rgba(255, 255, 255, 0.18);
 }
 /* text → white */
-.note[data-slug="bus"] .note__bar button,
-.note[data-slug="bus"] .note__title,
-.note[data-slug="bus"] .note__lead,
-.note[data-slug="bus"] .note__meta,
-.note[data-slug="bus"] .note__body,
-.note[data-slug="bus"] .note__pager strong { color: #fff; }
-.note[data-slug="bus"] .note__meta svg { stroke: #fff; }
-.note[data-slug="bus"] .note__meta .dim,
-.note[data-slug="bus"] .gal__head,
-.note[data-slug="bus"] .note__backs-label,
-.note[data-slug="bus"] .note__backs a span,
-.note[data-slug="bus"] .note__pager .mono { color: rgba(255, 255, 255, 0.6); }
+.note--cover .note__bar button,
+.note--cover .note__title,
+.note--cover .note__lead,
+.note--cover .note__meta,
+.note--cover .note__body,
+.note--cover .note__pager strong { color: #fff; }
+.note--cover .note__meta svg { stroke: #fff; }
+.note--cover .note__meta .dim,
+.note--cover .gal__head,
+.note--cover .note__backs-label,
+.note--cover .note__backs a span,
+.note--cover .note__pager .mono { color: rgba(255, 255, 255, 0.6); }
 /* lime accents keep dark text for contrast */
-.note[data-slug="bus"] .note__title em,
-.note[data-slug="bus"] .note__body a.wl,
-.note[data-slug="bus"] .note__backs a strong { color: var(--ink); }
+.note--cover .note__title em,
+.note--cover .note__body a.wl,
+.note--cover .note__backs a strong { color: var(--ink); }
 /* borders → translucent white */
-.note[data-slug="bus"] .note__backs,
-.note[data-slug="bus"] .note__backs a,
-.note[data-slug="bus"] .gal__item { border-color: rgba(255, 255, 255, 0.22); }
-.note[data-slug="bus"] .note__pager { border-top-color: rgba(255, 255, 255, 0.4); }
-.note[data-slug="bus"] .note__pager button:last-child { border-left-color: rgba(255, 255, 255, 0.18); }
-.note[data-slug="bus"] .note__body a.ext { border-bottom-color: rgba(255, 255, 255, 0.7); }
+.note--cover .note__backs,
+.note--cover .note__backs a,
+.note--cover .gal__item { border-color: rgba(255, 255, 255, 0.22); }
+.note--cover .note__pager { border-top-color: rgba(255, 255, 255, 0.4); }
+.note--cover .note__pager button:last-child { border-left-color: rgba(255, 255, 255, 0.18); }
+.note--cover .note__body a.ext { border-bottom-color: rgba(255, 255, 255, 0.7); }
+/* a visit button (external link) reads as white on the dark backdrop */
+.note--cover .note__visit { border-color: #fff; color: #fff; }
+.note--cover .note__visit:hover { background: #fff; color: var(--ink); }
 /* hover stays lime → dark text on it */
-.note[data-slug="bus"] .note__bar button:hover,
-.note[data-slug="bus"] .note__body a.ext:hover,
-.note[data-slug="bus"] .note__pager button:hover,
-.note[data-slug="bus"] .note__pager button:hover strong,
-.note[data-slug="bus"] .note__pager button:hover .mono { color: var(--ink); }
+.note--cover .note__bar button:hover,
+.note--cover .note__body a.ext:hover,
+.note--cover .note__pager button:hover,
+.note--cover .note__pager button:hover strong,
+.note--cover .note__pager button:hover .mono { color: var(--ink); }
 
 /* reveal helpers */
 [data-reveal] { opacity: 0; transform: translateY(24px); }

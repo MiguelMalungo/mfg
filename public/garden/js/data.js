@@ -24,6 +24,7 @@ window.GARDEN = {
   notes: [
     {
       slug: "life-on-the-road",
+      cover: "/garden/assets/cover-life-on-the-road.webp",
       title: "Life on the Road",
       stage: "budding",
       topics: ["Travel", "Life"],
@@ -44,6 +45,7 @@ window.GARDEN = {
     },
     {
       slug: "blend",
+      cover: "/garden/assets/cover-blend.webp",
       title: "BLEND by KaleidoKonscious",
       shortTitle: "BLEND",
       stage: "budding",
@@ -60,6 +62,7 @@ window.GARDEN = {
     },
     {
       slug: "blocks",
+      cover: "/garden/assets/cover-blocks.webp",
       title: "BLOCKS",
       stage: "evergreen",
       topics: ["Words", "Code"],
@@ -73,6 +76,7 @@ window.GARDEN = {
     },
     {
       slug: "bus",
+      cover: "/garden/assets/bus10.webp",
       title: "The Bus",
       stage: "evergreen",
       topics: ["Travel", "Life"],
@@ -99,6 +103,7 @@ window.GARDEN = {
     },
     {
       slug: "digisol",
+      cover: "/garden/assets/cover-digisol.webp",
       title: "DigiSol",
       stage: "evergreen",
       topics: ["Code", "AI"],
@@ -113,6 +118,7 @@ window.GARDEN = {
     },
     {
       slug: "nfts-ai",
+      cover: "/garden/assets/cover-nfts-ai.webp",
       title: "NFTs & Digital Art Leveraged by AI",
       shortTitle: "NFT Museum",
       stage: "evergreen",
@@ -128,6 +134,7 @@ window.GARDEN = {
     },
     {
       slug: "sotkis",
+      cover: "/garden/assets/cover-sotkis.webp",
       title: "Sotkis",
       stage: "evergreen",
       topics: ["Code", "Design"],
@@ -144,6 +151,7 @@ window.GARDEN = {
     },
     {
       slug: "capoeira",
+      cover: "/garden/assets/cover-capoeira.webp",
       title: "Capoeira",
       stage: "budding",
       topics: ["Movement", "Practice"],
@@ -174,6 +182,7 @@ window.GARDEN = {
     },
     {
       slug: "photography",
+      cover: "/garden/assets/cover-photography.webp",
       title: "Photography",
       stage: "budding",
       topics: ["Photography"],
@@ -186,6 +195,7 @@ window.GARDEN = {
     },
     {
       slug: "surfing",
+      cover: "/garden/assets/cover-surfing.webp",
       title: "Surfing",
       stage: "budding",
       topics: ["Movement", "Practice"],
@@ -198,6 +208,7 @@ window.GARDEN = {
     },
     {
       slug: "platos-cat",
+      cover: "/garden/assets/cover-platos-cat.webp",
       title: "Plato's Cat",
       stage: "seedling",
       topics: ["Film", "AI"],

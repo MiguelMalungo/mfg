@@ -137,6 +137,10 @@
     el.dataset.slug = n.slug;
     el.dataset.stage = n.stage;
     el.dataset.topics = n.topics.join(",");
+    if (n.cover) {
+      el.classList.add("plot--cover");
+      el.style.setProperty("--cover", `url("${n.cover}")`);
+    }
     el.setAttribute("role", "button");
     el.setAttribute("tabindex", "0");
     el.setAttribute("aria-label", `Open note: ${n.title}`);
@@ -451,7 +455,8 @@
 
   function fillNote(n) {
     current = n;
-    note.dataset.slug = n.slug; // lets CSS theme a specific note (e.g. bus noir)
+    note.classList.toggle("note--cover", !!n.cover); // noir backdrop when a cover exists
+    if (n.cover) note.style.setProperty("--cover", `url("${n.cover}")`);
     article.innerHTML = noteHTML(n);
     renderPager(n);
     setupGalleryDrag();

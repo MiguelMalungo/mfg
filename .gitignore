@@ -49,3 +49,4 @@ next-env.d.ts
 /public/images/bus/*.JPG
 /public/images/sotkis/*.png
 /public/images/sotkis/*.PNG
+/public/images/covers_garden/
