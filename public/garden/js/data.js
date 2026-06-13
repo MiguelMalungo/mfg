@@ -78,7 +78,7 @@ window.GARDEN = {
       topics: ["Travel", "Life"],
       desc: "The first home on wheels — converted, lived in, finished.",
       tended: "2024",
-      media: ["/garden/assets/bus2.webp", "/garden/assets/bus9.webp", "/garden/assets/bus14.webp"],
+      media: ["/garden/assets/bus9.webp", "/garden/assets/bus14.webp"],
       gallery: [
         "/garden/assets/bus1.webp", "/garden/assets/bus2.webp", "/garden/assets/bus3.webp",
         "/garden/assets/bus4.webp", "/garden/assets/bus5.webp", "/garden/assets/bus6.webp",
