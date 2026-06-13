@@ -541,6 +541,51 @@ main { position: relative; z-index: 1; }
   text-transform: uppercase; letter-spacing: -0.01em;
 }
 
+/* ─── Bus note: noir photo backdrop + white text (matches the card) ───── */
+.note[data-slug="bus"] { background: #0a0a0a; }
+.note[data-slug="bus"]::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.66)),
+    url("/garden/assets/bus10.webp") center / cover no-repeat;
+  filter: grayscale(1) contrast(1.08);
+}
+.note[data-slug="bus"] .note__bar,
+.note[data-slug="bus"] .note__scroll { position: relative; z-index: 1; }
+.note[data-slug="bus"] .note__bar {
+  background: transparent; border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+/* text → white */
+.note[data-slug="bus"] .note__bar button,
+.note[data-slug="bus"] .note__title,
+.note[data-slug="bus"] .note__lead,
+.note[data-slug="bus"] .note__meta,
+.note[data-slug="bus"] .note__body,
+.note[data-slug="bus"] .note__pager strong { color: #fff; }
+.note[data-slug="bus"] .note__meta svg { stroke: #fff; }
+.note[data-slug="bus"] .note__meta .dim,
+.note[data-slug="bus"] .gal__head,
+.note[data-slug="bus"] .note__backs-label,
+.note[data-slug="bus"] .note__backs a span,
+.note[data-slug="bus"] .note__pager .mono { color: rgba(255, 255, 255, 0.6); }
+/* lime accents keep dark text for contrast */
+.note[data-slug="bus"] .note__title em,
+.note[data-slug="bus"] .note__body a.wl,
+.note[data-slug="bus"] .note__backs a strong { color: var(--ink); }
+/* borders → translucent white */
+.note[data-slug="bus"] .note__backs,
+.note[data-slug="bus"] .note__backs a,
+.note[data-slug="bus"] .gal__item { border-color: rgba(255, 255, 255, 0.22); }
+.note[data-slug="bus"] .note__pager { border-top-color: rgba(255, 255, 255, 0.4); }
+.note[data-slug="bus"] .note__pager button:last-child { border-left-color: rgba(255, 255, 255, 0.18); }
+.note[data-slug="bus"] .note__body a.ext { border-bottom-color: rgba(255, 255, 255, 0.7); }
+/* hover stays lime → dark text on it */
+.note[data-slug="bus"] .note__bar button:hover,
+.note[data-slug="bus"] .note__body a.ext:hover,
+.note[data-slug="bus"] .note__pager button:hover,
+.note[data-slug="bus"] .note__pager button:hover strong,
+.note[data-slug="bus"] .note__pager button:hover .mono { color: var(--ink); }
+
 /* reveal helpers */
 [data-reveal] { opacity: 0; transform: translateY(24px); }
 .no-motion [data-reveal] { opacity: 1; transform: none; }

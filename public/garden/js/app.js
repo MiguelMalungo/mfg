@@ -451,6 +451,7 @@
 
   function fillNote(n) {
     current = n;
+    note.dataset.slug = n.slug; // lets CSS theme a specific note (e.g. bus noir)
     article.innerHTML = noteHTML(n);
     renderPager(n);
     setupGalleryDrag();
