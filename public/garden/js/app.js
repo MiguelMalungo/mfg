@@ -363,32 +363,87 @@
   function setupGalleryDrag() {
     const track = document.getElementById("galTrack");
     if (!track) return;
-    let down = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vel = 0;
+
+    // Tag any frame whose image is taller than the window (portraits): the
+    // image fills the width and overflows, so it can be panned up/down.
+    const measure = (item) => {
+      const img = item.querySelector("img");
+      const overflow = img.offsetHeight - item.clientHeight;
+      if (overflow > 2) {
+        item.classList.add("gal__item--tall");
+        item._panMax = overflow;
+        item._panY = Math.max(-overflow, Math.min(0, item._panY || 0));
+        img.style.transform = `translateY(${item._panY}px)`;
+      } else {
+        item.classList.remove("gal__item--tall");
+        item._panMax = 0; item._panY = 0;
+        img.style.transform = "";
+      }
+    };
+    track.querySelectorAll(".gal__item").forEach((item) => {
+      const img = item.querySelector("img");
+      if (img.complete && img.naturalHeight) measure(item);
+      else img.addEventListener("load", () => measure(item), { once: true });
+    });
+    const onResize = () => {
+      if (!track.isConnected) return window.removeEventListener("resize", onResize);
+      track.querySelectorAll(".gal__item").forEach(measure);
+    };
+    window.addEventListener("resize", onResize);
+
+    let down = false, axis = null;
+    let startX = 0, startY = 0, startScroll = 0;
+    let lastX = 0, lastT = 0, vel = 0;
+    let panItem = null, startPanY = 0;
+
     track.addEventListener("pointerdown", (e) => {
-      down = true; startX = e.clientX; startScroll = track.scrollLeft;
+      down = true; axis = null;
+      startX = e.clientX; startY = e.clientY;
+      startScroll = track.scrollLeft;
       lastX = e.clientX; lastT = performance.now(); vel = 0;
-      track.classList.add("dragging");
+      panItem = e.target.closest(".gal__item--tall");
+      startPanY = panItem ? panItem._panY : 0;
       track.setPointerCapture(e.pointerId);
       gsap.killTweensOf(track);
     });
+
     track.addEventListener("pointermove", (e) => {
       if (!down) return;
-      track.scrollLeft = startScroll - (e.clientX - startX);
-      const now = performance.now();
-      vel = (e.clientX - lastX) / Math.max(now - lastT, 1);
-      lastX = e.clientX; lastT = now;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!axis) {
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return; // wait for intent
+        // vertical pan only when starting on a portrait frame and the
+        // gesture is mostly vertical; otherwise scroll the strip
+        axis = panItem && Math.abs(dy) > Math.abs(dx) ? "y" : "x";
+        track.classList.add("dragging");
+        if (axis === "y") panItem.classList.add("panning");
+      }
+      if (axis === "x") {
+        track.scrollLeft = startScroll - dx;
+        const now = performance.now();
+        vel = (e.clientX - lastX) / Math.max(now - lastT, 1);
+        lastX = e.clientX; lastT = now;
+      } else {
+        const y = Math.max(-panItem._panMax, Math.min(0, startPanY + dy));
+        panItem._panY = y;
+        panItem.querySelector("img").style.transform = `translateY(${y}px)`;
+      }
     });
+
     const release = () => {
       if (!down) return;
       down = false;
       track.classList.remove("dragging");
-      if (!reduced && Math.abs(vel) > 0.1) {
+      if (panItem) panItem.classList.remove("panning");
+      if (axis === "x" && !reduced && Math.abs(vel) > 0.1) {
         gsap.to(track, {
           scrollLeft: track.scrollLeft - vel * 260,
           duration: 0.9,
           ease: "power3.out",
         });
       }
+      axis = null; panItem = null;
     };
     track.addEventListener("pointerup", release);
     track.addEventListener("pointercancel", release);

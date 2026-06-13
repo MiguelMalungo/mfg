@@ -322,6 +322,31 @@ main { position: relative; z-index: 1; }
   transition: opacity 0.3s, transform 0.4s var(--ease-out);
 }
 
+/* ─── Bus card: noir photo by default, reverts to the paper look on hover ─ */
+.plot[data-slug="bus"]::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.5)),
+    url("/garden/assets/bus10.webp") center / cover no-repeat;
+  filter: grayscale(1) contrast(1.12);
+  transition: opacity 0.55s var(--ease-out);
+}
+.plot[data-slug="bus"]:hover::before { opacity: 0; }
+/* text white over the noir photo */
+.plot[data-slug="bus"] .plot__idx { color: rgba(255, 255, 255, 0.85); }
+.plot[data-slug="bus"] .plot__title,
+.plot[data-slug="bus"] .plot__desc,
+.plot[data-slug="bus"] .plot__topics { color: #fff; }
+.plot[data-slug="bus"] .plot__glyph { stroke: #fff; }
+.plot[data-slug="bus"] .plot__year { -webkit-text-stroke-color: rgba(255, 255, 255, 0.75); }
+/* hover → back to exactly the normal card (ink text, lime sweep) */
+.plot[data-slug="bus"]:hover .plot__idx,
+.plot[data-slug="bus"]:hover .plot__title,
+.plot[data-slug="bus"]:hover .plot__desc,
+.plot[data-slug="bus"]:hover .plot__topics { color: var(--ink); }
+.plot[data-slug="bus"]:hover .plot__glyph { stroke: var(--ink); }
+.plot[data-slug="bus"]:hover .plot__year { -webkit-text-stroke-color: var(--ink); }
+
 /* spans (desktop) */
 @media (min-width: 861px) {
   .plot[data-span="7"] { grid-column: span 7; }
@@ -450,10 +475,27 @@ main { position: relative; z-index: 1; }
 }
 .gal__track::-webkit-scrollbar { display: none; }
 .gal__track.dragging { cursor: grabbing; }
-.gal__item { flex: 0 0 auto; height: clamp(260px, 46vh, 460px); position: relative; }
+.gal__item {
+  flex: 0 0 auto;
+  height: clamp(260px, 46vh, 460px);
+  aspect-ratio: 4 / 3;            /* landscape window — a 4:3 photo fits whole */
+  position: relative; overflow: hidden;
+  border: 1px solid var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
 .gal__item img {
-  height: 100%; width: auto; display: block;
-  border: 1px solid var(--ink); pointer-events: none;
+  width: 100%; height: auto; display: block;
+  pointer-events: none;
+  will-change: transform;
+}
+.gal__item--tall { cursor: grab; }  /* portrait: drag up/down to see the rest */
+.gal__item--tall.panning { cursor: grabbing; }
+.gal__item--tall::after {
+  content: "↕"; position: absolute; right: 10px; top: 10px;
+  font-family: var(--mono); font-size: 12px;
+  background: var(--paper); color: var(--ink);
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: 1px solid var(--ink);
 }
 .gal__item span {
   position: absolute; left: 10px; bottom: 10px;
