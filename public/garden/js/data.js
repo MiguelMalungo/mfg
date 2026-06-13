@@ -164,6 +164,7 @@ window.GARDEN = {
     },
     {
       slug: "films",
+      cover: "/garden/assets/cover-films.webp",
       title: "Films",
       stage: "budding",
       topics: ["Film"],
