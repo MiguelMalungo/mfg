@@ -118,8 +118,10 @@ window.GARDEN = {
       hrefLabel: "digisol.pt",
       body: `
         <p>My web work — sites and apps I build for other people. If you need something on the web that feels considered, this is the door.</p>
-        <p>Recent client work: <a class="wl" data-note="sotkis">Sotkis</a> — the website, mobile app and management platform for an intelligent waste system.</p>
-        <p>The companion to the more experimental things like <a class="wl" data-note="blocks">BLOCKS</a> and <a class="wl" data-note="blend">BLEND</a>: this one is craft for clients, those ones are craft for themselves.</p>`,
+        <p>The companion to the more experimental things like <a class="wl" data-note="blocks">BLOCKS</a> and <a class="wl" data-note="blend">BLEND</a>: this one is craft for clients, those ones are craft for themselves.</p>
+        <h2>Selected work</h2>
+        <p><a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis ↗</a> — the website, mobile app and management platform for an intelligent waste system: underground containers with fill-level sensors and Pay-As-You-Throw access, all reporting to one dashboard.</p>
+        <figure><img src="/garden/assets/sotkis.webp" alt="The Sotkis website" loading="lazy" /></figure>`,
     },
     {
       slug: "nfts-ai",
@@ -136,23 +138,6 @@ window.GARDEN = {
         <p>An interactive, gamified museum app to display digital art and NFTs. The idea: collectors and artists should be able to walk through their own work, not scroll past it.</p>
         <p>I built this alongside <a class="wl" data-note="blend">BLEND</a> — both came out of the same period of playing with AI as a collaborator rather than as a tool.</p>
         <p>If you'd like your own version of this — your collection, your space — get in touch.</p>`,
-    },
-    {
-      slug: "sotkis",
-      cover: "/garden/assets/cover-sotkis.webp",
-      title: "Sotkis",
-      stage: "evergreen",
-      topics: ["Code", "Design"],
-      desc: "Website, mobile app and management platform for an intelligent waste system.",
-      tended: "2026",
-      href: "https://sotkis.com/",
-      hrefLabel: "sotkis.com",
-      media: ["/garden/assets/sotkis.webp"],
-      body: `
-        <p>Sotkis is an intelligent waste-management system — underground containers with sensors that track fill levels and access, so collections run on data instead of guesswork.</p>
-        <p>I built their <a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">website</a> and designed the mobile app and the management platform: the place operators monitor containers, plan routes and read the numbers coming off the sensors.</p>
-        <figure><img src="/garden/assets/sotkis.webp" alt="The Sotkis website" loading="lazy" /></figure>
-        <p>This is <a class="wl" data-note="digisol">DigiSol</a> work — craft for a client, the considered kind.</p>`,
     },
     {
       slug: "capoeira",

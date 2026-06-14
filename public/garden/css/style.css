@@ -588,6 +588,7 @@ main { position: relative; z-index: 1; }
 /* borders → translucent white */
 .note--cover .note__backs,
 .note--cover .note__backs a,
+.note--cover .note__body figure img,
 .note--cover .gal__item { border-color: rgba(255, 255, 255, 0.22); }
 .note--cover .note__pager { border-top-color: rgba(255, 255, 255, 0.4); }
 .note--cover .note__pager button:last-child { border-left-color: rgba(255, 255, 255, 0.18); }
