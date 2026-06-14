@@ -460,22 +460,7 @@
     article.innerHTML = noteHTML(n);
     renderPager(n);
     setupGalleryDrag();
-    renderTikToks();
     noteScroll.scrollTop = 0;
-  }
-
-  // TikTok's embed.js turns .tiktok-embed blockquotes into iframes when it
-  // loads. Since notes are injected after page load, (re)append the script
-  // so it re-scans and renders any embeds in the current note.
-  function renderTikToks() {
-    if (!article.querySelector(".tiktok-embed")) return;
-    document
-      .querySelectorAll('script[src*="tiktok.com/embed.js"]')
-      .forEach((s) => s.remove());
-    const s = document.createElement("script");
-    s.async = true;
-    s.src = "https://www.tiktok.com/embed.js";
-    document.body.appendChild(s);
   }
 
   function openNote(slug, push = true) {
