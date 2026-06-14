@@ -460,6 +460,13 @@ main { position: relative; z-index: 1; }
 .note__body figure { margin: 2.2em 0; }
 .note__body figure img { width: 100%; height: auto; display: block; border: 1px solid var(--ink); }
 
+/* TikTok embeds */
+.tiktoks {
+  display: flex; flex-wrap: wrap; gap: 18px;
+  margin: 1.6em 0; justify-content: flex-start;
+}
+.tiktoks .tiktok-embed { margin: 0 !important; flex: 0 1 auto; }
+
 /* gallery */
 .gal { margin: 2.4em calc(-1 * clamp(20px, 4vw, 56px)) 1em; }
 .gal__head {

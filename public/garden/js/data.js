@@ -41,7 +41,12 @@ window.GARDEN = {
           <li>Routes and places — added as they happen</li>
           <li>What I'm learning about living small, again</li>
         </ul>
-        <p>I'll update this as the build progresses. Frame and insulation first.</p>`,
+        <p>I'll update this as the build progresses. Frame and insulation first.</p>
+        <h2>From the road</h2>
+        <div class="tiktoks">
+          <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@1gato100vidas/video/7649322248792198422" data-video-id="7649322248792198422" style="max-width:605px;min-width:325px;"><section><a target="_blank" title="@1gato100vidas" href="https://www.tiktok.com/@1gato100vidas?refer=embed">@1gato100vidas</a></section></blockquote>
+          <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@1gato100vidas/video/7647083445293763862" data-video-id="7647083445293763862" style="max-width:605px;min-width:325px;"><section><a target="_blank" title="@1gato100vidas" href="https://www.tiktok.com/@1gato100vidas?refer=embed">@1gato100vidas</a></section></blockquote>
+        </div>`,
     },
     {
       slug: "blend",
