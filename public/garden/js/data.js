@@ -162,13 +162,11 @@ window.GARDEN = {
       planted: "2026",
       body: `
         <p>Shorts I've made and I'm making. My small theater.</p>
-        <p>The one in motion right now is <a class="wl" data-note="platos-cat">Plato's Cat</a> — an AI-assisted film, still being built. The older work lives on my YouTube channel.</p>
+        <p>The one in motion right now is Plato's Cat — an AI-assisted film, still being built. The older work lives on my YouTube channel.</p>
         <h2>From the channel</h2>
         <p><a class="ext" href="https://www.youtube.com/@dreampiecefool/videos" target="_blank" rel="noopener noreferrer">@dreampiecefool on YouTube ↗</a></p>
         <h2>In the making</h2>
-        <ul>
-          <li><a class="wl" data-note="platos-cat">Plato's Cat</a> — an AI-assisted film, seedling stage</li>
-        </ul>
+        <p><strong>Plato's Cat</strong> — an AI-assisted short film. I'm building it the way you build a cave painting: slowly, with what is at hand. The most recent piece of working with AI as a co-author; updates will land here as the cuts come together.</p>
         <p>This is also where I think out loud about working with AI in moving image.</p>`,
     },
     {
@@ -196,19 +194,6 @@ window.GARDEN = {
         <p>Listening to the ocean and being humbled, often. A practice in patience.</p>
         <p>The same listening I bring to <a class="wl" data-note="capoeira">capoeira</a> — the body knows before the mind catches up.</p>
         <p>Living closer to water is part of why <a class="wl" data-note="life-on-the-road">the truck</a> matters: it puts the practice within walking distance of wherever I am.</p>`,
-    },
-    {
-      slug: "platos-cat",
-      cover: "/garden/assets/cover-platos-cat.webp",
-      title: "Plato's Cat",
-      stage: "seedling",
-      topics: ["Film", "AI"],
-      desc: "An AI-assisted short film, in the making.",
-      planted: "2026",
-      body: `
-        <p>An AI-assisted short film, in the making. I'm building it the way you build a cave painting — slowly, with what is at hand.</p>
-        <p>It belongs to the <a class="wl" data-note="films">films</a> plot, and is the most recent piece of working with AI as a co-author.</p>
-        <p>Updates will appear here as the cuts come together.</p>`,
     },
   ],
 };
