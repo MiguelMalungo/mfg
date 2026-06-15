@@ -418,7 +418,7 @@ main { position: relative; z-index: 1; }
   background: var(--ink); border-radius: 999px;
 }
 
-.mcard { flex: 0 0 auto; width: clamp(150px, 16vw, 200px); }
+.mcard { flex: 0 0 auto; width: clamp(129px, 13.76vw, 172px); }
 .mcard--album .mcard__poster { aspect-ratio: 1 / 1; }  /* album covers are square */
 .mcard__poster {
   aspect-ratio: 2 / 3; width: 100%;
