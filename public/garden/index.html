@@ -127,6 +127,14 @@
   <!-- Floating hover image -->
   <div class="peek" id="peek" aria-hidden="true"><img id="peekImg" alt="" /></div>
 
+  <!-- Lightbox (enlarge gallery photos) -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+    <button class="lightbox__nav lightbox__nav--prev" data-lb="prev" aria-label="Previous">‹</button>
+    <img class="lightbox__img" id="lightboxImg" alt="" />
+    <button class="lightbox__nav lightbox__nav--next" data-lb="next" aria-label="Next">›</button>
+    <button class="lightbox__close" aria-label="Close">CLOSE ✕</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>

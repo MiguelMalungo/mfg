@@ -411,10 +411,10 @@
 
     const gallery = n.gallery
       ? `<div class="gal">
-           <div class="gal__head"><span>THE ARCHIVE — ${n.gallery.length} FRAMES</span><span>DRAG →</span></div>
+           <div class="gal__head"><span>THE ARCHIVE — ${n.gallery.length} FRAMES</span><span>TAP TO ENLARGE</span></div>
            <div class="gal__track" id="galTrack">
              ${n.gallery.map((src, i) =>
-               `<figure class="gal__item"><img src="${src}" alt="${n.title} — photograph ${i + 1}" loading="lazy" draggable="false" /><span>${String(i + 1).padStart(2, "0")}/${n.gallery.length}</span></figure>`
+               `<figure class="gal__item" data-i="${i}"><img src="${src}" alt="${n.title} — photograph ${i + 1}" loading="lazy" draggable="false" /><span>${String(i + 1).padStart(2, "0")}/${n.gallery.length}</span></figure>`
              ).join("")}
            </div>
          </div>`
@@ -447,93 +447,78 @@
       <button data-note="${next.slug}"><span class="mono">NEXT PLOT →</span><strong>${next.shortTitle || next.title}</strong></button>`;
   }
 
+  let galleryImages = [];
+  let lbIndex = 0;
+
+  // Gallery: a horizontal strip of fully-visible thumbnails. Native touch
+  // scroll on mobile, click-drag on desktop; tap any frame to enlarge it.
   function setupGalleryDrag() {
     const track = document.getElementById("galTrack");
     if (!track) return;
+    galleryImages = [...track.querySelectorAll(".gal__item img")].map((i) => i.getAttribute("src"));
 
-    // Tag any frame whose image is taller than the window (portraits): the
-    // image fills the width and overflows, so it can be panned up/down.
-    const measure = (item) => {
-      const img = item.querySelector("img");
-      const overflow = img.offsetHeight - item.clientHeight;
-      if (overflow > 2) {
-        item.classList.add("gal__item--tall");
-        item._panMax = overflow;
-        item._panY = Math.max(-overflow, Math.min(0, item._panY || 0));
-        img.style.transform = `translateY(${item._panY}px)`;
-      } else {
-        item.classList.remove("gal__item--tall");
-        item._panMax = 0; item._panY = 0;
-        img.style.transform = "";
-      }
-    };
     track.querySelectorAll(".gal__item").forEach((item) => {
-      const img = item.querySelector("img");
-      if (img.complete && img.naturalHeight) measure(item);
-      else img.addEventListener("load", () => measure(item), { once: true });
+      item.addEventListener("click", () => {
+        if (track._dragged) return; // ignore the click that ends a drag
+        openLightbox(+item.dataset.i);
+      });
     });
-    const onResize = () => {
-      if (!track.isConnected) return window.removeEventListener("resize", onResize);
-      track.querySelectorAll(".gal__item").forEach(measure);
-    };
-    window.addEventListener("resize", onResize);
 
-    let down = false, axis = null;
-    let startX = 0, startY = 0, startScroll = 0;
-    let lastX = 0, lastT = 0, vel = 0;
-    let panItem = null, startPanY = 0;
-
+    if (!hasHover) return; // touch: native momentum scroll, no custom drag
+    let down = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vel = 0;
     track.addEventListener("pointerdown", (e) => {
-      down = true; axis = null;
-      startX = e.clientX; startY = e.clientY;
-      startScroll = track.scrollLeft;
+      down = true; track._dragged = false;
+      startX = e.clientX; startScroll = track.scrollLeft;
       lastX = e.clientX; lastT = performance.now(); vel = 0;
-      panItem = e.target.closest(".gal__item--tall");
-      startPanY = panItem ? panItem._panY : 0;
       track.setPointerCapture(e.pointerId);
       gsap.killTweensOf(track);
     });
-
     track.addEventListener("pointermove", (e) => {
       if (!down) return;
       const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      if (!axis) {
-        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return; // wait for intent
-        // vertical pan only when starting on a portrait frame and the
-        // gesture is mostly vertical; otherwise scroll the strip
-        axis = panItem && Math.abs(dy) > Math.abs(dx) ? "y" : "x";
-        track.classList.add("dragging");
-        if (axis === "y") panItem.classList.add("panning");
-      }
-      if (axis === "x") {
-        track.scrollLeft = startScroll - dx;
-        const now = performance.now();
-        vel = (e.clientX - lastX) / Math.max(now - lastT, 1);
-        lastX = e.clientX; lastT = now;
-      } else {
-        const y = Math.max(-panItem._panMax, Math.min(0, startPanY + dy));
-        panItem._panY = y;
-        panItem.querySelector("img").style.transform = `translateY(${y}px)`;
-      }
+      if (Math.abs(dx) > 4) { track._dragged = true; track.classList.add("dragging"); }
+      track.scrollLeft = startScroll - dx;
+      const now = performance.now();
+      vel = (e.clientX - lastX) / Math.max(now - lastT, 1);
+      lastX = e.clientX; lastT = now;
     });
-
     const release = () => {
       if (!down) return;
       down = false;
       track.classList.remove("dragging");
-      if (panItem) panItem.classList.remove("panning");
-      if (axis === "x" && !reduced && Math.abs(vel) > 0.1) {
-        gsap.to(track, {
-          scrollLeft: track.scrollLeft - vel * 260,
-          duration: 0.9,
-          ease: "power3.out",
-        });
+      if (!reduced && Math.abs(vel) > 0.1) {
+        gsap.to(track, { scrollLeft: track.scrollLeft - vel * 260, duration: 0.9, ease: "power3.out" });
       }
-      axis = null; panItem = null;
+      setTimeout(() => { track._dragged = false; }, 0);
     };
     track.addEventListener("pointerup", release);
     track.addEventListener("pointercancel", release);
+  }
+
+  // ─── lightbox (enlarge gallery photos) ────────────────────
+  const lightbox = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lightboxImg");
+  function openLightbox(i) {
+    lbIndex = i;
+    lbImg.src = galleryImages[i];
+    lightbox.classList.add("lightbox--open");
+    lightbox.setAttribute("aria-hidden", "false");
+  }
+  function closeLightbox() {
+    lightbox.classList.remove("lightbox--open");
+    lightbox.setAttribute("aria-hidden", "true");
+  }
+  function lbNav(d) {
+    if (!galleryImages.length) return;
+    lbIndex = (lbIndex + d + galleryImages.length) % galleryImages.length;
+    lbImg.src = galleryImages[lbIndex];
+  }
+  if (lightbox) {
+    lightbox.addEventListener("click", (e) => {
+      if (e.target.closest("[data-lb='prev']")) return lbNav(-1);
+      if (e.target.closest("[data-lb='next']")) return lbNav(1);
+      closeLightbox();
+    });
   }
 
   function fillNote(n) {
@@ -617,6 +602,13 @@
   });
 
   document.addEventListener("keydown", (e) => {
+    // lightbox takes priority over note navigation when it's open
+    if (lightbox && lightbox.classList.contains("lightbox--open")) {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowLeft") lbNav(-1);
+      else if (e.key === "ArrowRight") lbNav(1);
+      return;
+    }
     if (!overlayOpen) return;
     if (e.key === "Escape") closeNote();
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
