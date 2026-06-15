@@ -222,7 +222,7 @@ window.GARDEN = {
       kind: "book",
       items: [
         { title: "The Brothers Karamazov", by: "Fyodor Dostoevsky", img: "/garden/assets/book-karamazov.webp" },
-        { title: "The Idiot", by: "Fyodor Dostoevsky", img: "/garden/assets/book-idiot.webp" },
+        { title: "The Master and Margarita", by: "Mikhail Bulgakov", img: "/garden/assets/book-master-margarita.webp" },
         { title: "War and Peace", by: "Leo Tolstoy", img: "/garden/assets/book-war-and-peace.webp" },
         { title: "The Grapes of Wrath", by: "John Steinbeck", img: "/garden/assets/book-grapes-of-wrath.webp" },
         { title: "East of Eden", by: "John Steinbeck", img: "/garden/assets/book-east-of-eden.webp" },
