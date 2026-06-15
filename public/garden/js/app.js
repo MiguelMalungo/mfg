@@ -5,7 +5,7 @@
    ════════════════════════════════════════════════════════ */
 
 (() => {
-  const { notes, stages, glyphs } = window.GARDEN;
+  const { notes, stages, glyphs, shelves } = window.GARDEN;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const hasHover = window.matchMedia("(hover: hover)").matches;
 
@@ -210,6 +210,67 @@
       onLeave: (els) => gsap.set(els, { opacity: 0 }),
     });
   });
+
+  /* ─── shelves (films / books of my life) ──────────────── */
+  const POSTER_GLYPH = {
+    film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7 5v14M17 5v14M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4Z"/><path d="M5 18a2 2 0 0 1 2-2h11"/></svg>',
+  };
+
+  function mediaCard(item, kind) {
+    const poster = item.img
+      ? `<div class="mcard__poster" style="background-image:url('${item.img}')"></div>`
+      : `<div class="mcard__poster mcard__poster--empty">${POSTER_GLYPH[kind] || ""}</div>`;
+    return `<article class="mcard">
+      ${poster}
+      <h3 class="mcard__title">${item.title || "Untitled"}</h3>
+      <p class="mcard__by">${item.by || (kind === "film" ? "Director" : "Author")}</p>
+    </article>`;
+  }
+
+  const shelvesEl = document.getElementById("shelves");
+  if (shelvesEl && Array.isArray(shelves)) {
+    shelvesEl.innerHTML = shelves
+      .map(
+        (sh) => `<section class="shelf">
+          <h2 class="shelf__title">${sh.title}</h2>
+          <div class="shelf__track">${sh.items.map((it) => mediaCard(it, sh.kind)).join("")}</div>
+        </section>`
+      )
+      .join("");
+    shelvesEl.querySelectorAll(".shelf__track").forEach(setupDragX);
+  }
+
+  // Simple horizontal click-drag scroller (used by the shelves).
+  function setupDragX(track) {
+    let down = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vel = 0, moved = false;
+    track.addEventListener("pointerdown", (e) => {
+      down = true; moved = false;
+      startX = e.clientX; startScroll = track.scrollLeft;
+      lastX = e.clientX; lastT = performance.now(); vel = 0;
+      track.setPointerCapture(e.pointerId);
+      gsap.killTweensOf(track);
+    });
+    track.addEventListener("pointermove", (e) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 3) { moved = true; track.classList.add("dragging"); }
+      track.scrollLeft = startScroll - dx;
+      const now = performance.now();
+      vel = (e.clientX - lastX) / Math.max(now - lastT, 1);
+      lastX = e.clientX; lastT = now;
+    });
+    const release = () => {
+      if (!down) return;
+      down = false;
+      track.classList.remove("dragging");
+      if (moved && !reduced && Math.abs(vel) > 0.1) {
+        gsap.to(track, { scrollLeft: track.scrollLeft - vel * 260, duration: 0.9, ease: "power3.out" });
+      }
+    };
+    track.addEventListener("pointerup", release);
+    track.addEventListener("pointercancel", release);
+  }
 
   /* ─── floating peek image ─────────────────────────────── */
   const peek = document.getElementById("peek");

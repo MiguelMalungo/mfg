@@ -196,4 +196,32 @@ window.GARDEN = {
         <p>Living closer to water is part of why <a class="wl" data-note="life-on-the-road">the truck</a> matters: it puts the practice within walking distance of wherever I am.</p>`,
     },
   ],
+
+  // Horizontal shelves at the foot of the garden. Each item:
+  //   { title, by, note?, img? }   img → /garden/assets/<file>.webp (poster, ~2:3)
+  // Items without an img show a placeholder poster.
+  shelves: [
+    {
+      title: "Films of my Life <em>(so far)</em>",
+      kind: "film",
+      items: [
+        { title: "Untitled", by: "Director" },
+        { title: "Untitled", by: "Director" },
+        { title: "Untitled", by: "Director" },
+        { title: "Untitled", by: "Director" },
+        { title: "Untitled", by: "Director" },
+      ],
+    },
+    {
+      title: "Books of my Life <em>(so far)</em>",
+      kind: "book",
+      items: [
+        { title: "The Good Mother Myth", by: "Nancy Reddy" },
+        { title: "Untitled", by: "Author" },
+        { title: "Untitled", by: "Author" },
+        { title: "Untitled", by: "Author" },
+        { title: "Untitled", by: "Author" },
+      ],
+    },
+  ],
 };

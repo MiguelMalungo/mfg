@@ -371,6 +371,52 @@ main { position: relative; z-index: 1; }
 .peek--on { opacity: 1; transform: translate(-50%, -55%) scale(1) rotate(-3deg); }
 .peek img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* ─── Shelves (films / books of my life) ───────────────── */
+.shelves {
+  padding: 0 clamp(20px, 4vw, 56px) clamp(60px, 10vh, 120px);
+  display: flex; flex-direction: column; gap: clamp(40px, 6vh, 72px);
+}
+.shelf__title {
+  font-size: clamp(28px, 4.4vw, 56px); font-weight: 600;
+  letter-spacing: -0.015em; line-height: 1; text-transform: uppercase;
+  border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 26px;
+}
+.shelf__title em { font-style: italic; font-weight: 400; color: var(--ink-40); }
+.shelf__track {
+  display: flex; gap: clamp(14px, 1.6vw, 22px);
+  overflow-x: auto; padding-bottom: 8px;
+  cursor: grab; scrollbar-width: none;
+  user-select: none; -webkit-user-select: none;
+}
+.shelf__track::-webkit-scrollbar { display: none; }
+.shelf__track.dragging { cursor: grabbing; }
+
+.mcard { flex: 0 0 auto; width: clamp(150px, 16vw, 200px); }
+.mcard__poster {
+  aspect-ratio: 2 / 3; width: 100%;
+  border: 1px solid var(--ink); border-radius: 12px;
+  background: rgba(10, 10, 10, 0.06) center / cover no-repeat;
+  margin-bottom: 14px; overflow: hidden;
+  transition: transform 0.45s var(--ease-out);
+}
+.mcard:hover .mcard__poster { transform: translateY(-6px); }
+.mcard__poster img, .mcard__poster *[draggable] { pointer-events: none; }
+.mcard__poster--empty {
+  display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(135deg, rgba(10,10,10,0.04) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.mcard__poster--empty svg { width: 38px; height: 38px; stroke: var(--ink-40); }
+.mcard__title {
+  font-size: clamp(18px, 1.8vw, 24px); font-weight: 560;
+  line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 4px;
+}
+.mcard__by {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-40);
+}
+
 /* ─── Footer ───────────────────────────────────────────── */
 .foot { border-top: 2px solid var(--ink); position: relative; z-index: 2; background: var(--paper); }
 .foot__cols {
