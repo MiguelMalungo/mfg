@@ -392,6 +392,7 @@ main { position: relative; z-index: 1; }
 .shelf__track.dragging { cursor: grabbing; }
 
 .mcard { flex: 0 0 auto; width: clamp(150px, 16vw, 200px); }
+.mcard--album .mcard__poster { aspect-ratio: 1 / 1; }  /* album covers are square */
 .mcard__poster {
   aspect-ratio: 2 / 3; width: 100%;
   border: 1px solid var(--ink); border-radius: 12px;

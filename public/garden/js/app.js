@@ -215,13 +215,14 @@
   const POSTER_GLYPH = {
     film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7 5v14M17 5v14M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4"/></svg>',
     book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4Z"/><path d="M5 18a2 2 0 0 1 2-2h11"/></svg>',
+    album: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>',
   };
 
   function mediaCard(item, kind) {
     const poster = item.img
       ? `<div class="mcard__poster" style="background-image:url('${item.img}')"></div>`
       : `<div class="mcard__poster mcard__poster--empty">${POSTER_GLYPH[kind] || ""}</div>`;
-    return `<article class="mcard">
+    return `<article class="mcard mcard--${kind}">
       ${poster}
       <h3 class="mcard__title">${item.title || "Untitled"}</h3>
       <p class="mcard__by">${item.by || (kind === "film" ? "Director" : "Author")}</p>

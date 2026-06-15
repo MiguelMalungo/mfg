@@ -233,5 +233,21 @@ window.GARDEN = {
         { title: "One Hundred Years of Solitude", by: "Gabriel García Márquez", img: "/garden/assets/book-solitude.webp" },
       ],
     },
+    {
+      title: "Music of my Life <em>(so far)</em>",
+      kind: "album",
+      items: [
+        { title: "The Downward Spiral", by: "Nine Inch Nails · 1994", img: "/garden/assets/album-downward-spiral.webp" },
+        { title: "The Velvet Underground & Nico", by: "The Velvet Underground · 1967", img: "/garden/assets/album-velvet-underground.webp" },
+        { title: "Rio", by: "Duran Duran · 1982", img: "/garden/assets/album-rio.webp" },
+        { title: "Rage Against the Machine", by: "Rage Against the Machine · 1992", img: "/garden/assets/album-ratm.webp" },
+        { title: "Purple Rain", by: "Prince · 1984", img: "/garden/assets/album-purple-rain.webp" },
+        { title: "It Takes a Nation of Millions to Hold Us Back", by: "Public Enemy · 1988", img: "/garden/assets/album-nation-of-millions.webp" },
+        { title: "OK Computer", by: "Radiohead · 1997", img: "/garden/assets/album-ok-computer.webp" },
+        { title: "The Rise and Fall of Ziggy Stardust", by: "David Bowie · 1972", img: "/garden/assets/album-ziggy-stardust.webp" },
+        { title: "The Queen Is Dead", by: "The Smiths · 1986", img: "/garden/assets/album-queen-is-dead.webp" },
+        { title: "The Dark Side of the Moon", by: "Pink Floyd · 1973", img: "/garden/assets/album-dark-side.webp" },
+      ],
+    },
   ],
 };
