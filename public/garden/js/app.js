@@ -231,10 +231,14 @@
 
   const shelvesEl = document.getElementById("shelves");
   if (shelvesEl && Array.isArray(shelves)) {
-    shelvesEl.innerHTML = shelves
+    const head = `<div class="shelves__head">
+      <h2 class="shelves__title">What watered me</h2>
+      <p class="shelves__intro">The films, books and music that shaped the way I see — still watering whatever grows here.</p>
+    </div>`;
+    shelvesEl.innerHTML = head + shelves
       .map(
         (sh) => `<section class="shelf">
-          <h2 class="shelf__title">${sh.title}</h2>
+          <h3 class="shelf__title">${sh.title}</h3>
           <div class="shelf__track">${sh.items.map((it) => mediaCard(it, sh.kind)).join("")}</div>
           <div class="shelf__rail" aria-hidden="true"><div class="shelf__thumb"></div></div>
         </section>`

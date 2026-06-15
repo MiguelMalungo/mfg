@@ -371,15 +371,26 @@ main { position: relative; z-index: 1; }
 .peek--on { opacity: 1; transform: translate(-50%, -55%) scale(1) rotate(-3deg); }
 .peek img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* ─── Shelves (films / books of my life) ───────────────── */
+/* ─── Shelves (what watered me) ─────────────────────────── */
 .shelves {
-  padding: 0 clamp(20px, 4vw, 56px) clamp(60px, 10vh, 120px);
-  display: flex; flex-direction: column; gap: clamp(40px, 6vh, 72px);
+  padding: clamp(40px, 7vh, 90px) clamp(20px, 4vw, 56px) clamp(60px, 10vh, 120px);
+  display: flex; flex-direction: column; gap: clamp(36px, 5vh, 60px);
+  border-top: 2px solid var(--ink);
+}
+.shelves__head { margin-bottom: clamp(4px, 1vh, 12px); }
+.shelves__title {
+  font-size: clamp(40px, 7vw, 92px); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 0.98; text-transform: uppercase;
+}
+.shelves__intro {
+  margin-top: 18px; max-width: 46ch;
+  font-size: clamp(16px, 1.5vw, 20px); line-height: 1.5; font-weight: 420;
+  color: rgba(10, 10, 10, 0.7);
 }
 .shelf__title {
-  font-size: clamp(28px, 4.4vw, 56px); font-weight: 600;
-  letter-spacing: -0.015em; line-height: 1; text-transform: uppercase;
-  border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 26px;
+  font-size: clamp(20px, 2.6vw, 34px); font-weight: 580;
+  letter-spacing: -0.01em; line-height: 1; text-transform: uppercase;
+  border-bottom: 1px solid var(--ink); padding-bottom: 14px; margin-bottom: 22px;
 }
 .shelf__title em { font-style: italic; font-weight: 400; color: var(--ink-40); }
 .shelf__track {
