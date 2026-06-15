@@ -678,6 +678,10 @@ main { position: relative; z-index: 1; }
 .note--cover .note__title em,
 .note--cover .note__body a.wl,
 .note--cover .note__backs a strong { color: var(--ink); }
+/* on hover the lime fill flips to ink, so the text must go lime (green) —
+   otherwise the cover override above keeps it ink: black-on-black */
+.note--cover .note__body a.wl:hover { color: var(--lime); }
+.note--cover .note__backs a:hover strong { color: var(--lime); }
 /* borders → translucent white */
 .note--cover .note__backs,
 .note--cover .note__backs a,

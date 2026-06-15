@@ -51,8 +51,8 @@ window.GARDEN = {
     {
       slug: "blend",
       cover: "/garden/assets/cover-blend.webp",
-      title: "BLEND by KaleidoKonscious",
-      shortTitle: "BLEND",
+      title: "Serenity by KaleidoKonscious",
+      shortTitle: "Serenity",
       stage: "budding",
       topics: ["Words", "AI"],
       desc: "An interactive book of poems with AI-generated art and media. A book that listens back.",
@@ -62,7 +62,7 @@ window.GARDEN = {
       hrefLabel: "Open the book",
       body: `
         <p>An interactive book of poems with AI-generated art and media. A book that listens back.</p>
-        <p>BLEND sits in the same neighbourhood as <a class="wl" data-note="blocks">BLOCKS</a> — small typographic worlds you can move through. It's the most direct piece I've made about using AI as a co-author rather than a tool.</p>
+        <p>Serenity sits in the same neighbourhood as <a class="wl" data-note="blocks">BLOCKS</a> — small typographic worlds you can move through. It's the most direct piece I've made about using AI as a co-author rather than a tool.</p>
         <p>Still tending. Pages still get rewritten when I find a new one I like.</p>`,
     },
     {
@@ -77,7 +77,7 @@ window.GARDEN = {
       hrefLabel: "Open BLOCKS",
       body: `
         <p>An interactive poetry book — small typographic worlds you can move through. Each block is a fragment; the navigation is part of the poem.</p>
-        <p>Made in the same season as <a class="wl" data-note="blend">BLEND</a>, with a more mechanical, code-first attitude. Type as architecture.</p>`,
+        <p>Made in the same season as <a class="wl" data-note="blend">Serenity</a>, with a more mechanical, code-first attitude. Type as architecture.</p>`,
     },
     {
       slug: "bus",
@@ -118,7 +118,7 @@ window.GARDEN = {
       hrefLabel: "digisol.pt",
       body: `
         <p>My web work — sites and apps I build for other people. If you need something on the web that feels considered, this is the door.</p>
-        <p>The companion to the more experimental things like <a class="wl" data-note="blocks">BLOCKS</a> and <a class="wl" data-note="blend">BLEND</a>: this one is craft for clients, those ones are craft for themselves.</p>
+        <p>The companion to the more experimental things like <a class="wl" data-note="blocks">BLOCKS</a> and <a class="wl" data-note="blend">Serenity</a>: this one is craft for clients, those ones are craft for themselves.</p>
         <h2>Selected work</h2>
         <p><a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis ↗</a> — the website, mobile app and management platform for an intelligent waste system: underground containers with fill-level sensors and Pay-As-You-Throw access, all reporting to one dashboard.</p>
         <figure><img src="/garden/assets/sotkis.webp" alt="The Sotkis website" loading="lazy" /></figure>`,
@@ -136,7 +136,7 @@ window.GARDEN = {
       hrefLabel: "Open the museum",
       body: `
         <p>An interactive, gamified museum app to display digital art and NFTs. The idea: collectors and artists should be able to walk through their own work, not scroll past it.</p>
-        <p>I built this alongside <a class="wl" data-note="blend">BLEND</a> — both came out of the same period of playing with AI as a collaborator rather than as a tool.</p>
+        <p>I built this alongside <a class="wl" data-note="blend">Serenity</a> — both came out of the same period of playing with AI as a collaborator rather than as a tool.</p>
         <p>If you'd like your own version of this — your collection, your space — get in touch.</p>`,
     },
     {
@@ -202,7 +202,7 @@ window.GARDEN = {
   // Items without an img show a placeholder poster.
   shelves: [
     {
-      title: "Films of my Life <em>(so far)</em>",
+      title: "<em>Some of the</em> Films of my Life",
       kind: "film",
       items: [
         { title: "2001: A Space Odyssey", by: "Stanley Kubrick · 1968", img: "/garden/assets/film-2001.webp" },
@@ -218,7 +218,7 @@ window.GARDEN = {
       ],
     },
     {
-      title: "Books of my Life <em>(so far)</em>",
+      title: "<em>Some of the</em> Books of my Life",
       kind: "book",
       items: [
         { title: "The Brothers Karamazov", by: "Fyodor Dostoevsky", img: "/garden/assets/book-karamazov.webp" },
@@ -234,7 +234,7 @@ window.GARDEN = {
       ],
     },
     {
-      title: "Music of my Life <em>(so far)</em>",
+      title: "<em>Some of the</em> Music of my Life",
       kind: "album",
       items: [
         { title: "The Downward Spiral", by: "Nine Inch Nails · 1994", img: "/garden/assets/album-downward-spiral.webp" },
