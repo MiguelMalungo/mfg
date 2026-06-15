@@ -385,11 +385,27 @@ main { position: relative; z-index: 1; }
 .shelf__track {
   display: flex; gap: clamp(14px, 1.6vw, 22px);
   overflow-x: auto; padding-bottom: 8px;
-  cursor: grab; scrollbar-width: none;
-  user-select: none; -webkit-user-select: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;       /* momentum scroll on iOS */
+  scroll-snap-type: x proximity;
+  touch-action: pan-x pan-y;               /* let the page scroll vertically too */
+  overscroll-behavior-x: contain;
 }
+.shelf__track > .mcard { scroll-snap-align: start; }
 .shelf__track::-webkit-scrollbar { display: none; }
+@media (hover: hover) { .shelf__track { cursor: grab; } }
 .shelf__track.dragging { cursor: grabbing; }
+
+/* scroll progress line */
+.shelf__rail {
+  position: relative; height: 3px; margin-top: 14px;
+  background: var(--ink-15); border-radius: 999px;
+  transition: opacity 0.3s;
+}
+.shelf__thumb {
+  position: absolute; top: 0; height: 100%; left: 0; width: 30%;
+  background: var(--ink); border-radius: 999px;
+}
 
 .mcard { flex: 0 0 auto; width: clamp(150px, 16vw, 200px); }
 .mcard--album .mcard__poster { aspect-ratio: 1 / 1; }  /* album covers are square */
@@ -400,7 +416,9 @@ main { position: relative; z-index: 1; }
   margin-bottom: 14px; overflow: hidden;
   transition: transform 0.45s var(--ease-out);
 }
-.mcard:hover .mcard__poster { transform: translateY(-6px); }
+@media (hover: hover) {
+  .mcard:hover .mcard__poster { transform: translateY(-6px); }
+}
 .mcard__poster img, .mcard__poster *[draggable] { pointer-events: none; }
 .mcard__poster--empty {
   display: grid; place-items: center;

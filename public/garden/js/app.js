@@ -236,13 +236,34 @@
         (sh) => `<section class="shelf">
           <h2 class="shelf__title">${sh.title}</h2>
           <div class="shelf__track">${sh.items.map((it) => mediaCard(it, sh.kind)).join("")}</div>
+          <div class="shelf__rail" aria-hidden="true"><div class="shelf__thumb"></div></div>
         </section>`
       )
       .join("");
-    shelvesEl.querySelectorAll(".shelf__track").forEach(setupDragX);
+    shelvesEl.querySelectorAll(".shelf").forEach(setupShelf);
   }
 
-  // Simple horizontal click-drag scroller (used by the shelves).
+  // Per shelf: native touch scrolling everywhere, click-drag only on
+  // pointer (desktop), plus a progress line that mirrors scroll position.
+  function setupShelf(shelf) {
+    const track = shelf.querySelector(".shelf__track");
+    const rail = shelf.querySelector(".shelf__rail");
+    const thumb = shelf.querySelector(".shelf__thumb");
+    if (hasHover) setupDragX(track); // desktop only — avoids fighting touch scroll
+    const update = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      if (max <= 1) { rail.style.opacity = "0"; return; }
+      rail.style.opacity = "1";
+      thumb.style.width = (track.clientWidth / track.scrollWidth) * 100 + "%";
+      thumb.style.left = (track.scrollLeft / track.scrollWidth) * 100 + "%";
+    };
+    track.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+    setTimeout(update, 400); // re-measure once covers have laid out
+  }
+
+  // Simple horizontal click-drag scroller (desktop pointer only).
   function setupDragX(track) {
     let down = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vel = 0, moved = false;
     track.addEventListener("pointerdown", (e) => {
