@@ -459,7 +459,7 @@ main { position: relative; z-index: 1; }
 .note__body a.ext:hover { background: var(--lime); }
 .note__body figure { margin: 2.2em 0; }
 .note__body figure img { width: 100%; height: auto; display: block; border: 1px solid var(--ink); }
-.note__body figure img[src*="sotkis"] { border-radius: 0 0 16px 16px; }
+.note__body figure img[src*="sotkis"] { border-radius: 0 0 32px 32px; }
 
 /* TikTok embeds */
 .tiktoks {
