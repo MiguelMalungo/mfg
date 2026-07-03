@@ -27,8 +27,6 @@ const nextConfig: NextConfig = {
         destination: "/garden#:slug",
         permanent: true,
       },
-      // unlisted CV — support the capitalized form too
-      { source: "/CV", destination: "/cv", permanent: false },
     ];
   },
   async rewrites() {
