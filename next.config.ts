@@ -27,10 +27,28 @@ const nextConfig: NextConfig = {
         destination: "/garden#:slug",
         permanent: true,
       },
+      // unlisted CV — support the capitalized form too
+      { source: "/CV", destination: "/cv", permanent: false },
     ];
   },
   async rewrites() {
-    return [{ source: "/garden", destination: "/garden/index.html" }];
+    return [
+      { source: "/garden", destination: "/garden/index.html" },
+      { source: "/cv", destination: "/cv/index.html" },
+    ];
+  },
+  async headers() {
+    return [
+      // belt-and-braces: keep the unlisted CV out of search indexes
+      {
+        source: "/cv/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/cv",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
   },
 };
 
