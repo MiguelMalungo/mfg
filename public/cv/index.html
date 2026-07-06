@@ -161,6 +161,17 @@
     .foot a { text-decoration: none; font-weight: 600; }
     .foot a:hover { background: var(--accent); }
 
+    /* mobile: ring and titles center-aligned */
+    @media (max-width: 700px) {
+      .head__name, .head__tag { text-align: center; }
+      .head__tag { margin-left: auto; margin-right: auto; }
+      .head__kicker { justify-content: center; gap: 10px 18px; }
+      .ringrow { justify-content: center; }
+      .ringwrap { margin: 0 auto; }
+      .ringlabel { text-align: center; min-width: 100%; }
+      .head__links { justify-content: center; }
+    }
+
     @media print {
       #spores, .grain, .ringrow { display: none !important; }
       body { background: #fff; }
