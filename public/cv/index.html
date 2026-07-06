@@ -254,6 +254,7 @@
         <p class="entry__org todo">[GROUP / SCHOOL, CITY]</p>
         <p class="entry__desc todo">[What you taught, to whom, for how long — ginga, rhythm, the long memory of the body.]</p>
         <div class="entry__tags"><span class="tag">Sports</span></div>
+        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
       </article>
 
       <article class="entry" data-f="sports">
@@ -264,6 +265,7 @@
         <p class="entry__org todo">[CLUB / ACADEMY, CITY]</p>
         <p class="entry__desc todo">[Age groups, level, certifications context.]</p>
         <div class="entry__tags"><span class="tag">Sports</span></div>
+        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
       </article>
 
       <article class="entry" data-f="art">
@@ -458,8 +460,8 @@
       var ICONS = {
         grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
         code: "M9 6 4 12l5 6M15 6l5 6-5 6",
-        ball: "M12 3a9 9 0 1 0 .001 18A9 9 0 0 0 12 3Zm0 3.5 3.4 2.5-1.3 4h-4.2l-1.3-4L12 6.5Zm0 0V3M8.6 9.9 5 8.5m3.9 5.4-2.4 3m9.4-3 2.4 3m-3.9-8.4L18.9 8.5",
-        brush: "M14 5.5 18.5 10 9 19.5c-1.5 1.5-4 1.5-5-.5s.5-3.5 1.5-4.5L14 5.5ZM14 5.5 17 2.5c1-1 3.5 1.5 2.5 2.5L16.5 8",
+        ball: "M12 3a9 9 0 1 0 .001 18A9 9 0 0 0 12 3Zm0 5.2 3.3 2.4-1.26 3.9H9.96L8.7 10.6 12 8.2Zm0 0V4.9M15.3 10.6l3.3-1.1M14.04 14.5l2 2.7M9.96 14.5l-2 2.7M8.7 10.6 5.4 9.5",
+        brush: "M12 21a9 9 0 1 1 0-18c5 0 9 3.1 9 7a4 4 0 0 1-4 4h-1.5a1.5 1.5 0 0 0-1.1 2.6c.3.3.6.6.6 1.2A2.2 2.2 0 0 1 12.8 21H12ZM6.8 11.5h.01M9.8 7.6h.01M14.6 7.6h.01",
         user: "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 10c0-4 3-6.5 7-6.5s7 2.5 7 6.5",
         briefcase: "M4 8h16v11H4zM9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8M4 12.5h16",
         cap: "M12 4 2 9l10 5 10-5-10-5Zm-6 7.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5",
@@ -607,6 +609,14 @@
       restStatus();
 
       document.getElementById("yy").textContent = new Date().getFullYear();
+
+      /* in-page jump buttons (e.g. Diplomas ↓) — smooth scroll, hash untouched */
+      document.querySelectorAll("[data-jump]").forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          scrollTo(a.getAttribute("href"));
+        });
+      });
 
       /* ── text scramble on mono links (garden signature) ── */
       var SCRAMBLE = "!<>-_\\/[]{}—=+*^?#";
