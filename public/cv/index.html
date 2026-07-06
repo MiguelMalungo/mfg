@@ -540,14 +540,9 @@
         /* hub — dark overlay + white text above the .hubphoto div,
            which sits under the transparent SVG center */
         var hub = el("g", { id: "hub", role: "button", tabindex: 0, "aria-label": "Reset to all focuses", style: "cursor:pointer" });
-        el("circle", { cx: CX, cy: CY, r: 103.5, fill: "rgba(0,0,0,0.52)" }, hub);
+        el("circle", { cx: CX, cy: CY, r: 103.5, fill: "rgba(0,0,0,0.35)" }, hub);
         el("circle", { cx: CX, cy: CY, r: 104, fill: "none", stroke: "#0a0a0a", "stroke-width": 1.5 }, hub);
-        var hubGlyph = addGlyph("sprout", 0, 0, 2.2, hub);
-        hubGlyph.setAttribute("transform", "translate(" + (CX - 26.4) + " " + (CY - 38) + ") scale(2.2)");
-        hubGlyph.setAttribute("color", "#ffffff");
-        var t1 = el("text", { x: CX, y: CY + 34, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 13, "letter-spacing": 2, fill: "#ffffff", "font-weight": 600 }, hub);
-        t1.textContent = "MFG — CV";
-        var t2 = el("text", { x: CX, y: CY + 54, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 9, "letter-spacing": 1.5, fill: "rgba(255,255,255,0.7)" }, hub);
+        var t2 = el("text", { x: CX, y: CY + 80, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 13, "letter-spacing": 2, fill: "#ffffff", "font-weight": 600 }, hub);
         t2.textContent = "PICK A LENS";
         bindWedge(hub, "ALL FOCUSES", function () { setFocus("all", true); }, "RESET LENS");
 
