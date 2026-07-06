@@ -48,17 +48,22 @@
     .head__name {
       font-size: clamp(36px, 6.5vw, 72px); font-weight: 600;
       line-height: 0.95; letter-spacing: -0.02em; text-transform: uppercase;
-      text-align: center;
     }
     .head__name .ln { display: block; overflow: hidden; padding-bottom: 0.05em; }
     .head__name .ch { display: inline-block; will-change: transform; }
-    .head__tag { margin-top: 12px; font-size: clamp(16px, 2vw, 22px); font-weight: 500; line-height: 1.35; text-align: center; max-width: 46ch; margin-left: auto; margin-right: auto; }
+    .head__tag { margin-top: 12px; font-size: clamp(16px, 2vw, 22px); font-weight: 500; line-height: 1.35; max-width: 46ch; }
 
     /* ═══ the ring ═══ */
+    .ringrow {
+      display: flex; align-items: center;
+      gap: clamp(24px, 4vw, 56px);
+      margin-top: clamp(20px, 4vh, 40px);
+      flex-wrap: wrap;
+    }
     .ringwrap {
       position: relative;
-      width: min(88vw, 560px);
-      margin: clamp(20px, 4vh, 40px) auto 0;
+      width: min(82vw, 440px);
+      flex: 0 0 auto;
     }
     .ringwrap::before { /* soft halo behind the ring, tinted by focus */
       content: ""; position: absolute; inset: -12%;
@@ -72,14 +77,20 @@
     #ring .wedge:focus { outline: none; }
     #ring .glyph { pointer-events: none; }
     #ring text { pointer-events: none; }
-    .ring__status {
-      margin-top: 16px; text-align: center; color: var(--ink-40);
-      min-height: 1.4em;
+    /* where-am-I label, right of the ring */
+    .ringlabel { flex: 1 1 260px; min-width: 240px; }
+    .ringlabel__sub {
+      color: var(--ink-40); margin-bottom: 10px; min-height: 1.2em;
     }
-    .ring__hint { margin-top: 6px; text-align: center; color: var(--ink-40); font-size: 10.5px; }
+    .ringlabel__big {
+      font-size: clamp(28px, 4.6vw, 52px); font-weight: 600;
+      line-height: 1.02; letter-spacing: -0.015em; text-transform: uppercase;
+      color: var(--ink); min-height: 2.1em;
+    }
+    .ringlabel__hint { margin-top: 18px; color: var(--ink-40); font-size: 10.5px; line-height: 1.8; }
 
     /* head links under ring */
-    .head__links { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 26px; justify-content: center; }
+    .head__links { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 26px; }
     .head__links a {
       font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em;
       text-transform: uppercase; font-weight: 600; text-decoration: none;
@@ -141,11 +152,9 @@
     .foot a:hover { background: var(--accent); }
 
     @media print {
-      #spores, .grain, .ringwrap, .ring__status, .ring__hint { display: none !important; }
+      #spores, .grain, .ringrow { display: none !important; }
       body { background: #fff; }
       .wrap { padding: 0; max-width: none; }
-      .head__name, .head__tag { text-align: left; }
-      .head__links { justify-content: flex-start; }
       a { text-decoration: none; }
       /* content must print regardless of animation state */
       * { opacity: 1 !important; transform: none !important; }
@@ -174,11 +183,16 @@
     </header>
 
     <!-- ═══ The Ring ═══ -->
-    <div class="ringwrap" data-in>
-      <svg id="ring" viewBox="0 0 600 600" role="group" aria-label="CV control ring"></svg>
+    <div class="ringrow" data-in>
+      <div class="ringwrap">
+        <svg id="ring" viewBox="0 0 600 600" role="group" aria-label="CV control ring"></svg>
+      </div>
+      <div class="ringlabel" aria-live="polite">
+        <p class="mono ringlabel__sub" id="ringSub"></p>
+        <p class="ringlabel__big" id="ringBig"></p>
+        <p class="mono ringlabel__hint">INNER RING PICKS A LENS<br/>OUTER RING JUMPS TO A SECTION<br/>/cv#it · /cv#sports · /cv#art</p>
+      </div>
     </div>
-    <p class="mono ring__status" id="ringStatus" aria-live="polite"></p>
-    <p class="mono ring__hint">INNER RING PICKS A LENS · OUTER RING JUMPS TO A SECTION · /cv#it · /cv#sports · /cv#art</p>
 
     <nav class="head__links" data-in>
       <a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT ↗</a>
@@ -356,8 +370,12 @@
       var entries = document.querySelectorAll("[data-f]");
       var profileText = document.getElementById("profileText");
       var tagline = document.getElementById("tagline");
-      var statusEl = document.getElementById("ringStatus");
+      var ringBig = document.getElementById("ringBig");
+      var ringSub = document.getElementById("ringSub");
       var focus = "all";
+
+      function setStatus(big, sub) { ringBig.textContent = big; ringSub.textContent = sub; }
+      function restStatus() { setStatus(FOCUS_LABEL[focus], "CURRENT LENS"); }
 
       function applyFilter(f) {
         entries.forEach(function (el) {
@@ -372,7 +390,7 @@
         focus = f;
         document.documentElement.style.setProperty("--accent", ACCENTS[f]);
         paintRing();
-        statusEl.textContent = FOCUS_LABEL[f];
+        restStatus();
         if (hasGsap && !reduced) {
           gsap.to("[data-f]:not([hidden])", {
             opacity: 0, y: 8, duration: 0.16, ease: "power2.in", overwrite: true,
@@ -439,14 +457,14 @@
       ];
       /* outer ring: sections + actions (like the app's slots) */
       var SLOTS = [
-        { icon: "user",      label: "PROFILE",            act: function () { scrollTo("#profile"); } },
-        { icon: "briefcase", label: "EXPERIENCE",         act: function () { scrollTo("#experience"); } },
-        { icon: "cap",       label: "EDUCATION & DIPLOMAS", act: function () { scrollTo("#education"); } },
-        { icon: "spark",     label: "SKILLS",             act: function () { scrollTo("#skills"); } },
-        { icon: "print",     label: "PRINT / SAVE PDF",   act: function () { window.print(); } },
-        { icon: "mail",      label: "EMAIL — TO FILL",    act: function () { location.href = "mailto:PLACEHOLDER@EMAIL"; } },
-        { icon: "globe",     label: "MIGUELFGUEDES.PT ↗", act: function () { window.open("https://miguelfguedes.pt", "_blank", "noopener"); } },
-        { icon: "sprout",    label: "THE GARDEN ↗",       act: function () { window.open("https://miguelfguedes.pt/garden", "_blank", "noopener"); } }
+        { icon: "user",      label: "PROFILE",              sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#profile"); } },
+        { icon: "briefcase", label: "EXPERIENCE",           sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#experience"); } },
+        { icon: "cap",       label: "EDUCATION & DIPLOMAS", sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#education"); } },
+        { icon: "spark",     label: "SKILLS",               sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#skills"); } },
+        { icon: "print",     label: "PRINT / SAVE PDF",     sub: "ACTION", act: function () { window.print(); } },
+        { icon: "mail",      label: "EMAIL",                sub: "ACTION — WRITE ME", act: function () { location.href = "mailto:PLACEHOLDER@EMAIL"; } },
+        { icon: "globe",     label: "MIGUELFGUEDES.PT",     sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt", "_blank", "noopener"); } },
+        { icon: "sprout",    label: "THE GARDEN",           sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt/garden", "_blank", "noopener"); } }
       ];
 
       function scrollTo(sel) {
@@ -488,7 +506,7 @@
           var glyph = addGlyph(s.icon, 241, (a0 + a1) / 2, 1.35, g1);
           glyph.setAttribute("color", "#0a0a0a");
           slotWedges.push({ w: w, s: s });
-          bindWedge(w, s.label, s.act);
+          bindWedge(w, s.label, s.act, s.sub);
         });
 
         /* inner lenses: 4 × 90° */
@@ -505,31 +523,44 @@
           var glyph = addGlyph(l.icon, 153, mid, 1.25, g2);
           glyph.setAttribute("color", "#0a0a0a");
           lensWedges.push({ w: w, l: l });
-          bindWedge(w, l.label, function () { setFocus(l.f, true); });
+          bindWedge(w, l.label, function () { setFocus(l.f, true); }, "LENS — FILTERS THE CV");
         });
 
-        /* hub */
+        /* hub — photo, dark overlay, white text */
+        var defs = el("defs");
+        var clip = el("clipPath", { id: "hubclip" }, defs);
+        el("circle", { cx: CX, cy: CY, r: 103, }, clip);
+
         var hub = el("g", { id: "hub", role: "button", tabindex: 0, "aria-label": "Reset to all focuses", style: "cursor:pointer" });
-        el("circle", { cx: CX, cy: CY, r: 104, fill: "rgba(10,10,10,0.03)", stroke: "#0a0a0a", "stroke-width": 1.5 }, hub);
+        var img = el("image", {
+          x: CX - 104, y: CY - 104, width: 208, height: 208,
+          "clip-path": "url(#hubclip)", preserveAspectRatio: "xMidYMid slice"
+        }, hub);
+        img.setAttribute("href", "/cv/hub.webp");
+        img.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "/cv/hub.webp");
+        el("circle", { cx: CX, cy: CY, r: 103, fill: "rgba(0,0,0,0.52)", "clip-path": "url(#hubclip)" }, hub);
+        el("circle", { cx: CX, cy: CY, r: 104, fill: "none", stroke: "#0a0a0a", "stroke-width": 1.5 }, hub);
         var hubGlyph = addGlyph("sprout", 0, 0, 2.2, hub);
         hubGlyph.setAttribute("transform", "translate(" + (CX - 26.4) + " " + (CY - 38) + ") scale(2.2)");
-        hubGlyph.setAttribute("color", "#0a0a0a");
-        var t1 = el("text", { x: CX, y: CY + 34, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 13, "letter-spacing": 2, fill: "#0a0a0a", "font-weight": 600 }, hub);
+        hubGlyph.setAttribute("color", "#ffffff");
+        var t1 = el("text", { x: CX, y: CY + 34, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 13, "letter-spacing": 2, fill: "#ffffff", "font-weight": 600 }, hub);
         t1.textContent = "MFG — CV";
-        var t2 = el("text", { x: CX, y: CY + 54, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 9, "letter-spacing": 1.5, fill: "rgba(10,10,10,0.45)" }, hub);
+        var t2 = el("text", { x: CX, y: CY + 54, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 9, "letter-spacing": 1.5, fill: "rgba(255,255,255,0.7)" }, hub);
         t2.textContent = "PICK A LENS";
-        bindWedge(hub, "ALL FOCUSES", function () { setFocus("all", true); });
+        bindWedge(hub, "ALL FOCUSES", function () { setFocus("all", true); }, "RESET LENS");
 
         paintRing();
       }
 
-      function bindWedge(node, label, act) {
+      function bindWedge(node, label, act, sub) {
         node.addEventListener("click", act);
         node.addEventListener("keydown", function (e) {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); }
         });
-        node.addEventListener("mouseenter", function () { statusEl.textContent = label; hoverPaint(node, true); });
-        node.addEventListener("mouseleave", function () { statusEl.textContent = FOCUS_LABEL[focus]; hoverPaint(node, false); });
+        node.addEventListener("mouseenter", function () { setStatus(label, sub || ""); hoverPaint(node, true); });
+        node.addEventListener("mouseleave", function () { restStatus(); hoverPaint(node, false); });
+        node.addEventListener("focus", function () { setStatus(label, sub || ""); });
+        node.addEventListener("blur", function () { restStatus(); });
       }
 
       function hoverPaint(node, on) {
@@ -565,7 +596,7 @@
       document.documentElement.style.setProperty("--accent", ACCENTS[initial]);
       applyFilter(initial);
       paintRing();
-      statusEl.textContent = FOCUS_LABEL[initial];
+      restStatus();
 
       document.getElementById("yy").textContent = new Date().getFullYear();
 
