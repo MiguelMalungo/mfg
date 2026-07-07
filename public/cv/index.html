@@ -244,6 +244,7 @@
         <p class="entry__org">DigiSol — <a href="https://www.digisol.pt" target="_blank" rel="noopener noreferrer">digisol.pt</a></p>
         <p class="entry__desc">Sites and apps built for clients. Recent: <a href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis</a> — website, mobile app and management platform for an intelligent waste system. <span class="todo">[More details / other clients]</span></p>
         <div class="entry__tags"><span class="tag">IT</span><span class="tag">Design</span></div>
+        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
       </article>
 
       <article class="entry" data-f="sports">
@@ -282,6 +283,15 @@
     <!-- ═══ Education & Diplomas ═══ -->
     <section id="education">
       <h2 class="sec__title">Education &amp; Diplomas</h2>
+
+      <article class="entry" data-f="all">
+        <div class="entry__top">
+          <h3 class="entry__role">Bachelor in Mechanical Engineering</h3>
+          <span class="entry__when todo">YYYY</span>
+        </div>
+        <p class="entry__org todo">[UNIVERSITY / INSTITUTE]</p>
+        <a class="doc" href="/cv/diplomas/PLACEHOLDER.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+      </article>
 
       <article class="entry" data-f="it">
         <div class="entry__top">
@@ -390,6 +400,8 @@
       /* per-focus halo colors — the ring's "modes" */
       var ACCENTS = { all: "#c8ff00", it: "#54d6ff", sports: "#ffb300", art: "#ff4fa3" };
       var FOCUS_LABEL = { all: "ALL FOCUSES", it: "IT & WEB", sports: "SPORTS", art: "ART & DESIGN" };
+      var LENS_ICON = { it: "code", sports: "ball", art: "brush" };
+      var eduGlyphPath = null; /* diplomas wedge icon — follows the lens */
 
       var entries = document.querySelectorAll("[data-f]");
       var profileText = document.getElementById("profileText");
@@ -483,7 +495,9 @@
       var SLOTS = [
         { icon: "user",      label: "PROFILE",              sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#profile"); } },
         { icon: "briefcase", label: "EXPERIENCE",           sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#experience"); } },
-        { icon: "cap",       label: "EDUCATION & DIPLOMAS", sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#education"); } },
+        { icon: "cap", key: "edu",
+          label: function () { return focus === "all" ? "EDUCATION & DIPLOMAS" : "DIPLOMAS — " + FOCUS_LABEL[focus]; },
+          sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#education"); } },
         { icon: "spark",     label: "SKILLS",               sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#skills"); } },
         { icon: "print",     label: "PRINT / SAVE PDF",     sub: "ACTION", act: function () { window.print(); } },
         { icon: "mail",      label: "EMAIL",                sub: "ACTION — WRITE ME", act: function () { location.href = "mailto:PLACEHOLDER@EMAIL"; } },
@@ -524,11 +538,12 @@
           var w = el("path", {
             d: wedgePath(198, 284, a0, a1),
             class: "wedge", role: "button", tabindex: 0,
-            "aria-label": s.label,
+            "aria-label": (typeof s.label === "function" ? s.label() : s.label),
             fill: "rgba(10,10,10,0.045)", stroke: "rgba(10,10,10,0.35)", "stroke-width": 1
           }, g1);
           var glyph = addGlyph(s.icon, 241, (a0 + a1) / 2, 1.35, g1);
           glyph.setAttribute("color", "#0a0a0a");
+          if (s.key === "edu") eduGlyphPath = glyph.querySelector("path");
           slotWedges.push({ w: w, s: s });
           bindWedge(w, s.label, s.act, s.sub);
         });
@@ -563,13 +578,14 @@
       }
 
       function bindWedge(node, label, act, sub) {
+        var lbl = function () { return typeof label === "function" ? label() : label; };
         node.addEventListener("click", act);
         node.addEventListener("keydown", function (e) {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); }
         });
-        node.addEventListener("mouseenter", function () { setStatus(label, sub || ""); hoverPaint(node, true); });
+        node.addEventListener("mouseenter", function () { setStatus(lbl(), sub || ""); hoverPaint(node, true); });
         node.addEventListener("mouseleave", function () { restStatus(); hoverPaint(node, false); });
-        node.addEventListener("focus", function () { setStatus(label, sub || ""); });
+        node.addEventListener("focus", function () { setStatus(lbl(), sub || ""); });
         node.addEventListener("blur", function () { restStatus(); });
       }
 
@@ -595,6 +611,10 @@
         slotWedges.forEach(function (o) {
           o.w.setAttribute("fill", "rgba(10,10,10,0.045)");
         });
+        /* the diplomas wedge mirrors the active lens */
+        if (eduGlyphPath) {
+          eduGlyphPath.setAttribute("d", ICONS[focus === "all" ? "cap" : LENS_ICON[focus]]);
+        }
       }
 
       buildRing();
