@@ -142,6 +142,21 @@
       transition: background-color 0.3s var(--ease-out), color 0.3s;
     }
     .doc:hover { background: var(--ink); color: var(--accent); }
+    button.doc { background: transparent; cursor: pointer; }
+    .doc__ico { width: 14px; height: 14px; flex: 0 0 auto; }
+
+    /* per-section print buttons, right of each title */
+    .sec__print {
+      margin-left: auto; width: 34px; height: 34px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; border: 1px solid var(--ink-15); border-radius: 999px;
+      color: var(--ink-40); cursor: pointer;
+      transition: background-color 0.3s var(--ease-out), color 0.3s, border-color 0.3s;
+    }
+    .sec__print:hover { border-color: var(--ink); color: var(--ink); background: var(--accent); }
+    .sec__print .doc__ico { width: 15px; height: 15px; }
+
+    .printrow { margin-top: clamp(36px, 6vh, 60px); display: flex; justify-content: center; }
 
     /* skills */
     .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding-top: 18px; }
@@ -173,13 +188,15 @@
     }
 
     @media print {
-      #spores, .grain, .ringrow { display: none !important; }
+      #spores, .grain, .ringrow, .sec__print, .printrow { display: none !important; }
       body { background: #fff; }
       .wrap { padding: 0; max-width: none; }
       a { text-decoration: none; }
       /* content must print regardless of animation state */
       * { opacity: 1 !important; transform: none !important; }
       .entry[hidden], .skills__group[hidden] { display: none !important; }
+      /* a section print button prints only its own section */
+      body.print-section section:not(.print-solo) { display: none !important; }
     }
     @media (prefers-reduced-motion: reduce) {
       * { transition-duration: 0.01ms !important; }
@@ -226,7 +243,7 @@
 
     <!-- ═══ Profile ═══ -->
     <section id="profile">
-      <h2 class="sec__title">Profile</h2>
+      <h2 class="sec__title">Profile<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
       <div class="entry" data-f="all">
         <p class="entry__desc" id="profileText"></p>
       </div>
@@ -234,7 +251,7 @@
 
     <!-- ═══ Experience ═══ -->
     <section id="experience">
-      <h2 class="sec__title">Experience</h2>
+      <h2 class="sec__title">Experience<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
 
       <article class="entry" data-f="it art">
         <div class="entry__top">
@@ -282,7 +299,7 @@
 
     <!-- ═══ Education & Diplomas ═══ -->
     <section id="education">
-      <h2 class="sec__title">Education &amp; Diplomas</h2>
+      <h2 class="sec__title">Education &amp; Diplomas<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
 
       <article class="entry" data-f="all">
         <div class="entry__top">
@@ -332,7 +349,7 @@
 
     <!-- ═══ Skills ═══ -->
     <section id="skills">
-      <h2 class="sec__title">Skills</h2>
+      <h2 class="sec__title">Skills<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
       <div class="skills">
         <div class="skills__group" data-f="it">
           <span class="skills__label">IT &amp; Web</span>
@@ -368,6 +385,11 @@
         </div>
       </div>
     </section>
+
+    <!-- ═══ Print ═══ -->
+    <div class="printrow">
+      <button class="doc" id="printAll" type="button">Print / Save the full CV (PDF)</button>
+    </div>
 
     <!-- ═══ Footer ═══ -->
     <footer class="foot mono">
@@ -499,7 +521,6 @@
           label: function () { return focus === "all" ? "EDUCATION & DIPLOMAS" : "DIPLOMAS — " + FOCUS_LABEL[focus]; },
           sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#education"); } },
         { icon: "spark",     label: "SKILLS",               sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#skills"); } },
-        { icon: "print",     label: "PRINT / SAVE PDF",     sub: "ACTION", act: function () { window.print(); } },
         { icon: "mail",      label: "EMAIL",                sub: "ACTION — WRITE ME", act: function () { location.href = "mailto:PLACEHOLDER@EMAIL"; } },
         { icon: "globe",     label: "MIGUELFGUEDES.PT",     sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt", "_blank", "noopener"); } },
         { icon: "sprout",    label: "THE GARDEN",           sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt/garden", "_blank", "noopener"); } }
@@ -531,10 +552,11 @@
         /* dotted outer rim (like the app's tick marks) */
         el("circle", { cx: CX, cy: CY, r: 294, fill: "none", stroke: "rgba(10,10,10,0.45)", "stroke-width": 2, "stroke-dasharray": "2 8", id: "rim" });
 
-        /* outer slots: 8 × 45° */
+        /* outer slots: evenly split */
         var g1 = el("g", { id: "outer" });
+        var STEP = 360 / SLOTS.length;
         SLOTS.forEach(function (s, i) {
-          var a0 = i * 45 + 1.5, a1 = (i + 1) * 45 - 1.5;
+          var a0 = i * STEP + 1.5, a1 = (i + 1) * STEP - 1.5;
           var w = el("path", {
             d: wedgePath(198, 284, a0, a1),
             class: "wedge", role: "button", tabindex: 0,
@@ -636,6 +658,39 @@
           e.preventDefault();
           scrollTo(a.getAttribute("href"));
         });
+      });
+
+      /* ── button glyphs — diplomas carry the cap, print the printer ── */
+      function prependIcon(node, name) {
+        var s = document.createElementNS(SVG, "svg");
+        s.setAttribute("viewBox", "0 0 24 24");
+        s.setAttribute("aria-hidden", "true");
+        s.setAttribute("class", "doc__ico");
+        var p = document.createElementNS(SVG, "path");
+        p.setAttribute("d", ICONS[name]);
+        p.setAttribute("fill", "none");
+        p.setAttribute("stroke", "currentColor");
+        p.setAttribute("stroke-width", "2");
+        p.setAttribute("stroke-linecap", "round");
+        p.setAttribute("stroke-linejoin", "round");
+        s.appendChild(p);
+        node.insertBefore(s, node.firstChild);
+      }
+      document.querySelectorAll("#experience .doc, #education .doc").forEach(function (a) { prependIcon(a, "cap"); });
+      document.querySelectorAll(".sec__print, #printAll").forEach(function (b) { prependIcon(b, "print"); });
+
+      /* ── print — full CV from the bottom button, one section from its header ── */
+      document.getElementById("printAll").addEventListener("click", function () { window.print(); });
+      document.querySelectorAll(".sec__print").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          btn.closest("section").classList.add("print-solo");
+          document.body.classList.add("print-section");
+          window.print();
+        });
+      });
+      window.addEventListener("afterprint", function () {
+        document.body.classList.remove("print-section");
+        document.querySelectorAll(".print-solo").forEach(function (s) { s.classList.remove("print-solo"); });
       });
 
       /* ── text scramble on mono links (garden signature) ── */
