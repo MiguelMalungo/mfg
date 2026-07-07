@@ -782,10 +782,8 @@
         /* hub — dark overlay + white text above the .hubphoto div,
            which sits under the transparent SVG center */
         var hub = el("g", { id: "hub", role: "button", tabindex: 0, "aria-label": "Reset to all focuses", style: "cursor:pointer" });
-        el("circle", { cx: CX, cy: CY, r: 103.5, fill: "rgba(0,0,0,0.35)" }, hub);
+        el("circle", { cx: CX, cy: CY, r: 104, fill: "transparent" }, hub);
         el("circle", { cx: CX, cy: CY, r: 104, fill: "none", stroke: "#0a0a0a", "stroke-width": 1.5 }, hub);
-        var t2 = el("text", { x: CX, y: CY + 80, "text-anchor": "middle", "font-family": "Spline Sans Mono, monospace", "font-size": 13, "letter-spacing": 2, fill: "#ffffff", "font-weight": 600 }, hub);
-        t2.textContent = "PICK A LENS";
         bindWedge(hub, "ALL FOCUSES", function () { setFocus("all", true); }, "RESET LENS");
 
         paintRing();
