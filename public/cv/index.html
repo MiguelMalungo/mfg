@@ -174,6 +174,22 @@
     /* placeholders — obvious until real content lands */
     .todo { outline: 2px dashed rgba(10,10,10,0.35); outline-offset: 3px; background: rgba(200,255,0,0.25); padding: 0 4px; }
 
+    /* ambient sound toggle — off by default */
+    #soundtoggle {
+      position: fixed; right: clamp(16px, 3vw, 28px); bottom: clamp(16px, 3vw, 28px);
+      z-index: 70; width: 46px; height: 46px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--paper); border: 1px solid var(--ink); color: var(--ink);
+      cursor: pointer; box-shadow: 0 2px 12px rgba(10, 10, 10, 0.12);
+      transition: background-color 0.3s var(--ease-out), color 0.3s, transform 0.3s var(--ease-out);
+    }
+    #soundtoggle:hover { background: var(--accent); transform: translateY(-2px); }
+    #soundtoggle svg { width: 20px; height: 20px; }
+    #soundtoggle .ico--on { display: none; }
+    #soundtoggle.is-on { background: var(--accent); }
+    #soundtoggle.is-on .ico--off { display: none; }
+    #soundtoggle.is-on .ico--on { display: block; }
+
     /* footer */
     .foot { margin-top: clamp(48px, 8vh, 80px); border-top: 2px solid var(--ink); padding-top: 22px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
     .foot a { text-decoration: none; font-weight: 600; }
@@ -191,7 +207,7 @@
     }
 
     @media print {
-      #spores, .grain, .ringrow, .sec__print, .printrow { display: none !important; }
+      #spores, .grain, .ringrow, .sec__print, .printrow, #soundtoggle { display: none !important; }
       body { background: #fff; }
       .wrap { padding: 0; max-width: none; }
       a { text-decoration: none; }
@@ -617,6 +633,12 @@
     </footer>
   </div>
 
+  <button id="soundtoggle" type="button" aria-label="Play ambient sound" aria-pressed="false" title="Ambient sound">
+    <svg class="ico ico--off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9l4.5 6M21 9l-4.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg class="ico ico--on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <audio id="ambient" loop preload="none" src="/assets/Fields.mp3"></audio>
+
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
   <script>
@@ -1007,6 +1029,35 @@
           if (running && !was) tick();
         });
       }
+    })();
+  </script>
+
+  <script>
+    /* ── ambient sound — off by default, loops when switched on ── */
+    (function () {
+      var btn = document.getElementById("soundtoggle");
+      var audio = document.getElementById("ambient");
+      if (!btn || !audio) return;
+      audio.volume = 0.35;
+      btn.addEventListener("click", function () {
+        if (audio.paused) {
+          audio.play().then(function () {
+            btn.classList.add("is-on");
+            btn.setAttribute("aria-pressed", "true");
+            btn.setAttribute("aria-label", "Mute ambient sound");
+          }).catch(function () {});
+        } else {
+          audio.pause();
+          btn.classList.remove("is-on");
+          btn.setAttribute("aria-pressed", "false");
+          btn.setAttribute("aria-label", "Play ambient sound");
+        }
+      });
+      /* pause when the tab is hidden; resume if it was playing */
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden && !audio.paused) { audio.pause(); audio.dataset.wasPlaying = "1"; }
+        else if (!document.hidden && audio.dataset.wasPlaying === "1") { audio.dataset.wasPlaying = ""; audio.play().catch(function () {}); }
+      });
     })();
   </script>
 </body>
