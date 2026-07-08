@@ -143,6 +143,9 @@
     }
     .doc:hover { background: var(--ink); color: var(--accent); }
     button.doc { background: transparent; cursor: pointer; }
+    /* non-clickable diploma marker — the diploma exists but isn't viewable */
+    .doc--static { cursor: default; color: var(--ink-40); border-color: var(--ink-15); }
+    .doc--static:hover { background: transparent; color: var(--ink-40); }
     .doc__ico { width: 14px; height: 14px; flex: 0 0 auto; }
 
     /* per-section print buttons, right of each title */
@@ -217,7 +220,7 @@
         <span class="ln" data-split>MIGUEL</span>
         <span class="ln" data-split>FERRAZ GUEDES</span>
       </h1>
-      <p class="head__tag" id="tagline" data-in>Builder of considered things — on the web, in the body, on the page.</p>
+      <p class="head__tag" id="tagline" data-in></p>
     </header>
 
     <!-- ═══ The Ring ═══ -->
@@ -235,7 +238,7 @@
 
     <nav class="head__links" data-in>
       <a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT ↗</a>
-      <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>THE GARDEN ↗</a>
+      <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>DIGITAL GARDEN ↗</a>
       <a href="https://www.digisol.pt" target="_blank" rel="noopener noreferrer" data-scramble>DIGISOL ↗</a>
       <a href="https://github.com/MiguelMalungo" target="_blank" rel="noopener noreferrer" data-scramble>GITHUB ↗</a>
       <a href="https://linkedin.com/in/miguelferrazguedes" target="_blank" rel="noopener noreferrer" data-scramble>LINKEDIN ↗</a>
@@ -262,9 +265,7 @@
         </div>
         <p class="entry__org">DigiSol — <a href="https://www.digisol.pt" target="_blank" rel="noopener noreferrer">digisol.pt</a></p>
         <p class="entry__desc">Sites and apps built for clients. Recent: <a href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis</a> — website, mobile app and management platform for an intelligent waste system.</p>
-        <div class="entry__tags"><span class="tag">IT</span><span class="tag">Design</span></div>
-        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
-      </article>
+        <div class="entry__tags"><span class="tag">IT</span><span class="tag">Design</span></div>      </article>
 
       <article class="entry" data-f="it">
         <div class="entry__top">
@@ -283,9 +284,7 @@
         </div>
         <p class="entry__org">GEO Link SA</p>
         <p class="entry__desc">Built a native Android kiosk application for taxi services in hospitals and hotels.</p>
-        <div class="entry__tags"><span class="tag">IT</span><span class="tag">Android</span></div>
-        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
-      </article>
+        <div class="entry__tags"><span class="tag">IT</span><span class="tag">Android</span></div>      </article>
 
       <article class="entry" data-f="art it">
         <div class="entry__top">
@@ -303,7 +302,7 @@
           <span class="entry__when">2019 — Present</span>
         </div>
         <p class="entry__org">SP59 — <a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer">miguelfguedes.pt</a></p>
-        <p class="entry__desc">Interactive poetry (<a href="https://miguelmalungo.github.io/kept/" target="_blank" rel="noopener noreferrer">Serenity</a>, BLOCKS, <a href="https://www.instagram.com/kaleidokonscious/" target="_blank" rel="noopener noreferrer">KaleidoKonscious</a>), AI-assisted short films, and <a href="https://www.instagram.com/saudadefuturista/" target="_blank" rel="noopener noreferrer">Saudade Futurista</a>, an artistic-inspiration project.</p>
+        <p class="entry__desc">Interactive poetry (<a href="https://miguelmalungo.github.io/kept/" target="_blank" rel="noopener noreferrer">Serenity</a>, <a href="https://lovely-pegasus-e9f6e6.netlify.app/?utm_source=ig&amp;utm_medium=social&amp;utm_content=link_in_bio&amp;fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQPOTM2NjE5NzQzMzkyNDU5AAGnvDAHpoAEz3Oa8J4ju9Qld8XMd5FpMwyYWS7ADIojfCsDhV6Wx7M-7qLj4Yc_aem_AnOYNz7WjvJ1oN7pB2VHDA" target="_blank" rel="noopener noreferrer">BLOCKS</a>, KaleidoKonscious), AI-assisted short films, and Saudade Futurista, an artistic-inspiration project.</p>
         <div class="entry__tags"><span class="tag">Art</span><span class="tag">AI</span></div>
       </article>
 
@@ -314,9 +313,7 @@
         </div>
         <p class="entry__org">Grupo Senzala — Portugal, Finland &amp; Sweden</p>
         <p class="entry__desc">Taught capoeira across three countries. Founded KF Senzala Stockholm in 2005, organising sports, social and cultural events for adults, teens and children.</p>
-        <div class="entry__tags"><span class="tag">Sports</span><span class="tag">Community</span></div>
-        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
-      </article>
+        <div class="entry__tags"><span class="tag">Sports</span><span class="tag">Community</span></div>      </article>
 
       <article class="entry" data-f="sports">
         <div class="entry__top">
@@ -325,9 +322,7 @@
         </div>
         <p class="entry__org">Samba Football AB · Rågsved IF · NSK Norrtull, Stockholm</p>
         <p class="entry__desc">Coached across several Stockholm clubs and academies.</p>
-        <div class="entry__tags"><span class="tag">Sports</span></div>
-        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
-      </article>
+        <div class="entry__tags"><span class="tag">Sports</span></div>      </article>
 
       <article class="entry" data-f="sports">
         <div class="entry__top">
@@ -336,17 +331,15 @@
         </div>
         <p class="entry__org">Girls' courses — Stockholm</p>
         <p class="entry__desc">Designed and led self-defence courses for girls.</p>
-        <div class="entry__tags"><span class="tag">Sports</span></div>
-        <a class="doc" href="#education" data-jump>Diplomas ↓</a>
-      </article>
+        <div class="entry__tags"><span class="tag">Sports</span></div>      </article>
 
       <article class="entry" data-f="other">
         <div class="entry__top">
           <h3 class="entry__role">Company Owner</h3>
           <span class="entry__when">2020 — Present</span>
         </div>
-        <p class="entry__org">Endless Road — Campervan Rental</p>
-        <p class="entry__desc">Founder and owner of a campervan-rental business.</p>
+        <p class="entry__org">Endless Road — Campervan and Caravan Rental</p>
+        <p class="entry__desc">Founder and owner of a campervan- and caravan-rental business.</p>
       </article>
 
       <article class="entry" data-f="other">
@@ -397,16 +390,23 @@
         </div>
         <p class="entry__org">Energest, Lda — Engineering, Maia, Portugal</p>
       </article>
+
+      <article class="entry" data-f="other">
+        <div class="entry__top">
+          <h3 class="entry__role">Public Relations &amp; Door Host</h3>
+          <span class="entry__when">1992 — 1996</span>
+        </div>
+        <p class="entry__org">Club Bela Cruz — Porto, Portugal</p>
+      </article>
     </section>
 
     <!-- ═══ Education & Diplomas ═══ -->
     <section id="education">
-      <h2 class="sec__title">Education &amp; Diplomas<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
+      <h2 class="sec__title">Education<button class="sec__print" type="button" aria-label="Print this section" title="Print this section"></button></h2>
 
       <article class="entry" data-f="all">
         <div class="entry__top">
           <h3 class="entry__role">Bachelor in Mechanical Engineering</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">Instituto Superior de Engenharia do Porto (ISEP)</p>
         <a class="doc" href="/cv/diplomas/mechanical-engineering.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
@@ -415,7 +415,6 @@
       <article class="entry" data-f="it">
         <div class="entry__top">
           <h3 class="entry__role">Mobile Application Developer</h3>
-          <span class="entry__when">2022 — 2024</span>
         </div>
         <p class="entry__org">Folkuniversitetet — Gothenburg, Sweden</p>
         <p class="entry__desc">Full-time programme: Java, Android and iOS app development, cross-platform web, cloud, and Agile method.</p>
@@ -425,16 +424,15 @@
       <article class="entry" data-f="it">
         <div class="entry__top">
           <h3 class="entry__role">IT &amp; Web Courses</h3>
-          <span class="entry__when">Coursework</span>
         </div>
         <p class="entry__org">Programming · Web · Game · AI</p>
         <p class="entry__desc">Programming 1 (C#), Programming 2 (Python), Web Developer 1 (HTML/CSS), Web Developer 2 (JavaScript), UX &amp; UI design 2D/3D (Adobe XD, Blender), Game design (Unreal Engine), Digital Events &amp; Livestreaming, AI &amp; Machine Learning.</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="sports">
         <div class="entry__top">
           <h3 class="entry__role">Football Trainer Certification</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">Swedish Football Federation (SFF)</p>
         <a class="doc" href="/cv/diplomas/football-trainer-sff.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
@@ -443,79 +441,99 @@
       <article class="entry" data-f="sports">
         <div class="entry__top">
           <h3 class="entry__role">Capoeira Teacher</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
-        <p class="entry__org">Grupo Senzala</p>
-        <a class="doc" href="/cv/diplomas/capoeira-senzala.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <p class="entry__org">Mestre Peixinho — Grupo Senzala, Rio de Janeiro</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="sports">
         <div class="entry__top">
           <h3 class="entry__role">Self-Defence Trainer</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
-        <p class="entry__org">SSD — Portugal</p>
-        <a class="doc" href="/cv/diplomas/self-defence-ssd.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <p class="entry__org">SSD Portugal</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="sports">
         <div class="entry__top">
           <h3 class="entry__role">Wellness &amp; Stress Pedagogue</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">Addera Kompetens — Sweden</p>
-        <a class="doc" href="/cv/diplomas/wellness-stress-addera.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="all">
         <div class="entry__top">
           <h3 class="entry__role">The Science of Well-Being</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">Yale University</p>
-        <a class="doc" href="/cv/diplomas/science-of-well-being-yale.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <span class="doc doc--static">Diplom.</span>
+      </article>
+
+      <article class="entry" data-f="art">
+        <div class="entry__top">
+          <h3 class="entry__role">International Culture Producer</h3>
+        </div>
+        <p class="entry__org">Almost Educations — Sweden</p>
+        <p class="entry__desc">Two-year full-time programme — starting August 2026. <a href="https://almosteducations.se/international-culture-producer/" target="_blank" rel="noopener noreferrer">Course details ↗</a></p>
+      </article>
+
+      <article class="entry" data-f="art">
+        <div class="entry__top">
+          <h3 class="entry__role">Artistic Practice / Realization in Digital Environments</h3>
+        </div>
+        <p class="entry__org">Almost Educations — Sweden</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="art">
         <div class="entry__top">
           <h3 class="entry__role">Graphic &amp; Web Design, Media Production</h3>
-          <span class="entry__when">Coursework</span>
         </div>
         <p class="entry__org">Adobe Suite &amp; Media Tools</p>
-        <p class="entry__desc">Photoshop, Illustrator, After Effects, Premiere, Adobe XD, Dreamweaver, Final Cut, Audition, and social-media tools.</p>
+        <p class="entry__desc">Photoshop, Illustrator, After Effects, Premiere, Adobe XD, Figma, Dreamweaver, Final Cut, Audition, and social-media tools.</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="art">
         <div class="entry__top">
           <h3 class="entry__role">Photography</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">NTI — Sweden</p>
-        <a class="doc" href="/cv/diplomas/photography-nti.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <span class="doc doc--static">Diplom.</span>
+      </article>
+
+      <article class="entry" data-f="art">
+        <div class="entry__top">
+          <h3 class="entry__role">Documentary Film Making</h3>
+        </div>
+        <p class="entry__org">Stockholm Film School</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="art">
         <div class="entry__top">
           <h3 class="entry__role">Animation</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">3D Studio — Porto, Portugal</p>
+        <p class="entry__desc">3D modelling and animation with Blender.</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="other">
         <div class="entry__top">
           <h3 class="entry__role">AutoCAD 2D / 3D</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">Maia, Portugal</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
 
       <article class="entry" data-f="other">
         <div class="entry__top">
           <h3 class="entry__role">Natural Gas Technician</h3>
-          <span class="entry__when todo">YYYY</span>
         </div>
         <p class="entry__org">ISQ — Gaia, Portugal</p>
+        <span class="doc doc--static">Diplom.</span>
       </article>
     </section>
 
@@ -551,6 +569,7 @@
             <li>Premiere · After Effects · Final Cut</li>
             <li>Photography &amp; video editing</li>
             <li>3D — Blender / 3D Studio</li>
+            <li>TouchDesigner — live visuals</li>
             <li>Interactive storytelling</li>
           </ul>
         </div>
@@ -586,7 +605,7 @@
     <!-- ═══ Footer ═══ -->
     <footer class="foot mono">
       <span>© <span id="yy"></span> MIGUEL FERRAZ GUEDES</span>
-      <span><a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT</a> · <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>THE GARDEN</a></span>
+      <span><a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT</a> · <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>DIGITAL GARDEN</a></span>
     </footer>
   </div>
 
@@ -606,7 +625,7 @@
         art: "Freelance graphic designer, photographer and video editor since 2005, and independent artist as SP59. Interactive poetry (KaleidoKonscious, Serenity, BLOCKS), AI-assisted film, and Saudade Futurista — plus 'Mobile Visions', a mobile-film course I created and taught to youngsters in Stockholm."
       };
       var TAGLINES = {
-        all: "Builder of considered things — on the web, in the body, on the page.",
+        all: "",
         it: "Web developer & designer — sites and apps that feel considered.",
         sports: "Capoeira instructor & football trainer — movement, taught with patience.",
         art: "Artist & designer — interactive books, films and digital worlds."
@@ -715,7 +734,7 @@
         { icon: "spark",     label: "SKILLS",               sub: "SECTION — CLICK TO JUMP", act: function () { scrollTo("#skills"); } },
         { icon: "mail",      label: "EMAIL",                sub: "ACTION — WRITE ME", act: function () { location.href = "mailto:info@swedencapoeira.se"; } },
         { icon: "globe",     label: "MIGUELFGUEDES.PT",     sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt", "_blank", "noopener"); } },
-        { icon: "sprout",    label: "THE GARDEN",           sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt/garden", "_blank", "noopener"); } }
+        { icon: "sprout",    label: "DIGITAL GARDEN",       sub: "LINK — OPENS IN NEW TAB", act: function () { window.open("https://miguelfguedes.pt/garden", "_blank", "noopener"); } }
       ];
 
       function scrollTo(sel) {
