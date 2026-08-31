@@ -43,7 +43,7 @@ export default function ContactPage() {
             <p className="mb-8 text-black">Porto, Rua Serpa Pinto 59</p>
             
             <h2 className="text-2xl font-bold mb-4 text-black">PHONE</h2>
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-8">
               <a 
                 href="https://wa.me/351961084022" 
                 target="_blank" 
@@ -55,7 +55,6 @@ export default function ContactPage() {
                 +351 961 084 022
               </a>
             </div>
-            <p className="mb-8 text-black">+351 961 084 022</p>
             
             <h2 className="text-2xl font-bold mb-4 text-black">FOLLOW US</h2>
             <div className="flex items-center mb-3">
@@ -120,7 +119,7 @@ export default function ContactPage() {
             <p className="mb-8 text-black">Porto, Rua Serpa Pinto 59</p>
             
             <h2 className="text-2xl font-bold mb-4 text-black">PHONE</h2>
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-8">
               <a 
                 href="https://wa.me/351961084022" 
                 target="_blank" 
@@ -132,7 +131,6 @@ export default function ContactPage() {
                 +351 961 084 022
               </a>
             </div>
-            <p className="mb-8 text-black">+351 961 084 022</p>
             
             <h2 className="text-2xl font-bold mb-4 text-black">FOLLOW US</h2>
             <div className="flex items-center mb-3">

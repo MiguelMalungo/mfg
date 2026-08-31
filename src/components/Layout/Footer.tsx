@@ -98,7 +98,6 @@ const Footer = () => {
                 +351 961 084 022
               </a>
             </div>
-            <p className="mb-2">+351 961 084 022</p>
             <p className="mb-6">
               <a
                 href="mailto:info@swedencapoeira.se"
