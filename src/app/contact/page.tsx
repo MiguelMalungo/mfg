@@ -45,14 +45,14 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold mb-4 text-black">PHONE</h2>
             <div className="flex items-center mb-2">
               <a 
-                href="https://wa.me/46762044037" 
+                href="https://wa.me/351961084022" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover:opacity-80 flex items-center text-black"
                 aria-label="Contact on WhatsApp"
               >
                 <FaWhatsapp className="w-5 h-5 mr-2" />
-                +46 76 2044037
+                +351 961 084 022
               </a>
             </div>
             <p className="mb-8 text-black">+351 961 084 022</p>
@@ -122,14 +122,14 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold mb-4 text-black">PHONE</h2>
             <div className="flex items-center mb-2">
               <a 
-                href="https://wa.me/46762044037" 
+                href="https://wa.me/351961084022" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover:opacity-80 flex items-center text-black"
                 aria-label="Contact on WhatsApp"
               >
                 <FaWhatsapp className="w-5 h-5 mr-2" />
-                +46 76 2044037
+                +351 961 084 022
               </a>
             </div>
             <p className="mb-8 text-black">+351 961 084 022</p>
