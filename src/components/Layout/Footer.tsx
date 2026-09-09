@@ -88,14 +88,14 @@ const Footer = () => {
             <h3 className="text-lg font-semibold uppercase mb-4">GET IN TOUCH</h3>
             <div className="flex items-center mb-2">
               <a
-                href="https://wa.me/46762044037"
+                href="https://wa.me/351961084022"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:opacity-80 flex items-center"
                 aria-label="Contact on WhatsApp"
               >
                 <FaWhatsapp className="w-5 h-5 mr-2" />
-                +46 76 2044037
+                +351 961 084 022
               </a>
             </div>
             <p className="mb-2">+351 961 084 022</p>
