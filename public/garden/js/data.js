@@ -80,6 +80,22 @@ window.GARDEN = {
         <p>Made in the same season as <a class="wl" data-note="blend">Serenity</a>, with a more mechanical, code-first attitude. Type as architecture.</p>`,
     },
     {
+      slug: "miks",
+      cover: "/garden/assets/cover-miks.webp",
+      title: "MiKS",
+      stage: "budding",
+      topics: ["Music", "Art", "AI"],
+      desc: "A fictional Afro House artist, built out in full — tracks, tour dates, press photos, a booking page.",
+      tended: "2025",
+      order: 3,
+      href: "/miks",
+      hrefLabel: "Enter the site",
+      body: `
+        <p>MiKS is an artist who does not exist. The tracks, the tour dates, the press shots, the booking address — all of it is made, and all of it is presented straight, the way a real artist's site would present it.</p>
+        <p>The interesting part was never the music on its own. It was how little it takes to make a world feel real: a consistent palette, a tour that runs in the right season, a contact page with three different email addresses. Convention does most of the work.</p>
+        <p>It comes out of the same run of experiments as <a class="wl" data-note="blend">Serenity</a> and <a class="wl" data-note="blocks">BLOCKS</a> — AI as a collaborator rather than a tool — but pointed at a persona instead of a page.</p>`,
+    },
+    {
       slug: "bus",
       cover: "/garden/assets/bus10.webp",
       title: "The Bus",

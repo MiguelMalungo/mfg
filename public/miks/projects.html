@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<base href="/miks/">
+<meta name="description" content="Visual projects from MiKS. A fictional Afro House artist — a built world of tracks, tour dates and visuals. An art project by Miguel Ferraz Guedes.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MiKS">
+<meta property="og:title" content="MiKS · Projects">
+<meta property="og:description" content="Visual projects from MiKS. A fictional Afro House artist — a built world of tracks, tour dates and visuals. An art project by Miguel Ferraz Guedes.">
+<meta property="og:image" content="https://miguelfguedes.pt/miks/media/og.jpg">
+<meta property="og:url" content="https://miguelfguedes.pt/miks/projects.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MiKS · Projects">
+<meta name="twitter:description" content="Visual projects from MiKS. A fictional Afro House artist — a built world of tracks, tour dates and visuals. An art project by Miguel Ferraz Guedes.">
+<meta name="twitter:image" content="https://miguelfguedes.pt/miks/media/og.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coffee:#161009;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;
+    --gold:#f3c969;--ochre:#e09f3e;--clay:#c9552e;
+    --hair:rgba(224,159,62,.22);--hair-dim:rgba(224,159,62,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:auto}
+  body{background:var(--coffee);color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden}
+
+  /* page backdrop — home-style fog, running on bkgc.mp4 */
+  #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0d0906}
+  #bg video{position:absolute;left:50%;top:50%;width:106%;height:106%;
+    transform:translate(-50%,-50%);object-fit:cover}
+  #vFog{filter:blur(46px) brightness(.34) grayscale(1) contrast(1.08)}
+  #vFocus{
+    filter:blur(18px) brightness(.58) grayscale(1) contrast(1.08);
+    -webkit-mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+    mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+  }
+  #bg::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 120% 100% at 50% 42%, transparent 52%, rgba(10,6,3,.78));}
+  header,main,footer{position:relative;z-index:2}
+
+  header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
+  .brand{position:absolute;left:42px;top:50%;transform:translateY(-50%);cursor:pointer;transition:transform .3s}
+  .brand:hover{transform:translateY(-50%) scale(1.08)}
+  .brand img{height:30px;opacity:.95}
+  nav{display:flex;gap:30px}
+  nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.26em;transition:color .3s}
+  nav a:hover,nav a.on{color:var(--gold)}
+
+  /* intro */
+  .intro{min-height:56vh;display:flex;flex-direction:column;justify-content:center;
+    align-items:center;text-align:center;padding:4vh 24px 0}
+  .kick{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.5em;color:var(--gold);text-transform:uppercase}
+  .intro h1{
+    font-weight:200;font-size:clamp(52px,9vw,132px);line-height:.95;letter-spacing:-.02em;margin-top:18px;
+    background:linear-gradient(175deg,var(--bone) 30%,var(--sand) 62%,var(--ochre) 105%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:none;
+  }
+  .intro h1 i{font-style:normal;font-weight:600}
+  .intro p{margin-top:22px;color:var(--sand);font-weight:300;font-size:15px;max-width:54ch;line-height:1.7;
+    text-shadow:0 1px 10px rgba(0,0,0,.7)}
+  .hint{margin-top:5vh;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.34em;
+    color:var(--mist);text-transform:uppercase;display:flex;align-items:center;gap:12px}
+  .hint .ln{width:64px;height:1px;background:linear-gradient(90deg,var(--hair),transparent)}
+
+  /* horizontal journey of video cards */
+  #hwrap{position:relative;overflow:hidden}
+  #track{display:flex;align-items:stretch;will-change:transform}
+  .panel{flex:0 0 auto;width:min(880px,92vw);height:80vh;padding:4vh 2.2vw;display:flex}
+  .card{
+    position:relative;flex:1;border-radius:26px;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:6vh 5vw;border:1px solid var(--hair-dim);
+    transition:border-color .5s, box-shadow .5s;
+  }
+  .card[data-href]{cursor:pointer}
+  .card:hover{border-color:var(--hair);box-shadow:0 30px 80px -30px rgba(0,0,0,.8), 0 0 40px -18px rgba(224,159,62,.35)}
+  /* each card carries its own tone-graded cut of the home video —
+     fogged and muted at rest, its colour wakes up on hover */
+  .card video{
+    position:absolute;left:50%;top:50%;width:112%;height:112%;
+    transform:translate(-50%,-50%);object-fit:cover;z-index:0;
+    filter:blur(28px) brightness(.34) saturate(.25);
+    transition:filter 1s ease, transform 1.2s ease;
+  }
+  .card:hover video{
+    filter:blur(16px) brightness(.52) saturate(1.35);
+    transform:translate(-50%,-50%) scale(1.05);
+  }
+  .card .scrim{position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(10,6,3,.18),rgba(10,6,3,.74) 80%)}
+  .card .num{
+    position:absolute;top:3vh;left:2vw;z-index:2;
+    font-weight:600;font-size:clamp(120px,20vh,220px);line-height:1;
+    color:transparent;-webkit-text-stroke:1px rgba(224,159,62,.32);
+    user-select:none;will-change:transform;
+  }
+  .card .body{position:relative;z-index:3;max-width:34em}
+  .card .tag{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.34em;
+    color:var(--gold);text-transform:uppercase}
+  .card h2{font-weight:200;font-size:clamp(36px,5.4vw,68px);line-height:1.02;
+    letter-spacing:-.015em;margin:12px 0 16px}
+  .card h2 b{font-weight:600}
+  .card p{color:var(--sand);font-weight:300;font-size:14.5px;line-height:1.75;max-width:48ch}
+  .card .foot{margin-top:22px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .card .meta{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.22em;color:var(--mist);text-transform:uppercase}
+  .card .visit{
+    font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;border:1px solid var(--hair);border-radius:999px;
+    padding:11px 22px;transition:all .3s;
+  }
+  .card .visit:hover{border-color:var(--gold);background:rgba(224,159,62,.1);
+    box-shadow:0 0 22px -8px rgba(224,159,62,.5)}
+
+  /* progress line */
+  #prog{position:fixed;left:0;right:0;bottom:0;height:2px;z-index:40;
+    background:rgba(224,159,62,.12)}
+  #prog i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);
+    background:linear-gradient(90deg,var(--clay),var(--ochre),var(--gold))}
+
+  .outro{min-height:42vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 24px}
+  .outro h3{font-weight:200;font-size:clamp(26px,3.6vw,44px);text-shadow:0 1px 12px rgba(0,0,0,.7)}
+  .outro h3 b{font-weight:600;color:var(--gold)}
+  .outro a{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;border:1px solid var(--hair);border-radius:999px;
+    padding:15px 34px;transition:all .35s;
+  }
+  .outro a:hover{border-color:var(--gold);box-shadow:0 0 26px -8px rgba(224,159,62,.5)}
+
+  footer{text-align:center;padding:26px 0 40px}
+  footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
+
+  @media (max-width:860px){
+    /* vertical fallback: cards stack */
+    #track{flex-direction:column;gap:4vh;padding:0 5vw}
+    .panel{width:100%;height:auto;min-height:66vh;padding:0}
+    .card{padding:5vh 7vw}
+    .card .num{font-size:92px;top:2.4vh;left:5vw}
+    .intro{min-height:44vh}
+  }
+  @media (max-width:700px){
+    header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
+      padding:8px 16px;background:rgba(18,12,7,.93);backdrop-filter:blur(10px);
+      border-top:1px solid var(--hair-dim);z-index:60}
+    .brand{left:16px}
+    .brand img{height:22px}
+    nav{gap:12px;margin-left:52px}
+    nav a{font-size:8px;letter-spacing:.1em}
+    footer{display:none}
+    body{padding-bottom:52px}
+    #prog{bottom:44px}
+  }
+</style>
+</head>
+<body>
+
+<div id="bg">
+  <video id="vFog"   src="media/bkgc.mp4" muted loop playsinline autoplay></video>
+  <video id="vFocus" src="media/bkgc.mp4" muted loop playsinline autoplay></video>
+</div>
+
+<header>
+  <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
+  <nav>
+    <a href="index.html">HOME</a>
+    <a href="music.html">MUSIC</a>
+    <a href="tour.html">TOUR</a>
+    <a href="projects.html" class="on">PROJECTS</a>
+    <a href="#" onclick="return false">SHOP</a>
+    <a href="contact.html">CONTACT</a>
+  </nav>
+</header>
+
+<main>
+  <section class="intro">
+    <span class="kick">Beyond the decks</span>
+    <h1>Works &<br><i>worlds.</i></h1>
+    <p>Four ongoing projects — code that breathes, poems made of ink, stages shared
+       with other artists, and a classroom with the decks left on. Different rooms,
+       same pulse.</p>
+    <div class="hint"><span class="ln" style="transform:scaleX(-1)"></span>SCROLL TO TRAVEL<span class="ln"></span></div>
+  </section>
+
+  <section id="hwrap">
+    <div id="track">
+
+      <article class="panel">
+        <div class="card" data-href="https://miguelmalungo.github.io/kept/">
+          <video src="media/projA.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">01</div>
+          <div class="body">
+            <span class="tag">Interactive Experience</span>
+            <h2>Serenity <b>Project</b></h2>
+            <p>A quiet corner of the internet. An interactive piece built for slowing
+               down — soft motion, softer sound, and nothing asking for your attention.
+               Enter, breathe, stay as long as you need.</p>
+            <div class="foot">
+              <a class="visit" href="https://miguelmalungo.github.io/kept/" target="_blank" rel="noopener">Visit ↗</a>
+              <span class="meta">LIVE ON THE WEB</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="card" data-href="https://miguelmalungo.github.io/BlocksExpanded/">
+          <video src="media/projB.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">02</div>
+          <div class="body">
+            <span class="tag">Living Poetry</span>
+            <h2>Blocks <b>Expanded</b></h2>
+            <p>The poetry book <em>BLOCKS</em>, re-set in living type — 67 poems sampled
+               into thousands of grains of ink that reform around every word you touch.
+               Reading becomes excavation.</p>
+            <div class="foot">
+              <a class="visit" href="https://miguelmalungo.github.io/BlocksExpanded/" target="_blank" rel="noopener">Visit ↗</a>
+              <span class="meta">67 POEMS · INTERACTIVE EDITION</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="card">
+          <video src="media/projC.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">03</div>
+          <div class="body">
+            <span class="tag">Live Collaborations</span>
+            <h2>Roots in <b>Motion</b></h2>
+            <p>Collaborations with local artists in every city — live music meeting
+               digital art, with visual performances improvised in real time on stage.
+               No two rooms, and no two nights, ever the same.</p>
+            <div class="foot"><span class="meta">LIVE MUSIC × LIVE VISUALS · TOURING</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="card">
+          <video src="media/projD.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">04</div>
+          <div class="body">
+            <span class="tag">Community & Education</span>
+            <h2>The <b>Yard</b></h2>
+            <p>Free workshops in community spaces — DJing and VJing, live visuals, and
+               generative-AI tools for art production. Youngsters leave with a set,
+               a show, and a new way of making.</p>
+            <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI</span></div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="outro">
+    <h3>Have a stage, a story,<br>or a strange idea? <b>Bring it.</b></h3>
+    <a href="contact.html">Get in touch</a>
+  </section>
+</main>
+
+<div id="prog"><i></i></div>
+
+<footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+/* ═══ page fog (bkgc) — keep playing, focus circle follows the cursor ═══ */
+(function(){
+  const fog=document.getElementById('vFog'), foc=document.getElementById('vFocus');
+  const kick=()=>{document.querySelectorAll('video').forEach(v=>{if(v.paused)v.play().catch(()=>{});});};
+  kick();
+  ['pointerdown','pointermove','touchstart','keydown','scroll'].forEach(e=>addEventListener(e,kick,{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick();});
+  setInterval(()=>{if(Math.abs(fog.currentTime-foc.currentTime)>0.1)foc.currentTime=fog.currentTime;},4000);
+  let tx=-999,ty=-999,cx=-999,cy=-999;
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function loop(){cx+=(tx-cx)*.14;cy+=(ty-cy)*.14;
+    foc.style.setProperty('--fx',cx.toFixed(1)+'px');
+    foc.style.setProperty('--fy',cy.toFixed(1)+'px');
+    requestAnimationFrame(loop);})();
+})();
+
+/* cards 01/02 open their live projects */
+document.querySelectorAll('.card[data-href]').forEach(c=>{
+  c.addEventListener('click',e=>{
+    if(e.target.closest('a'))return;            /* the Visit pill handles itself */
+    window.open(c.dataset.href,'_blank','noopener');
+  });
+});
+
+/* ═══ GSAP: entrance, pinned horizontal journey, parallax, progress ═══ */
+(function(){
+  if(!window.gsap)return;
+  gsap.registerPlugin(ScrollTrigger);
+  gsap.from('.intro > *',{y:26,opacity:0,duration:1.1,stagger:.12,ease:'power3.out',delay:.15});
+
+  const mm=gsap.matchMedia();
+  mm.add('(min-width: 861px)',()=>{
+    const track=document.getElementById('track');
+    const dist=()=>track.scrollWidth-innerWidth;
+    const tween=gsap.to(track,{
+      x:()=>-dist(),
+      ease:'none',
+      scrollTrigger:{
+        trigger:'#hwrap',pin:true,scrub:1,
+        end:()=>'+='+dist(),
+        invalidateOnRefresh:true,
+        onUpdate:self=>gsap.set('#prog i',{scaleX:self.progress}),
+      }
+    });
+    gsap.utils.toArray('.card .num').forEach(num=>{
+      gsap.fromTo(num,{x:50},{x:-90,ease:'none',
+        scrollTrigger:{trigger:num.closest('.panel'),containerAnimation:tween,
+          start:'left right',end:'right left',scrub:true}});
+    });
+    gsap.utils.toArray('.card .body').forEach(body=>{
+      gsap.from(body,{y:40,opacity:0,duration:.8,ease:'power3.out',
+        scrollTrigger:{trigger:body,containerAnimation:tween,
+          start:'left 85%',toggleActions:'play none none reverse'}});
+    });
+    return ()=>{};
+  });
+  mm.add('(max-width: 860px)',()=>{
+    gsap.utils.toArray('.card .body').forEach(body=>{
+      gsap.from(body,{y:36,opacity:0,duration:.8,ease:'power3.out',
+        scrollTrigger:{trigger:body,start:'top 88%',toggleActions:'play none none reverse'}});
+    });
+    const upd=()=>{const m=document.body.scrollHeight-innerHeight;
+      gsap.set('#prog i',{scaleX:m>0?scrollY/m:0});};
+    addEventListener('scroll',upd,{passive:true}); upd();
+    return ()=>removeEventListener('scroll',upd);
+  });
+})();
+</script>
+</body>
+</html>

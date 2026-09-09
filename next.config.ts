@@ -10,13 +10,19 @@ const GARDEN_SLUGS = [
   "bus",
   "digisol",
   "nfts-ai",
-  "sotkis",
   "capoeira",
   "films",
   "photography",
   "surfing",
-  "platos-cat",
 ].join("|");
+
+// Short vanity URLs for the projects worth sharing out loud, e.g.
+// miguelfguedes.pt/serenity. Each one lands on its garden note; the
+// slug on the right is the internal one, which does not always match.
+const VANITY_NOTES: Record<string, string> = {
+  serenity: "blend",
+  blocks: "blocks",
+};
 
 const nextConfig: NextConfig = {
   async redirects() {
@@ -27,12 +33,21 @@ const nextConfig: NextConfig = {
         destination: "/garden#:slug",
         permanent: true,
       },
+      ...Object.entries(VANITY_NOTES).map(([vanity, slug]) => ({
+        source: `/${vanity}`,
+        destination: `/garden#${slug}`,
+        permanent: false,
+      })),
     ];
   },
   async rewrites() {
     return [
       { source: "/garden", destination: "/garden/index.html" },
       { source: "/cv", destination: "/cv/index.html" },
+      // MiKS is a whole static site, not a garden note, so it gets its
+      // own path. The pages carry <base href="/miks/">, which is what
+      // keeps their relative links working from the bare /miks URL.
+      { source: "/miks", destination: "/miks/index.html" },
     ];
   },
   async headers() {
