@@ -17,13 +17,17 @@ const GARDEN_SLUGS = [
 ].join("|");
 
 // Short vanity URLs that go straight to the project itself, e.g.
-// miguelfguedes.pt/serenity. These live on their own hosts, so the
-// address bar changes once the redirect lands — the trade for not
-// having to vendor each project into this repo the way /miks is.
-// Keep in step with the note hrefs in public/garden/js/data.js.
+// miguelfguedes.pt/serenity.
+//
+// Every one points at the project's own live host rather than a copy
+// kept here. A copy is a copy: /miks used to be vendored into this repo
+// and silently went stale the moment the real site moved on. Redirecting
+// means each project has exactly one source of truth and updates the
+// instant it is deployed, at the cost of the address bar changing.
 const VANITY_PROJECTS: Record<string, string> = {
   serenity: "https://miguelmalungo.github.io/kept/",
   blocks: "https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/",
+  miks: "https://miguelmalungo.github.io/miks/",
 };
 
 const nextConfig: NextConfig = {
@@ -46,10 +50,6 @@ const nextConfig: NextConfig = {
     return [
       { source: "/garden", destination: "/garden/index.html" },
       { source: "/cv", destination: "/cv/index.html" },
-      // MiKS is a whole static site, not a garden note, so it gets its
-      // own path. The pages carry <base href="/miks/">, which is what
-      // keeps their relative links working from the bare /miks URL.
-      { source: "/miks", destination: "/miks/index.html" },
     ];
   },
   async headers() {
