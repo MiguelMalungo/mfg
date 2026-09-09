@@ -16,12 +16,14 @@ const GARDEN_SLUGS = [
   "surfing",
 ].join("|");
 
-// Short vanity URLs for the projects worth sharing out loud, e.g.
-// miguelfguedes.pt/serenity. Each one lands on its garden note; the
-// slug on the right is the internal one, which does not always match.
-const VANITY_NOTES: Record<string, string> = {
-  serenity: "blend",
-  blocks: "blocks",
+// Short vanity URLs that go straight to the project itself, e.g.
+// miguelfguedes.pt/serenity. These live on their own hosts, so the
+// address bar changes once the redirect lands — the trade for not
+// having to vendor each project into this repo the way /miks is.
+// Keep in step with the note hrefs in public/garden/js/data.js.
+const VANITY_PROJECTS: Record<string, string> = {
+  serenity: "https://miguelmalungo.github.io/kept/",
+  blocks: "https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/",
 };
 
 const nextConfig: NextConfig = {
@@ -33,9 +35,9 @@ const nextConfig: NextConfig = {
         destination: "/garden#:slug",
         permanent: true,
       },
-      ...Object.entries(VANITY_NOTES).map(([vanity, slug]) => ({
+      ...Object.entries(VANITY_PROJECTS).map(([vanity, url]) => ({
         source: `/${vanity}`,
-        destination: `/garden#${slug}`,
+        destination: url,
         permanent: false,
       })),
     ];
