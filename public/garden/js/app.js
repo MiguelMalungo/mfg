@@ -31,36 +31,6 @@
   });
   const bySlug = Object.fromEntries(sorted.map((n) => [n.slug, n]));
 
-  /* ─── custom cursor ───────────────────────────────────── */
-  const cursor = document.getElementById("cursor");
-  const cursorLabel = document.getElementById("cursorLabel");
-  if (hasHover && !reduced) {
-    const dot = cursor.querySelector(".cursor__dot");
-    const ring = cursor.querySelector(".cursor__ring");
-    const dx = gsap.quickTo(dot, "left", { duration: 0.08, ease: "power2" });
-    const dy = gsap.quickTo(dot, "top", { duration: 0.08, ease: "power2" });
-    const rx = gsap.quickTo(ring, "left", { duration: 0.35, ease: "power3" });
-    const ry = gsap.quickTo(ring, "top", { duration: 0.35, ease: "power3" });
-    window.addEventListener("pointermove", (e) => {
-      dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY);
-    }, { passive: true });
-
-    document.addEventListener("pointerover", (e) => {
-      const t = e.target.closest("[data-cursor], .plot, a, button, .gal__track");
-      if (!t) { cursor.classList.remove("cursor--active"); return; }
-      let label = t.dataset.cursor ?? "";
-      if (t.classList.contains("plot")) label = "OPEN";
-      if (t.classList.contains("gal__track")) label = "DRAG";
-      cursorLabel.textContent = label;
-      cursor.classList.add("cursor--active");
-    });
-    document.addEventListener("pointerout", (e) => {
-      if (!e.relatedTarget) cursor.classList.remove("cursor--active");
-    });
-  } else {
-    cursor.style.display = "none";
-  }
-
   /* ─── text scramble ───────────────────────────────────── */
   const SCRAMBLE = "!<>-_\\/[]{}—=+*^?#";
   document.querySelectorAll("[data-scramble]").forEach((el) => {

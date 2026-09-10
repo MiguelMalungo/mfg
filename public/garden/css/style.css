@@ -130,33 +130,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em;
 }
 
-/* ─── Cursor ───────────────────────────────────────────── */
-.cursor { position: fixed; top: 0; left: 0; z-index: 90; pointer-events: none; }
-.cursor__dot {
-  position: fixed; top: -100px; left: -100px;
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ink); transform: translate(-50%, -50%);
-}
-.cursor__ring {
-  position: fixed; top: -100px; left: -100px;
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 1px solid var(--ink); transform: translate(-50%, -50%);
-  display: flex; align-items: center; justify-content: center;
-  transition: width 0.3s var(--ease-out), height 0.3s var(--ease-out),
-    background-color 0.3s, border-color 0.3s;
-}
-.cursor__label {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
-  opacity: 0; transition: opacity 0.2s;
-}
-.cursor--active .cursor__ring {
-  width: 72px; height: 72px;
-  background: rgba(200, 255, 0, 0.35); /* see-through — text behind stays readable */
-  border-color: var(--lime);
-}
-.cursor--active .cursor__label { opacity: 1; }
-.cursor--active .cursor__dot { opacity: 0; }
-@media (hover: none) { .cursor { display: none; } }
 
 /* ─── Header ───────────────────────────────────────────── */
 .site-head {
@@ -332,7 +305,7 @@ main { position: relative; z-index: 1; }
 
 .plot__top { display: flex; justify-content: space-between; align-items: flex-start; }
 .plot__idx { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-40); }
-.plot:hover .plot__idx { color: var(--ink); }
+.plot:hover .plot__idx { color: var(--ink-fixed); }
 .plot__glyph { width: 26px; height: 26px; stroke: var(--ink); }
 .plot__glyph path, .plot__glyph circle { stroke-dasharray: 80; stroke-dashoffset: 0; }
 .plot:hover .plot__glyph { animation: regrow 0.9s var(--ease-out); }
@@ -352,7 +325,7 @@ main { position: relative; z-index: 1; }
   margin-top: 12px; font-size: 15.5px; line-height: 1.45;
   font-weight: 420; color: var(--ink-72); max-width: 42ch;
 }
-.plot:hover .plot__desc { color: var(--ink); }
+.plot:hover .plot__desc { color: var(--ink-fixed); }
 
 .plot__bot {
   display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
@@ -363,7 +336,7 @@ main { position: relative; z-index: 1; }
   line-height: 0.8; color: transparent;
   -webkit-text-stroke: 1px var(--ink-40);
 }
-.plot:hover .plot__year { -webkit-text-stroke: 1px var(--ink); }
+.plot:hover .plot__year { -webkit-text-stroke: 1px var(--ink-fixed); }
 .plot__open {
   position: absolute; right: clamp(18px, 2vw, 30px); bottom: clamp(18px, 2vw, 30px);
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
@@ -392,9 +365,20 @@ main { position: relative; z-index: 1; }
 .plot--cover:hover .plot__idx,
 .plot--cover:hover .plot__title,
 .plot--cover:hover .plot__desc,
-.plot--cover:hover .plot__topics { color: var(--ink); }
-.plot--cover:hover .plot__glyph { stroke: var(--ink); }
-.plot--cover:hover .plot__year { -webkit-text-stroke-color: var(--ink); }
+.plot--cover:hover .plot__topics { color: var(--ink-fixed); }
+.plot--cover:hover .plot__glyph { stroke: var(--ink-fixed); }
+.plot--cover:hover .plot__year { -webkit-text-stroke-color: var(--ink-fixed); }
+
+/* The lime wash covers the whole card on hover. Lime is identical in both
+   themes, so everything sitting on it is pinned to the fixed dark ink —
+   otherwise the text turns cream in dark mode and disappears. */
+.plot:hover .plot__idx,
+.plot:hover .plot__title,
+.plot:hover .plot__desc,
+.plot:hover .plot__topics,
+.plot:hover .plot__open { color: var(--ink-fixed); }
+.plot:hover .plot__glyph { stroke: var(--ink-fixed); }
+.plot:hover .plot__year { -webkit-text-stroke-color: var(--ink-fixed); }
 
 /* spans (desktop) */
 @media (min-width: 861px) {
@@ -752,13 +736,13 @@ main { position: relative; z-index: 1; }
 .note--cover .note__body a.ext { border-bottom-color: rgba(255, 255, 255, 0.7); }
 /* a visit button (external link) reads as white on the dark backdrop */
 .note--cover .note__visit { border-color: #fff; color: #fff; }
-.note--cover .note__visit:hover { background: #fff; color: var(--ink); }
+.note--cover .note__visit:hover { background: #fff; color: var(--ink-fixed); }
 /* hover stays lime → dark text on it */
 .note--cover .note__bar button:hover,
 .note--cover .note__body a.ext:hover,
 .note--cover .note__pager button:hover,
 .note--cover .note__pager button:hover strong,
-.note--cover .note__pager button:hover .mono { color: var(--ink); }
+.note--cover .note__pager button:hover .mono { color: var(--ink-fixed); }
 
 /* reveal helpers */
 [data-reveal] { opacity: 0; transform: translateY(24px); }
