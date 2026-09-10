@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#14130f" />
+  <meta name="color-scheme" content="dark" />
   <title>CV — Miguel Ferraz Guedes</title>
   <!-- unlisted: not linked from the site, not for search engines -->
   <meta name="robots" content="noindex, nofollow" />
@@ -12,12 +14,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Spline+Sans+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --paper: #f0eee6;
-      --ink: #0a0a0a;
+      color-scheme: dark;
+      --paper: #14130f;            /* dark page ground (warm charcoal) */
+      --ink: #f0eee6;              /* light primary text + strokes */
       --lime: #c8ff00;
       --accent: #c8ff00;           /* follows the selected focus */
-      --ink-40: rgba(10, 10, 10, 0.4);
-      --ink-15: rgba(10, 10, 10, 0.15);
+      --ink-40: rgba(240, 238, 230, 0.45);
+      --ink-15: rgba(240, 238, 230, 0.16);
+      --on-accent: #0a0a0a;        /* text/ink on lime/accent backgrounds — always black */
       --serif: "Fraunces", Georgia, serif;
       --mono: "Spline Sans Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
       --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
@@ -29,7 +33,7 @@
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
-    ::selection { background: var(--accent); color: var(--ink); }
+    ::selection { background: var(--accent); color: var(--on-accent); }
     .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
     a { color: inherit; }
 
@@ -105,7 +109,7 @@
       font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em;
       text-transform: uppercase; font-weight: 600; text-decoration: none;
     }
-    .head__links a:hover { background: var(--accent); }
+    .head__links a:hover { background: var(--accent); color: var(--on-accent); }
 
     /* sections */
     section { margin-top: clamp(36px, 6vh, 60px); scroll-margin-top: 20px; }
@@ -128,9 +132,9 @@
     .entry:hover .entry__role { transform: translateX(6px); }
     .entry__when { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-40); text-transform: uppercase; white-space: nowrap; }
     .entry__org { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 5px; }
-    .entry__desc { margin-top: 10px; font-size: 16.5px; line-height: 1.55; font-weight: 420; max-width: 66ch; color: rgba(10,10,10,0.85); }
+    .entry__desc { margin-top: 10px; font-size: 16.5px; line-height: 1.55; font-weight: 420; max-width: 66ch; color: rgba(240,238,230,0.82); }
     .entry__desc a { text-decoration: underline; text-underline-offset: 3px; }
-    .entry__desc a:hover { background: var(--accent); }
+    .entry__desc a:hover { background: var(--accent); color: var(--on-accent); }
     .exticon { width: 0.72em; height: 0.72em; display: inline-block; vertical-align: -0.03em; margin-left: 1px; }
     .entry__tags { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
     .tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--ink-15); border-radius: 999px; padding: 3px 9px; color: var(--ink-40); }
@@ -142,7 +146,7 @@
       border: 1px solid var(--ink); border-radius: 999px; padding: 8px 16px;
       transition: background-color 0.3s var(--ease-out), color 0.3s;
     }
-    .doc:hover { background: var(--ink); color: var(--accent); }
+    .doc:hover { background: var(--accent); color: var(--on-accent); }
     button.doc { background: transparent; cursor: pointer; }
     /* non-clickable diploma marker — the diploma exists but isn't viewable */
     .doc--static { cursor: default; color: var(--ink-40); border-color: var(--ink-15); }
@@ -157,7 +161,7 @@
       color: var(--ink-40); cursor: pointer;
       transition: background-color 0.3s var(--ease-out), color 0.3s, border-color 0.3s;
     }
-    .sec__print:hover { border-color: var(--ink); color: var(--ink); background: var(--accent); }
+    .sec__print:hover { border-color: var(--on-accent); color: var(--on-accent); background: var(--accent); }
     .sec__print .doc__ico { width: 15px; height: 15px; }
 
     .printrow { margin-top: clamp(36px, 6vh, 60px); display: flex; justify-content: center; }
@@ -167,13 +171,13 @@
     .skills__group[hidden] { display: none; }
     .skills__group { border: 1px solid var(--ink); padding: 18px; transition: transform 0.4s var(--ease-out); }
     .skills__group:hover { transform: translateY(-4px); }
-    .skills__label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em; text-transform: uppercase; background: var(--accent); display: inline-block; padding: 3px 9px; margin-bottom: 12px; transition: background-color 0.4s; }
+    .skills__label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em; text-transform: uppercase; background: var(--accent); color: var(--on-accent); display: inline-block; padding: 3px 9px; margin-bottom: 12px; transition: background-color 0.4s; }
     .skills__group ul { list-style: none; }
     .skills__group li { font-size: 15.5px; padding: 4px 0; font-weight: 440; }
     .skills__group li::before { content: "→ "; font-size: 0.8em; }
 
     /* placeholders — obvious until real content lands */
-    .todo { outline: 2px dashed rgba(10,10,10,0.35); outline-offset: 3px; background: rgba(200,255,0,0.25); padding: 0 4px; }
+    .todo { outline: 2px dashed rgba(240,238,230,0.4); outline-offset: 3px; background: rgba(200,255,0,0.8); color: var(--on-accent); padding: 0 4px; }
 
     /* ambient sound toggle — off by default */
     #soundtoggle {
@@ -184,17 +188,17 @@
       cursor: pointer; box-shadow: 0 2px 12px rgba(10, 10, 10, 0.12);
       transition: background-color 0.3s var(--ease-out), color 0.3s, transform 0.3s var(--ease-out);
     }
-    #soundtoggle:hover { background: var(--accent); transform: translateY(-2px); }
+    #soundtoggle:hover { background: var(--accent); color: var(--on-accent); transform: translateY(-2px); }
     #soundtoggle svg { width: 20px; height: 20px; }
     #soundtoggle .ico--on { display: none; }
-    #soundtoggle.is-on { background: var(--accent); }
+    #soundtoggle.is-on { background: var(--accent); color: var(--on-accent); }
     #soundtoggle.is-on .ico--off { display: none; }
     #soundtoggle.is-on .ico--on { display: block; }
 
     /* footer */
     .foot { margin-top: clamp(48px, 8vh, 80px); border-top: 2px solid var(--ink); padding-top: 22px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
     .foot a { text-decoration: none; font-weight: 600; }
-    .foot a:hover { background: var(--accent); }
+    .foot a:hover { background: var(--accent); color: var(--on-accent); }
 
     /* mobile: ring and titles center-aligned */
     @media (max-width: 700px) {
@@ -208,8 +212,11 @@
     }
 
     @media print {
+      /* print on white paper with black ink, regardless of the dark screen theme */
+      :root { --paper: #fff; --ink: #0a0a0a; --ink-40: rgba(10,10,10,0.5); --ink-15: rgba(10,10,10,0.2); }
       #spores, .grain, .ringrow, .sec__print, .printrow, #soundtoggle { display: none !important; }
-      body { background: #fff; }
+      body { background: #fff; color: #0a0a0a; }
+      .entry__desc { color: rgba(10,10,10,0.85); }
       .wrap { padding: 0; max-width: none; }
       a { text-decoration: none; }
       /* content must print regardless of animation state */
@@ -792,7 +799,7 @@
         svg.innerHTML = "";
 
         /* dotted outer rim (like the app's tick marks) */
-        el("circle", { cx: CX, cy: CY, r: 294, fill: "none", stroke: "rgba(10,10,10,0.45)", "stroke-width": 2, "stroke-dasharray": "2 8", id: "rim" });
+        el("circle", { cx: CX, cy: CY, r: 294, fill: "none", stroke: "rgba(240,238,230,0.35)", "stroke-width": 2, "stroke-dasharray": "2 8", id: "rim" });
 
         /* outer slots: evenly split */
         var g1 = el("g", { id: "outer" });
@@ -803,12 +810,12 @@
             d: wedgePath(198, 284, a0, a1),
             class: "wedge", role: "button", tabindex: 0,
             "aria-label": (typeof s.label === "function" ? s.label() : s.label),
-            fill: "rgba(10,10,10,0.045)", stroke: "rgba(10,10,10,0.35)", "stroke-width": 1
+            fill: "rgba(240,238,230,0.05)", stroke: "rgba(240,238,230,0.28)", "stroke-width": 1
           }, g1);
           var glyph = addGlyph(s.icon, 241, (a0 + a1) / 2, 1.35, g1);
-          glyph.setAttribute("color", "#0a0a0a");
+          glyph.setAttribute("color", "#f0eee6");
           if (s.key === "edu") eduGlyphPath = glyph.querySelector("path");
-          slotWedges.push({ w: w, s: s });
+          slotWedges.push({ w: w, s: s, g: glyph });
           bindWedge(w, s.label, s.act, s.sub);
         });
 
@@ -821,11 +828,11 @@
             d: wedgePath(116, 190, a0, a1),
             class: "wedge", role: "button", tabindex: 0,
             "aria-label": "Focus: " + l.label,
-            fill: "rgba(10,10,10,0.045)", stroke: "rgba(10,10,10,0.35)", "stroke-width": 1
+            fill: "rgba(240,238,230,0.05)", stroke: "rgba(240,238,230,0.28)", "stroke-width": 1
           }, g2);
           var glyph = addGlyph(l.icon, 153, mid, 1.25, g2);
-          glyph.setAttribute("color", "#0a0a0a");
-          lensWedges.push({ w: w, l: l });
+          glyph.setAttribute("color", "#f0eee6");
+          lensWedges.push({ w: w, l: l, g: glyph });
           bindWedge(w, l.label, function () { setFocus(l.f, true); }, "LENS — FILTERS THE CV");
         });
 
@@ -833,7 +840,7 @@
            which sits under the transparent SVG center */
         var hub = el("g", { id: "hub", role: "button", tabindex: 0, "aria-label": "Reset to all focuses", style: "cursor:pointer" });
         el("circle", { cx: CX, cy: CY, r: 104, fill: "transparent" }, hub);
-        el("circle", { cx: CX, cy: CY, r: 104, fill: "none", stroke: "#0a0a0a", "stroke-width": 1.5 }, hub);
+        el("circle", { cx: CX, cy: CY, r: 104, fill: "none", stroke: "#f0eee6", "stroke-width": 1.5 }, hub);
         bindWedge(hub, "ALL FOCUSES", function () { setFocus("all", true); }, "RESET LENS");
 
         paintRing();
@@ -866,12 +873,13 @@
         var acc = ACCENTS[focus];
         lensWedges.forEach(function (o) {
           var active = o.l.f === focus;
-          o.w.setAttribute("fill", active ? hexA(acc, 0.85) : "rgba(10,10,10,0.045)");
-          o.w.setAttribute("stroke", active ? "#0a0a0a" : "rgba(10,10,10,0.35)");
+          o.w.setAttribute("fill", active ? hexA(acc, 0.85) : "rgba(240,238,230,0.05)");
+          o.w.setAttribute("stroke", active ? "#0a0a0a" : "rgba(240,238,230,0.28)");
           o.w.setAttribute("stroke-width", active ? 1.6 : 1);
+          if (o.g) o.g.setAttribute("color", active ? "#0a0a0a" : "#f0eee6");
         });
         slotWedges.forEach(function (o) {
-          o.w.setAttribute("fill", "rgba(10,10,10,0.045)");
+          o.w.setAttribute("fill", "rgba(240,238,230,0.05)");
         });
         /* the diplomas wedge mirrors the active lens */
         if (eduGlyphPath) {
@@ -1017,7 +1025,7 @@
             var x = d.x + Math.sin(t * 0.6 + d.ph) * 14;
             ctx.beginPath();
             ctx.arc(x, d.y, d.r, 0, Math.PI * 2);
-            ctx.fillStyle = d.lime ? "rgba(158,199,0," + (d.a * 2.4) + ")" : "rgba(10,10,10," + d.a + ")";
+            ctx.fillStyle = d.lime ? "rgba(200,255,0," + (d.a * 2.4) + ")" : "rgba(240,238,230," + d.a + ")";
             ctx.fill();
           }
           requestAnimationFrame(tick);
