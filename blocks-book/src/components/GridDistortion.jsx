@@ -57,13 +57,14 @@ const GridDistortion = ({
     
     const observer = new IntersectionObserver(handleIntersection, observerOptions);
     
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+    const container = containerRef.current;
+    if (container) {
+      observer.observe(container);
     }
-    
+
     return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
+      if (container) {
+        observer.unobserve(container);
       }
       observer.disconnect();
     };

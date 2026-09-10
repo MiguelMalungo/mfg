@@ -380,8 +380,6 @@ function App() {
       // Safety check to ensure poemRefs.current exists
       if (!poemRefs.current) return;
       
-      const scrollPosition = window.scrollY;
-      
       // Find the poem that is currently in view
       let currentPoem = null;
       let closestDistance = Infinity;
@@ -416,7 +414,7 @@ function App() {
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Call once on mount to set initial active poem
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [activePoem]);
+  }, [activePoem, poems]);
 
   return (
     <div className="App">
