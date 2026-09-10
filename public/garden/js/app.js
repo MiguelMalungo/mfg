@@ -635,6 +635,44 @@
     h < 12 ? ["morning", "watering"] :
     h < 18 ? ["afternoon", "building the truck"] :
     ["evening", "surfing the last light"];
+  /* ─── theme ───────────────────────────────────────────── */
+  // The head script has already applied any stored choice; this only wires
+  // the control and keeps it in step with the system when nothing is stored.
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const isDark = () =>
+    root.getAttribute("data-theme") === "dark" ||
+    (!root.hasAttribute("data-theme") && systemDark.matches);
+
+  function syncTheme() {
+    const dark = isDark();
+    if (toggle) {
+      toggle.setAttribute("aria-pressed", String(dark));
+      const label = toggle.querySelector(".theme-toggle__label");
+      if (label) label.textContent = dark ? "LIGHT" : "DARK";
+      toggle.title = dark ? "Switch to light" : "Switch to dark";
+    }
+    // The spore field paints to a canvas, so it cannot inherit the tokens.
+    window.dispatchEvent(new CustomEvent("garden:theme", { detail: { dark } }));
+  }
+
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      root.setAttribute("data-theme", isDark() ? "light" : "dark");
+      try { localStorage.setItem("garden-theme", root.getAttribute("data-theme")); } catch (e) {}
+      syncTheme();
+    });
+  }
+
+  // Follow the system only while the visitor has not picked a side.
+  const onSystem = () => { if (!root.hasAttribute("data-theme")) syncTheme(); };
+  if (systemDark.addEventListener) systemDark.addEventListener("change", onSystem);
+  else if (systemDark.addListener) systemDark.addListener(onSystem);
+
+  syncTheme();
+
   document.getElementById("footTime").textContent =
     `IT IS ${phase[0].toUpperCase()} IN THE GARDEN. THE GARDENER IS PROBABLY ${phase[1].toUpperCase()}.`;
 })();

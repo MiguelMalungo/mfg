@@ -6,6 +6,11 @@
 
 import * as THREE from "three";
 
+function cssColor(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
 const canvas = document.getElementById("field-canvas");
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -73,9 +78,16 @@ const uniforms = {
   uMouse: { value: new THREE.Vector2(999, 999) },
   uArea: { value: new THREE.Vector2(VW0 * 1.25, VH0 * 1.6) },
   uDpr: { value: Math.min(window.devicePixelRatio || 1, 2) },
-  uInk: { value: new THREE.Color("#0a0a0a") },
-  uLime: { value: new THREE.Color("#9ec700") },
+  uInk: { value: new THREE.Color(cssColor("--field-ink", "#0a0a0a")) },
+  uLime: { value: new THREE.Color(cssColor("--field-lime", "#9ec700")) },
 };
+
+// The field paints to a canvas and cannot inherit the CSS tokens, so it
+// reads them once here and again whenever the theme changes.
+window.addEventListener("garden:theme", () => {
+  uniforms.uInk.value.set(cssColor("--field-ink", "#0a0a0a"));
+  uniforms.uLime.value.set(cssColor("--field-lime", "#9ec700"));
+});
 
 const mat = new THREE.ShaderMaterial({
   uniforms,

@@ -9,6 +9,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Spline+Sans+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Applied before first paint so a dark visitor never sees a flash of
+    // paper. Storage can throw in private mode, so it is guarded.
+    (function () {
+      try {
+        var t = localStorage.getItem("garden-theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="/garden/css/style.css" />
 </head>
 <body>
@@ -46,6 +59,11 @@
     <nav class="site-head__nav">
       <a href="#field" data-scramble data-cursor="">THE FIELD</a>
       <a href="/" data-scramble>MAIN SITE ↗</a>
+      <button class="theme-toggle mono" id="themeToggle" type="button"
+              aria-pressed="false" title="Toggle dark mode">
+        <span class="theme-toggle__dot" aria-hidden="true"></span>
+        <span class="theme-toggle__label">DARK</span>
+      </button>
     </nav>
   </header>
 
