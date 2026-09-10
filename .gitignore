@@ -51,3 +51,6 @@ next-env.d.ts
 /public/images/sotkis/*.PNG
 /public/images/covers_garden/
 /public/images/IMG_3275*
+
+# generated at build time from blocks-book/
+/public/blocks

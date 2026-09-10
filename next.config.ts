@@ -26,7 +26,6 @@ const GARDEN_SLUGS = [
 // instant it is deployed, at the cost of the address bar changing.
 const VANITY_PROJECTS: Record<string, string> = {
   serenity: "https://miguelmalungo.github.io/kept/",
-  blocks: "https://lovely-pegasus-e9f6e6.netlify.app/",
   miks: "https://miguelmalungo.github.io/miks/",
 };
 
@@ -50,6 +49,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/garden", destination: "/garden/index.html" },
       { source: "/cv", destination: "/cv/index.html" },
+      // The book is built from blocks-book/ into public/blocks at deploy
+      // time, so this serves it from our own domain rather than bouncing
+      // to another host — and there is still only one copy of the source.
+      { source: "/blocks", destination: "/blocks/index.html" },
     ];
   },
   async headers() {

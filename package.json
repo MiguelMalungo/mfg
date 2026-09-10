@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run build:blocks && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:blocks": "cd blocks-book && npm ci --no-audit --no-fund && npm run build && rm -rf ../public/blocks && cp -r build ../public/blocks"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
