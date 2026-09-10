@@ -420,7 +420,7 @@ function App() {
     <div className="App">
       {/* Audio player with improved mobile touch handling */}
       <AudioPlayer 
-        audioSrc="/media/audio.mp3" 
+        audioSrc={`${process.env.PUBLIC_URL}/media/audio.mp3`} 
         fadeInDuration={800} 
         fadeOutDuration={1500} 
       />
@@ -430,7 +430,7 @@ function App() {
         <div className="sidebar-content">
           <div className="sidebar-logo">
             <img
-              src="/media/blocks.webp"
+              src={`${process.env.PUBLIC_URL}/media/blocks.webp`}
               alt="BLOCKS"
               className="sidebar-logo-image"
               onError={(e) => {
@@ -466,7 +466,7 @@ function App() {
           
           <div className="cover-video-container">
             <video 
-              src="/media/video.mp4" 
+              src={`${process.env.PUBLIC_URL}/media/video.mp4`} 
               className="cover-video"
               autoPlay
               muted={true}
@@ -481,7 +481,7 @@ function App() {
           
           <div className="cover-image-container">
             <img
-              src="/media/blocks.webp"
+              src={`${process.env.PUBLIC_URL}/media/blocks.webp`}
               alt="BLOCKS"
               className="cover-image blocks-image"
               loading="eager"
@@ -513,7 +513,7 @@ function App() {
                   <div className="poem-image">
                     <div className="distortion-container-wrapper">
                       <GridDistortion
-                        imageSrc={`/media/images/${[30, 32, 42, 44, 46, 52, 54, 56, 58, 60, 62, 64, 66].includes(poem.id) ? `${poem.id} copy` : poem.id}.webp`}
+                        imageSrc={`${process.env.PUBLIC_URL}/media/images/${[30, 32, 42, 44, 46, 52, 54, 56, 58, 60, 62, 64, 66].includes(poem.id) ? `${poem.id} copy` : poem.id}.webp`}
                         grid={15}
                         mouse={0.1}
                         strength={0.15}

@@ -10,7 +10,7 @@ const BookCover = () => {
       {/* Placeholder for cover image */}
       <div className="cover-image-container">
         <img 
-          src="/media/cover.jpg" 
+          src={`${process.env.PUBLIC_URL}/media/cover.jpg`} 
           alt="Book Cover" 
           className="cover-image"
           onError={(e) => {
