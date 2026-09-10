@@ -49,6 +49,35 @@ window.GARDEN = {
         </div>`,
     },
     {
+      slug: "pieces-of-eden",
+      cover: "/garden/assets/cover-pieces-of-eden.webp",
+      title: "Pieces of Eden",
+      stage: "seedling",
+      topics: ["Land", "Life"],
+      desc: "Looking for land to build on — wood houses, off grid, surrounded by nature. Three candidates so far.",
+      planted: "2026",
+      order: 2,
+      body: `
+        <p>I'm looking for land. Pieces of it, in different places, for a way of living that mostly takes care of itself: wood houses, off grid, solar for the electricity, biological systems for the waste, filters for the water. Nothing exotic — just the old arrangement where the house doesn't need a pipeline to stay alive.</p>
+        <p>Three candidates so far. One of them will work out. Eventually, maybe all three.</p>
+        <h2>The three</h2>
+        <ul>
+          <li><strong>The one near the city.</strong> Close enough to be practical, but once you're inside it you'd swear you were in the forest. That contradiction is most of why I like it.</li>
+          <li><strong>The one with the river.</strong> Water running through the land itself, not past it. Two of the three have this; this is the one where it's the whole point.</li>
+          <li><strong>The one behind the pines.</strong> Protected area, miles and miles of pine and tree, and a path out to a beach that stands empty for miles in both directions — with a line of waves in front of it that breaks so evenly it looks like a wave pool. Almost unfair. It asks to be a surf camp, and a few other sustainable things besides.</li>
+        </ul>
+        <h2>The third one</h2>
+        <p>These are from the last visit — the walk in through the dunes, and what's waiting at the end of it.</p>
+        <div class="vids">
+          <video class="vid" src="/garden/assets/eden-dunes.mp4" poster="/garden/assets/eden-dunes-poster.webp" muted loop playsinline preload="none"></video>
+          <video class="vid" src="/garden/assets/eden-beach.mp4" poster="/garden/assets/eden-beach-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <h2>Where it stands</h2>
+        <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Land first. House second. The rest when the rest is ready.</p>
+        <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And if the third one lands, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>
+        <p>Seedling. Nothing signed yet. This page grows as the plots do.</p>`,
+    },
+    {
       slug: "blend",
       cover: "/garden/assets/cover-blend.webp",
       title: "Serenity by KaleidoKonscious",
@@ -57,7 +86,7 @@ window.GARDEN = {
       topics: ["Words", "AI"],
       desc: "An interactive book of poems with AI-generated art and media. A book that listens back.",
       tended: "2024",
-      order: 2,
+      order: 3,
       href: "https://miguelmalungo.github.io/kept/",
       hrefLabel: "Open the book",
       body: `
@@ -78,22 +107,6 @@ window.GARDEN = {
       body: `
         <p>An interactive poetry book — small typographic worlds you can move through. Each block is a fragment; the navigation is part of the poem.</p>
         <p>Made in the same season as <a class="wl" data-note="blend">Serenity</a>, with a more mechanical, code-first attitude. Type as architecture.</p>`,
-    },
-    {
-      slug: "miks",
-      cover: "/garden/assets/cover-miks.webp",
-      title: "MiKS",
-      stage: "budding",
-      topics: ["Music", "Art", "AI"],
-      desc: "A fictional Afro House artist, built out in full — tracks, tour dates, press photos, a booking page.",
-      tended: "2025",
-      order: 3,
-      href: "/miks",
-      hrefLabel: "Enter the site",
-      body: `
-        <p>MiKS is an artist who does not exist. The tracks, the tour dates, the press shots, the booking address — all of it is made, and all of it is presented straight, the way a real artist's site would present it.</p>
-        <p>The interesting part was never the music on its own. It was how little it takes to make a world feel real: a consistent palette, a tour that runs in the right season, a contact page with three different email addresses. Convention does most of the work.</p>
-        <p>It comes out of the same run of experiments as <a class="wl" data-note="blend">Serenity</a> and <a class="wl" data-note="blocks">BLOCKS</a> — AI as a collaborator rather than a tool — but pointed at a persona instead of a page.</p>`,
     },
     {
       slug: "bus",
@@ -210,6 +223,21 @@ window.GARDEN = {
         <p>Listening to the ocean and being humbled, often. A practice in patience.</p>
         <p>The same listening I bring to <a class="wl" data-note="capoeira">capoeira</a> — the body knows before the mind catches up.</p>
         <p>Living closer to water is part of why <a class="wl" data-note="life-on-the-road">the truck</a> matters: it puts the practice within walking distance of wherever I am.</p>`,
+    },
+    {
+      slug: "miks",
+      cover: "/garden/assets/cover-miks.webp",
+      title: "MiKS",
+      stage: "budding",
+      topics: ["Music", "Art", "AI"],
+      desc: "A fictional Afro House artist, built out in full — tracks, tour dates, press photos, a booking page.",
+      tended: "2025",
+      href: "/miks",
+      hrefLabel: "Enter the site",
+      body: `
+        <p>MiKS is an artist who does not exist. The tracks, the tour dates, the press shots, the booking address — all of it is made, and all of it is presented straight, the way a real artist's site would present it.</p>
+        <p>The interesting part was never the music on its own. It was how little it takes to make a world feel real: a consistent palette, a tour that runs in the right season, a contact page with three different email addresses. Convention does most of the work.</p>
+        <p>It comes out of the same run of experiments as <a class="wl" data-note="blend">Serenity</a> and <a class="wl" data-note="blocks">BLOCKS</a> — AI as a collaborator rather than a tool — but pointed at a persona instead of a page.</p>`,
     },
   ],
 

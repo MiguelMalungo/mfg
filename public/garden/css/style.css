@@ -583,6 +583,23 @@ main { position: relative; z-index: 1; }
   background: #000;
 }
 
+/* portrait video pairs (Pieces of Eden) */
+.vids {
+  display: flex; flex-wrap: wrap; gap: 18px;
+  margin: 1.6em 0; justify-content: flex-start;
+}
+.vid {
+  flex: 0 0 auto;
+  width: 325px; max-width: 100%;
+  aspect-ratio: 9 / 16;
+  display: block; object-fit: cover;
+  border: 1px solid var(--ink); border-radius: 10px;
+  background: #000;
+  pointer-events: none; /* ambient loop, not a player — nothing to click */
+}
+/* if autoplay is refused (or reduced motion is on) they become real players */
+.vid--manual { pointer-events: auto; }
+
 /* gallery */
 .gal { margin: 2.4em calc(-1 * clamp(20px, 4vw, 56px)) 1em; }
 .gal__head {
@@ -730,6 +747,7 @@ main { position: relative; z-index: 1; }
 .note--cover .note__backs,
 .note--cover .note__backs a,
 .note--cover .note__body figure img,
+.note--cover .vid,
 .note--cover .gal__item img { border-color: rgba(255, 255, 255, 0.22); }
 .note--cover .note__pager { border-top-color: rgba(255, 255, 255, 0.4); }
 .note--cover .note__pager button:last-child { border-left-color: rgba(255, 255, 255, 0.18); }

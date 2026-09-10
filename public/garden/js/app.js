@@ -495,6 +495,37 @@
     });
   }
 
+  // Ambient clips: they play, muted and looping, only while they're on
+  // screen — so a note that's scrolled past isn't quietly burning bandwidth.
+  // With reduced motion the user gets controls and nothing moves on its own.
+  let vidObserver = null;
+  function setupAmbientVideo() {
+    const vids = [...article.querySelectorAll("video.vid")];
+    if (!vids.length) return;
+
+    if (reduced) {
+      vids.forEach((v) => { v.classList.add("vid--manual"); v.controls = true; v.preload = "metadata"; });
+      return;
+    }
+
+    vidObserver?.disconnect();
+    vidObserver = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        const v = e.target;
+        if (!e.isIntersecting) { v.pause(); return; }
+        // AbortError just means it scrolled back out mid-play — only a real
+        // autoplay refusal should hand the clip back to the user as a player.
+        v.play().catch((err) => {
+          if (err.name !== "NotAllowedError") return;
+          v.classList.add("vid--manual");
+          v.controls = true;
+        });
+      }),
+      { root: noteScroll, threshold: 0.4 }
+    );
+    vids.forEach((v) => vidObserver.observe(v));
+  }
+
   function fillNote(n) {
     current = n;
     note.classList.toggle("note--cover", !!n.cover); // noir backdrop when a cover exists
@@ -502,6 +533,7 @@
     article.innerHTML = noteHTML(n);
     renderPager(n);
     setupGalleryDrag();
+    setupAmbientVideo();
     noteScroll.scrollTop = 0;
   }
 
@@ -547,6 +579,8 @@
     if (!overlayOpen) return;
     overlayOpen = false;
     if (push && location.hash) history.pushState({}, "", location.pathname);
+    vidObserver?.disconnect();
+    article.querySelectorAll("video.vid").forEach((v) => v.pause());
     const done = () => {
       note.classList.remove("note--open");
       note.setAttribute("aria-hidden", "true");

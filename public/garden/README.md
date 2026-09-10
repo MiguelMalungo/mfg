@@ -25,7 +25,8 @@ css/style.css     all styling (CSS variables at the top)
 js/data.js        the 12 notes, baked from the main site's markdown
 js/scene.js       three.js spore field (ES module)
 js/app.js         GSAP interactions, filters, overlay, gallery drag
-assets/           optimized webp media (bus archive + sotkis screenshot)
+assets/           optimized webp images and mp4 clips (bus archive,
+                  sotkis screenshot, the Eden plots)
 ```
 
 ## Updating content
