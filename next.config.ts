@@ -26,7 +26,7 @@ const GARDEN_SLUGS = [
 // instant it is deployed, at the cost of the address bar changing.
 const VANITY_PROJECTS: Record<string, string> = {
   serenity: "https://miguelmalungo.github.io/kept/",
-  blocks: "https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/",
+  blocks: "https://lovely-pegasus-e9f6e6.netlify.app/",
   miks: "https://miguelmalungo.github.io/miks/",
 };
 

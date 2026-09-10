@@ -73,7 +73,7 @@ window.GARDEN = {
       topics: ["Words", "Code"],
       desc: "An interactive poetry book — small typographic worlds you can move through.",
       tended: "2024",
-      href: "https://6945a2ad1ceae80c24d7e1cf--lovely-pegasus-e9f6e6.netlify.app/",
+      href: "https://lovely-pegasus-e9f6e6.netlify.app/",
       hrefLabel: "Open BLOCKS",
       body: `
         <p>An interactive poetry book — small typographic worlds you can move through. Each block is a fragment; the navigation is part of the poem.</p>
