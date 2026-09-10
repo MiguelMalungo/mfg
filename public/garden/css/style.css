@@ -27,9 +27,10 @@
 }
 
 /* ── Dark ─────────────────────────────────────────────────
-   Follows the system by default; [data-theme] wins when the
-   visitor has picked a side explicitly. Set on <html> by an
-   inline script in the head so the first paint is correct.
+   The garden opens dark for everyone; [data-theme="light"]
+   only appears once the visitor has hit the toggle. Set on
+   <html> by an inline script in the head, before first paint.
+   The media query below is the no-JS fallback.
    ──────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -735,10 +736,11 @@ main { position: relative; z-index: 1; }
 .note--cover .note__backs-label,
 .note--cover .note__backs a span,
 .note--cover .note__pager .mono { color: rgba(255, 255, 255, 0.6); }
-/* lime accents keep dark text for contrast */
+/* lime accents keep dark text for contrast — --ink-fixed, never --ink,
+   which flips to near-white in dark mode and vanishes on the lime */
 .note--cover .note__title em,
 .note--cover .note__body a.wl,
-.note--cover .note__backs a strong { color: var(--ink); }
+.note--cover .note__backs a strong { color: var(--ink-fixed); }
 /* on hover the lime fill flips to ink, so the text must go lime (green) —
    otherwise the cover override above keeps it ink: black-on-black */
 .note--cover .note__body a.wl:hover { color: var(--lime); }

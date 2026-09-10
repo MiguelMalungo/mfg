@@ -9,17 +9,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Spline+Sans+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="dark light" />
   <script>
-    // Applied before first paint so a dark visitor never sees a flash of
-    // paper. Storage can throw in private mode, so it is guarded.
+    // Applied before first paint so nobody sees a flash of paper. The garden
+    // opens dark whatever the system says; only a visitor who has actually
+    // hit the toggle gets something else. Storage throws in private mode.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("garden-theme");
-        if (t === "dark" || t === "light") {
-          document.documentElement.setAttribute("data-theme", t);
-        }
+        var saved = localStorage.getItem("garden-theme");
+        if (saved === "dark" || saved === "light") t = saved;
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
   <link rel="stylesheet" href="/garden/css/style.css" />

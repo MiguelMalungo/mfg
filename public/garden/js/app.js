@@ -640,15 +640,13 @@
     h < 18 ? ["afternoon", "building the truck"] :
     ["evening", "surfing the last light"];
   /* ─── theme ───────────────────────────────────────────── */
-  // The head script has already applied any stored choice; this only wires
-  // the control and keeps it in step with the system when nothing is stored.
+  // The head script has already set data-theme — dark unless the visitor
+  // stored a choice — so this only wires the control. The system setting is
+  // deliberately not consulted: the garden opens dark for everyone.
   const root = document.documentElement;
   const toggle = document.getElementById("themeToggle");
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-  const isDark = () =>
-    root.getAttribute("data-theme") === "dark" ||
-    (!root.hasAttribute("data-theme") && systemDark.matches);
+  const isDark = () => root.getAttribute("data-theme") !== "light";
 
   function syncTheme() {
     const dark = isDark();
@@ -669,11 +667,6 @@
       syncTheme();
     });
   }
-
-  // Follow the system only while the visitor has not picked a side.
-  const onSystem = () => { if (!root.hasAttribute("data-theme")) syncTheme(); };
-  if (systemDark.addEventListener) systemDark.addEventListener("change", onSystem);
-  else if (systemDark.addListener) systemDark.addListener(onSystem);
 
   syncTheme();
 
