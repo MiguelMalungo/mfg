@@ -5,6 +5,7 @@ import type { NextConfig } from "next";
 // /garden/assets, /garden/css and /garden/js still resolve as files.
 const GARDEN_SLUGS = [
   "life-on-the-road",
+  "pieces-of-eden",
   "blend",
   "blocks",
   "bus",
@@ -14,6 +15,7 @@ const GARDEN_SLUGS = [
   "films",
   "photography",
   "surfing",
+  "miks",
 ].join("|");
 
 // Short vanity URLs that go straight to the project itself, e.g.
