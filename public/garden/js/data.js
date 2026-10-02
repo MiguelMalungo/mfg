@@ -52,30 +52,54 @@ window.GARDEN = {
       slug: "pieces-of-eden",
       cover: "/garden/assets/cover-pieces-of-eden.webp",
       title: "Pieces of Eden",
-      stage: "seedling",
+      stage: "budding",
       topics: ["Land", "Life"],
-      desc: "Looking for land to build on — wood houses, off grid, surrounded by nature. Three candidates so far.",
+      desc: "Land to build on — wood houses, off grid, surrounded by nature. Two of the three are done deals.",
       planted: "2026",
+      tended: "2026",
       order: 2,
+      media: ["/garden/assets/eden-coast-cabin.webp", "/garden/assets/eden-dome.webp"],
       body: `
         <p>I'm looking for land. Pieces of it, in different places, for a way of living that mostly takes care of itself: wood houses, off grid, solar for the electricity, biological systems for the waste, filters for the water. Nothing exotic — just the old arrangement where the house doesn't need a pipeline to stay alive.</p>
-        <p>Three candidates so far. One of them will work out. Eventually, maybe all three.</p>
-        <h2>The three</h2>
-        <ul>
-          <li><strong>The one near the city.</strong> Close enough to be practical, but once you're inside it you'd swear you were in the forest. That contradiction is most of why I like it.</li>
-          <li><strong>The one with the river.</strong> Water running through the land itself, not past it. Two of the three have this; this is the one where it's the whole point.</li>
-          <li><strong>The one behind the pines.</strong> Protected area, miles and miles of pine and tree, and a path out to a beach that stands empty for miles in both directions — with a line of waves in front of it that breaks so evenly it looks like a wave pool. Almost unfair. It asks to be a surf camp, and a few other sustainable things besides.</li>
-        </ul>
-        <h2>The third one</h2>
-        <p>These are from the last visit — the walk in through the dunes, and what's waiting at the end of it.</p>
+        <p>Three plots were in play. <strong>Two are done deals.</strong> One still to go.</p>
+        <h2>One — the coast, near Porto</h2>
+        <p>Close enough to town to be practical, and then you walk in, the reeds close up behind you, and you'd swear you were an hour from anywhere. That contradiction is most of why I wanted it.</p>
+        <figure>
+          <img src="/garden/assets/eden-coast-cabin.webp" alt="A dark timber cabin raised on stilts, with a deck and steps down to cut grass, backed by tall reeds" loading="lazy" />
+          <figcaption>The cabin, standing. I already own it — flat, in pieces, waiting. This is AI's version of it in place, with the grass thoughtfully already cut.</figcaption>
+        </figure>
+        <figure>
+          <img src="/garden/assets/eden-coast-land.webp" alt="The same ground before any work: waist-high green grass and reeds under a pale sky" loading="lazy" />
+          <figcaption>And the ground as it actually is. Reeds, and then more reeds.</figcaption>
+        </figure>
+        <figure>
+          <img src="/garden/assets/eden-coast-plot.webp" alt="Satellite view of the plot with three drawn outlines marking the boundary, the clearing and the cabin footprint" loading="lazy" />
+          <figcaption>Blue is the plot. Red is what gets cleared. Yellow is where the cabin lands.</figcaption>
+        </figure>
+        <figure>
+          <img src="/garden/assets/eden-coast-map.webp" alt="Map showing the plot sitting at the edge of a coastal town, a short walk from the beach" loading="lazy" />
+          <figcaption>And where all of that sits — the sand is a walk away, not a drive.</figcaption>
+        </figure>
+        <h2>Two — behind the pines</h2>
+        <p>Protected area: miles and miles of pine, and a path out to a beach that stands empty for miles in both directions, with a line of waves in front of it that breaks so evenly it looks like a wave pool. Almost unfair. It asks to be a surf camp, and a few other sustainable things besides.</p>
+        <p>The walk in through the dunes, and what's waiting at the end of it:</p>
         <div class="vids">
           <video class="vid" src="/garden/assets/eden-dunes.mp4" poster="/garden/assets/eden-dunes-poster.webp" muted loop playsinline preload="none"></video>
           <video class="vid" src="/garden/assets/eden-beach.mp4" poster="/garden/assets/eden-beach-poster.webp" muted loop playsinline preload="none"></video>
         </div>
+        <h3>A dome-building workshop, this spring</h3>
+        <p>The first structure going up there is a dome — and it's going up as a workshop. A few days of actually building one: cutting, jointing, raising it, sleeping next to it. Not a demonstration you watch from a chair.</p>
+        <figure>
+          <img src="/garden/assets/eden-dome.webp" alt="A timber geodesic dome standing in a mown clearing at the edge of a eucalyptus wood" loading="lazy" />
+          <figcaption>The kind of thing we'll raise, and the kind of clearing we'll raise it in.</figcaption>
+        </figure>
+        <p>Places are few, because a dome only needs so many hands. If you want one, <a class="ext" href="/contact">get in touch</a> and tell me a little about yourself.</p>
+        <h2>Three — the one with the river</h2>
+        <p>Water running through the land itself, not past it. This is the one still being chased, and the one I'd be most sorry to lose. Nothing to show yet.</p>
         <h2>Where it stands</h2>
-        <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Land first. House second. The rest when the rest is ready.</p>
-        <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And if the third one lands, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>
-        <p>Seedling. Nothing signed yet. This page grows as the plots do.</p>`,
+        <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Land first. Cabin second. The rest when the rest is ready.</p>
+        <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And with the second plot, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>
+        <p>Two down. This page grows as the plots do.</p>`,
     },
     {
       slug: "blend",

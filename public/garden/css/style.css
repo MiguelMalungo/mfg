@@ -556,6 +556,12 @@ main { position: relative; z-index: 1; }
   display: flex; align-items: center; gap: 14px;
 }
 .note__body h2::before { content: ""; width: 34px; height: 2px; background: var(--lime); outline: 1px solid var(--ink); }
+.note__body h3 {
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin: 2.2em 0 0.7em; padding-bottom: 0.6em;
+  border-bottom: 1px solid var(--ink-15);
+}
 .note__body ul { margin: 0 0 1.4em 1.2em; max-width: 60ch; }
 .note__body li { margin-bottom: 0.5em; }
 .note__body li::marker { content: "→ "; font-size: 0.85em; }
@@ -570,6 +576,11 @@ main { position: relative; z-index: 1; }
 .note__body figure { margin: 2.2em 0; }
 .note__body figure img { width: 100%; height: auto; display: block; border: 1px solid var(--ink); }
 .note__body figure img[src*="sotkis"] { border-radius: 0 0 32px 32px; }
+.note__body figcaption {
+  font-family: var(--mono); font-size: 12px; line-height: 1.55;
+  letter-spacing: 0.02em; color: var(--ink-40);
+  margin-top: 0.75em; max-width: 56ch;
+}
 
 /* TikTok embeds */
 .tiktoks {
@@ -732,6 +743,7 @@ main { position: relative; z-index: 1; }
 .note--cover .note__pager strong { color: #fff; }
 .note--cover .note__meta svg { stroke: #fff; }
 .note--cover .note__meta .dim,
+.note--cover .note__body figcaption,
 .note--cover .gal__head,
 .note--cover .note__backs-label,
 .note--cover .note__backs a span,
@@ -746,6 +758,7 @@ main { position: relative; z-index: 1; }
 .note--cover .note__body a.wl:hover { color: var(--lime); }
 .note--cover .note__backs a:hover strong { color: var(--lime); }
 /* borders → translucent white */
+.note--cover .note__body h3 { border-bottom-color: rgba(255, 255, 255, 0.22); }
 .note--cover .note__backs,
 .note--cover .note__backs a,
 .note--cover .note__body figure img,
