@@ -54,14 +54,14 @@ window.GARDEN = {
       title: "Pieces of Eden",
       stage: "budding",
       topics: ["Land", "Life"],
-      desc: "Land to build on — wood houses, off grid, surrounded by nature. Two of the three are done deals.",
+      desc: "Land to build on — wood houses, off grid, surrounded by nature. Three of the four are done deals.",
       planted: "2026",
       tended: "2026",
       order: 2,
       media: ["/garden/assets/eden-coast-cabin.webp", "/garden/assets/eden-dome.webp"],
       body: `
         <p>I'm looking for land. Pieces of it, in different places, for a way of living that mostly takes care of itself: wood houses, off grid, solar for the electricity, biological systems for the waste, filters for the water. Nothing exotic — just the old arrangement where the house doesn't need a pipeline to stay alive.</p>
-        <p>Three plots were in play. <strong>Two are done deals.</strong> One still to go.</p>
+        <p>Four plots now. <strong>Three are done deals.</strong> One still to go.</p>
         <h2>One — the coast, near Porto</h2>
         <p>Close enough to town to be practical, and then you walk in, the reeds close up behind you, and you'd swear you were an hour from anywhere. That contradiction is most of why I wanted it.</p>
         <figure>
@@ -94,12 +94,34 @@ window.GARDEN = {
           <figcaption>The kind of thing we'll raise, and the kind of clearing we'll raise it in.</figcaption>
         </figure>
         <p>Places are few, because a dome only needs so many hands. If you want one, <a class="ext" href="/contact">get in touch</a> and tell me a little about yourself.</p>
-        <h2>Three — the one with the river</h2>
+        <h2>Three — O Caminho, at Praia do Marreco</h2>
+        <p>Four thousand square metres at Lavra, in Matosinhos, with electricity already on it and a well for the water. The sea is on one side. On the other, a few steps away, runs the Caminho Português da Costa — the coastal route to Santiago, and the fastest-growing one: 89,509 pilgrims finished it in 2025, against 22,291 in 2019. Most of them start in Porto and walk this exact stretch of boardwalk north.</p>
+        <div class="vids">
+          <video class="vid" src="/garden/assets/caminho-boardwalk.mp4" poster="/garden/assets/caminho-boardwalk-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <figure>
+          <img src="/garden/assets/caminho-track.webp" alt="The plot's grass track running up towards the raised boardwalk of the coastal Camino" loading="lazy" />
+          <figcaption>The land, and the Caminho running along the top of it.</figcaption>
+        </figure>
+        <figure>
+          <img src="/garden/assets/caminho-plot.webp" alt="The wide grassy plot with the village rooftops beyond it" loading="lazy" />
+          <figcaption>Four thousand square metres of it.</figcaption>
+        </figure>
+        <figure>
+          <img src="/garden/assets/caminho-sea.webp" alt="Looking through the grass and fence posts to rocks and open ocean" loading="lazy" />
+          <figcaption>And what's on the other side.</figcaption>
+        </figure>
+        <p>Two things will live here. <strong>O Caminho</strong> is the glamping and rest stop — somewhere to sleep, wash, eat and carry on walking. <strong>O Caminho Vivo</strong> is the part I care about most: a cultural association, in formation, that turns a rest stop into a meeting place.</p>
+        <h3>O Caminho Vivo — three afternoons, 2027</h3>
+        <p>Pilgrims cross Matosinhos every day and almost never meet the place they're walking through. The locals meet them as people passing. So: three free afternoons in 2027, in the last weeks of June, August and October. A pilgrim group walking the coast shows something of its own — a song, a dance, a craft, a dish — and a local rancho folclórico answers with the local version. Everyone learns a step or a chorus, and it ends with a shared tasting. Alongside it, local painters, photographers and ceramicists show work on site, rotating through the season.</p>
+        <p>Entry is free. 2027 is a pilot: three events to find out whether the format holds, and to learn enough to repeat it.</p>
+        <p>If you're a local artist who'd like to show, a rancho, or a walking group who'd want an afternoon of this on the way north — <a class="ext" href="/contact">get in touch</a>.</p>
+        <h2>Four — the one with the river</h2>
         <p>Water running through the land itself, not past it. This is the one still being chased, and the one I'd be most sorry to lose. Nothing to show yet.</p>
         <h2>Where it stands</h2>
         <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Land first. Cabin second. The rest when the rest is ready.</p>
         <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And with the second plot, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>
-        <p>Two down. This page grows as the plots do.</p>`,
+        <p>Three down. This page grows as the plots do.</p>`,
     },
     {
       slug: "blend",
