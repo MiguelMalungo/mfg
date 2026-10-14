@@ -112,6 +112,10 @@ window.GARDEN = {
           <figcaption>And what's on the other side.</figcaption>
         </figure>
         <p>Two things will live here. <strong>O Caminho</strong> is the glamping and rest stop — somewhere to sleep, wash, eat and carry on walking. <strong>O Caminho Vivo</strong> is the part I care about most: a cultural association, in formation, that turns a rest stop into a meeting place.</p>
+        <figure>
+          <img src="/garden/assets/caminho-glamping.webp" alt="A render of the finished camp: rows of bell tents, a timber reception shelter and a sign reading Campamento de Glamping para Peregrinos" loading="lazy" />
+          <figcaption>O Caminho as the AI pictures it — and it got so carried away it pitched tents on the far side of the wall, on land that isn't mine.</figcaption>
+        </figure>
         <h3>O Caminho Vivo — three afternoons, 2027</h3>
         <p>Pilgrims cross Matosinhos every day and almost never meet the place they're walking through. The locals meet them as people passing. So: three free afternoons in 2027, in the last weeks of June, August and October. A pilgrim group walking the coast shows something of its own — a song, a dance, a craft, a dish — and a local rancho folclórico answers with the local version. Everyone learns a step or a chorus, and it ends with a shared tasting. Alongside it, local painters, photographers and ceramicists show work on site, rotating through the season.</p>
         <p>Entry is free. 2027 is a pilot: three events to find out whether the format holds, and to learn enough to repeat it.</p>
