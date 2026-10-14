@@ -125,9 +125,18 @@ window.GARDEN = {
         <p>Entry is free. 2027 is a pilot: three events to find out whether the format holds, and to learn enough to repeat it.</p>
         <p>If you're a local artist who'd like to show, a rancho, or a walking group who'd want an afternoon of this on the way north — <a class="ext" href="/contact">get in touch</a>.</p>
         <h2>Four — the one with the river</h2>
-        <p>Water running through the land itself, not past it. This is the one still being chased, and the one I'd be most sorry to lose. Nothing to show yet.</p>
+        <p>Fourteen thousand square metres. A river down one side, and on the other a worked, well-kept forest that comes with the land rather than next to it. All I'll say about where is that it's in the Porto area — the location is too good to be true, and I'd rather not be more specific until it's signed.</p>
+        <figure>
+          <img src="/garden/assets/river-plot.webp" alt="Satellite view with the plot outlined in blue among neighbouring parcels, parts of the image scribbled out in red" loading="lazy" />
+          <figcaption>Blue is the plot. Red is me keeping my mouth shut.</figcaption>
+        </figure>
+        <div class="vids">
+          <video class="vid" src="/garden/assets/river-walk.mp4" poster="/garden/assets/river-walk-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <p>This is the one still open, and the one I'd be most sorry to lose. Fourteen thousand metres of good ground is also the tougher mission financially, and I'd rather say that plainly than pretend otherwise.</p>
+        <p>So: I'm open to partnership on this one. If you've read this far and some part of it sounds like something you'd want a hand in — the land, the build, the thing that happens on it afterwards — <a class="ext" href="/contact">tell me what you'd bring</a>.</p>
         <h2>Where it stands</h2>
-        <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Land first. Cabin second. The rest when the rest is ready.</p>
+        <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Three plots is already enough to be getting on with: the cabin goes up first, then the dome, then the rest when the rest is ready.</p>
         <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And with the second plot, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>
         <p>Three down. This page grows as the plots do.</p>`,
     },
