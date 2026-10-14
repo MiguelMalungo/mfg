@@ -100,6 +100,10 @@ window.GARDEN = {
           <video class="vid" src="/garden/assets/caminho-boardwalk.mp4" poster="/garden/assets/caminho-boardwalk-poster.webp" muted loop playsinline preload="none"></video>
         </div>
         <figure>
+          <img src="/garden/assets/caminho-pilgrim.webp" alt="A pilgrim with a backpack walking the coastal path past the plot on a clear day" loading="lazy" />
+          <figcaption>One going past. That's the whole premise.</figcaption>
+        </figure>
+        <figure>
           <img src="/garden/assets/caminho-track.webp" alt="The plot's grass track running up towards the raised boardwalk of the coastal Camino" loading="lazy" />
           <figcaption>The land, and the Caminho running along the top of it.</figcaption>
         </figure>
