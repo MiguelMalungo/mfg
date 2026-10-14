@@ -125,16 +125,18 @@ window.GARDEN = {
         <p>Entry is free. 2027 is a pilot: three events to find out whether the format holds, and to learn enough to repeat it.</p>
         <p>If you're a local artist who'd like to show, a rancho, or a walking group who'd want an afternoon of this on the way north — <a class="ext" href="/contact">get in touch</a>.</p>
         <h2>Four — the one with the river</h2>
-        <p>Fourteen thousand square metres. A river down one side, and on the other a worked, well-kept forest that comes with the land rather than next to it. All I'll say about where is that it's in the Porto area — the location is too good to be true, and I'd rather not be more specific until it's signed.</p>
-        <figure>
+        <p>Fourteen thousand square metres, in the Porto area. That's as precise as I'll be until it's signed — but the location is the part that doesn't quite add up. Land like this is normally two hours inland. This one sits inside the orbit of a city with an international airport, a coastline, and a steady year-round stream of people already walking through for the Camino. You can be properly in the trees without having gone anywhere.</p>
+        <figure class="fig--narrow">
           <img src="/garden/assets/river-plot.webp" alt="Satellite view with the plot outlined in blue among neighbouring parcels, parts of the image scribbled out in red" loading="lazy" />
           <figcaption>Blue is the plot. Red is me keeping my mouth shut.</figcaption>
         </figure>
         <div class="vids">
           <video class="vid" src="/garden/assets/river-walk.mp4" poster="/garden/assets/river-walk-poster.webp" muted loop playsinline preload="none"></video>
         </div>
-        <p>This is the one still open, and the one I'd be most sorry to lose. Fourteen thousand metres of good ground is also the tougher mission financially, and I'd rather say that plainly than pretend otherwise.</p>
-        <p>So: I'm open to partnership on this one. If you've read this far and some part of it sounds like something you'd want a hand in — the land, the build, the thing that happens on it afterwards — <a class="ext" href="/contact">tell me what you'd bring</a>.</p>
+        <p>A river runs the whole of one side. Not a winter stream — a river, and a boundary, which is the kind of edge that tends to stay an edge. It also means water, shade, cooler air in August, and the particular quiet that only moving water makes.</p>
+        <p>The other side is forest, and it belongs to the plot rather than merely facing it. Someone has been looking after it for years: worked and well kept, not scrub. Standing trees, shade, and a screen thick enough that whatever goes up in the middle won't be seen from outside it.</p>
+        <p>The size is what changes the arithmetic. The other three plots each do one thing well. Fourteen thousand metres could hold several at once — cabins, a workshop, something growing, and still leave the forest as forest. Which is also precisely why it's the hardest of the four to carry alone, and I'd rather say that plainly than dress it up.</p>
+        <p>So: I'm open to partnership on this one — capital, or a pair of hands with a trade, or someone who'd run the thing that happens on it afterwards. If you've read this far and some part of it sounds like yours, <a class="ext" href="/contact">tell me what you'd bring</a> and I'll tell you the rest, location included.</p>
         <h2>Where it stands</h2>
         <p>I've found the right partner for it, which is usually the hardest part and this time was the easy one. My head is boiling with ideas — camps, workshops, small builds, things to grow — and the discipline is going to be doing one at a time. Three plots is already enough to be getting on with: the cabin goes up first, then the dome, then the rest when the rest is ready.</p>
         <p>It follows the same thread as <a class="wl" data-note="life-on-the-road">the truck</a> and <a class="wl" data-note="bus">the bus</a> — small, well-made, self-sufficient — except this one stays put. And with the second plot, <a class="wl" data-note="surfing">surfing</a> stops being a drive and starts being a walk.</p>

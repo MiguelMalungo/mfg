@@ -576,6 +576,9 @@ main { position: relative; z-index: 1; }
 .note__body figure { margin: 2.2em 0; }
 .note__body figure img { width: 100%; height: auto; display: block; border: 1px solid var(--ink); }
 .note__body figure img[src*="sotkis"] { border-radius: 0 0 32px 32px; }
+/* held to the width of a video frame — for maps and diagrams that
+   gain nothing from the full column */
+.note__body figure.fig--narrow { max-width: 325px; }
 .note__body figcaption {
   font-family: var(--mono); font-size: 12px; line-height: 1.55;
   letter-spacing: 0.02em; color: var(--ink-40);
