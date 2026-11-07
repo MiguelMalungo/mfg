@@ -167,9 +167,9 @@ window.GARDEN = {
         <p>With the latest AI it's become wildly easier to make a game. I make mine in Unreal Engine — still the most advanced way to do it, even with AI — and model the 3D assets in Blender. These two will still take a while. Partly I'm waiting for enough compute to go around; partly because real-time world generation is moving so fast that our weirdest dream visions are about to become things you can build, and play.</p>
         <p>Both are about the same thing: recreating your own dreams and playing them, and learning about yourself on the way. I've made a video series on Instagram for each — the themes the games will be built around.</p>
         <h3>The 4th Way</h3>
-        <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗</a></p>
+        <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
         <h3>Shadow to Gold</h3>
-        <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗</a></p>
+        <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
         <h2>Why games</h2>
         <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. These games are that, played on purpose.</p>
         <p>Seeds in the ground. Stay tuned.</p>`,
@@ -246,7 +246,7 @@ window.GARDEN = {
         <p>My web work — sites and apps I build for other people. If you need something on the web that feels considered, this is the door.</p>
         <p>The companion to the more experimental things like <a class="wl" data-note="blocks">BLOCKS</a> and <a class="wl" data-note="blend">Serenity</a>: this one is craft for clients, those ones are craft for themselves.</p>
         <h2>Selected work</h2>
-        <p><a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis ↗</a> — the website, mobile app and management platform for an intelligent waste system: underground containers with fill-level sensors and Pay-As-You-Throw access, all reporting to one dashboard.</p>
+        <p><a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis ↗&#xFE0E;</a> — the website, mobile app and management platform for an intelligent waste system: underground containers with fill-level sensors and Pay-As-You-Throw access, all reporting to one dashboard.</p>
         <figure><img src="/garden/assets/sotkis.webp" alt="The Sotkis website" loading="lazy" /></figure>`,
     },
     {
@@ -290,7 +290,7 @@ window.GARDEN = {
         <p>Shorts I've made and I'm making. My small theater.</p>
         <p>The one in motion right now is Plato's Cat — an AI-assisted film, still being built. The older work lives on my YouTube channel.</p>
         <h2>From the channel</h2>
-        <p><a class="ext" href="https://www.youtube.com/@dreampiecefool/videos" target="_blank" rel="noopener noreferrer">@dreampiecefool on YouTube ↗</a></p>
+        <p><a class="ext" href="https://www.youtube.com/@dreampiecefool/videos" target="_blank" rel="noopener noreferrer">@dreampiecefool on YouTube ↗&#xFE0E;</a></p>
         <h2>In the making</h2>
         <p><strong>Plato's Cat</strong> — an AI-assisted short film. I'm building it the way you build a cave painting: slowly, with what is at hand. The most recent piece of working with AI as a co-author; updates will land here as the cuts come together.</p>
         <p>This is also where I think out loud about working with AI in moving image.</p>`,

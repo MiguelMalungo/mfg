@@ -263,13 +263,13 @@
     </div>
 
     <nav class="head__links" data-in>
-      <a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT ↗</a>
-      <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>DIGITAL GARDEN ↗</a>
-      <a href="https://www.digisol.pt" target="_blank" rel="noopener noreferrer" data-scramble>DIGISOL ↗</a>
-      <a href="https://github.com/MiguelMalungo" target="_blank" rel="noopener noreferrer" data-scramble>GITHUB ↗</a>
-      <a href="https://linkedin.com/in/miguelferrazguedes" target="_blank" rel="noopener noreferrer" data-scramble>LINKEDIN ↗</a>
-      <a href="https://linktr.ee/miguelfguedes" target="_blank" rel="noopener noreferrer" data-scramble>LINKTREE ↗</a>
-      <a href="mailto:info@swedencapoeira.se" data-scramble>EMAIL ↗</a>
+      <a href="https://miguelfguedes.pt" target="_blank" rel="noopener noreferrer" data-scramble>MIGUELFGUEDES.PT ↗&#xFE0E;</a>
+      <a href="https://miguelfguedes.pt/garden" target="_blank" rel="noopener noreferrer" data-scramble>DIGITAL GARDEN ↗&#xFE0E;</a>
+      <a href="https://www.digisol.pt" target="_blank" rel="noopener noreferrer" data-scramble>DIGISOL ↗&#xFE0E;</a>
+      <a href="https://github.com/MiguelMalungo" target="_blank" rel="noopener noreferrer" data-scramble>GITHUB ↗&#xFE0E;</a>
+      <a href="https://linkedin.com/in/miguelferrazguedes" target="_blank" rel="noopener noreferrer" data-scramble>LINKEDIN ↗&#xFE0E;</a>
+      <a href="https://linktr.ee/miguelfguedes" target="_blank" rel="noopener noreferrer" data-scramble>LINKTREE ↗&#xFE0E;</a>
+      <a href="mailto:info@swedencapoeira.se" data-scramble>EMAIL ↗&#xFE0E;</a>
     </nav>
 
     <!-- ═══ Profile ═══ -->
@@ -435,7 +435,7 @@
           <h3 class="entry__role">Bachelor in Mechanical Engineering</h3>
         </div>
         <p class="entry__org">Instituto Superior de Engenharia do Porto (ISEP)</p>
-        <a class="doc" href="/images/Diploma_ISEP.jpg" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <a class="doc" href="/images/Diploma_ISEP.jpg" target="_blank" rel="noopener noreferrer">View diploma ↗&#xFE0E;</a>
       </article>
 
       <article class="entry" data-f="it">
@@ -444,7 +444,7 @@
         </div>
         <p class="entry__org">Folkuniversitetet — Gothenburg, Sweden</p>
         <p class="entry__desc">Full-time programme: Java, Android and iOS app development, cross-platform web, cloud, and Agile method.</p>
-        <a class="doc" href="/images/MobileAppsDiplom.JPG" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <a class="doc" href="/images/MobileAppsDiplom.JPG" target="_blank" rel="noopener noreferrer">View diploma ↗&#xFE0E;</a>
       </article>
 
       <article class="entry" data-f="art">
@@ -469,7 +469,7 @@
           <h3 class="entry__role">Football Trainer Certification</h3>
         </div>
         <p class="entry__org">Swedish Football Federation (SFF)</p>
-        <a class="doc" href="/cv/diplomas/football-trainer-sff.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗</a>
+        <a class="doc" href="/cv/diplomas/football-trainer-sff.pdf" target="_blank" rel="noopener noreferrer">View diploma ↗&#xFE0E;</a>
       </article>
 
       <article class="entry" data-f="sports">
@@ -953,7 +953,7 @@
           clearInterval(frame);
           frame = setInterval(function () {
             el2.textContent = original.split("").map(function (ch, idx) {
-              if (ch === " " || ch === "↗" || ch === "·") return ch;
+              if (ch === " " || ch === "↗" || ch === "\uFE0E" || ch === "·") return ch;
               if (idx < i) return original[idx];
               return SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
             }).join("");

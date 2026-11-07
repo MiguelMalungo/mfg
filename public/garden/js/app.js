@@ -44,7 +44,7 @@
         el.textContent = original
           .split("")
           .map((ch, idx) => {
-            if (ch === " " || ch === "↗") return ch;
+            if (ch === " " || ch === "↗" || ch === "\uFE0E") return ch;
             if (idx < i) return original[idx];
             return SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
           })
@@ -407,7 +407,7 @@
       </div>
       <h1 class="note__title" data-in>${n.shortTitle || n.title}</h1>
       <p class="note__lead" data-in>${n.desc}</p>
-      ${n.href ? `<a class="note__visit" data-in href="${n.href}" target="_blank" rel="noopener noreferrer" data-magnetic data-cursor="">${n.hrefLabel || "Visit site"} ↗</a>` : ""}
+      ${n.href ? `<a class="note__visit" data-in href="${n.href}" target="_blank" rel="noopener noreferrer" data-magnetic data-cursor="">${n.hrefLabel || "Visit site"} ↗&#xFE0E;</a>` : ""}
       <div class="note__body" data-in>${n.body}${gallery}</div>
       ${backs ? `<div class="note__backs" data-in><div class="note__backs-label">Referenced by</div>${backs}</div>` : ""}`;
   }
