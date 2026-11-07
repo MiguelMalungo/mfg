@@ -6,6 +6,7 @@ import type { NextConfig } from "next";
 const GARDEN_SLUGS = [
   "life-on-the-road",
   "pieces-of-eden",
+  "games",
   "blend",
   "blocks",
   "bus",

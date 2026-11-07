@@ -143,6 +143,38 @@ window.GARDEN = {
         <p>Three down. This page grows as the plots do.</p>`,
     },
     {
+      slug: "games",
+      cover: "/garden/assets/cover-games.webp",
+      title: "Games",
+      stage: "seedling",
+      topics: ["Games", "Art", "AI"],
+      desc: "One art game made, and two waiting for their season — about dreams, self-discovery and soul alchemy.",
+      planted: "2026",
+      order: 3,
+      media: ["/garden/assets/games-peek-1.webp", "/garden/assets/games-peek-2.webp"],
+      body: `
+        <p>I learned some game development on a course a while back, and then — like a lot of my projects — it went on the shelf. Not abandoned. Shelved. Everything has its timing, and some ideas are seeds that need their own season. The funny part is that the season nearly always comes.</p>
+        <h2>One I made</h2>
+        <p>An art game, set in a gallery. Each round a clue describes an artist — the Spaniard who co-founded Cubism and painted <em>Guernica</em>; the Russian who wrote <em>Concerning the Spiritual in Art</em> — and you play against the clock to get it right. When you do, the screen shouts <em>Right on!!!</em></p>
+        <div class="vids">
+          <video class="vid" style="--ar: 540 / 1124" src="/garden/assets/games-play.mp4" poster="/garden/assets/games-play-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <p>And a gallery to walk through, first person, from a phone — the same instinct as the <a class="wl" data-note="nfts-ai">NFT museum</a>: art you move through rather than scroll past.</p>
+        <div class="vids">
+          <video class="vid vid--wide" style="--ar: 960 / 444" src="/garden/assets/games-walk.mp4" poster="/garden/assets/games-walk-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <h2>Two I'm waiting to make</h2>
+        <p>With the latest AI it's become wildly easier to make a game. These two will still take a while. Partly I'm waiting for enough compute to go around; partly because real-time world generation is moving so fast that our weirdest dream visions are about to become things you can build, and play.</p>
+        <p>Both are about the same thing: recreating your own dreams and playing them, and learning about yourself on the way. I've made a video series on Instagram for each — the themes the games will be built around.</p>
+        <h3>The 4th Way</h3>
+        <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗</a></p>
+        <h3>Shadow to Gold</h3>
+        <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗</a></p>
+        <h2>Why games</h2>
+        <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. These games are that, played on purpose.</p>
+        <p>Seeds in the ground. Stay tuned.</p>`,
+    },
+    {
       slug: "blend",
       cover: "/garden/assets/cover-blend.webp",
       title: "Serenity by KaleidoKonscious",
@@ -151,7 +183,7 @@ window.GARDEN = {
       topics: ["Words", "AI"],
       desc: "An interactive book of poems with AI-generated art and media. A book that listens back.",
       tended: "2024",
-      order: 3,
+      order: 4,
       href: "https://miguelmalungo.github.io/kept/",
       hrefLabel: "Open the book",
       body: `

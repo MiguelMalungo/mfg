@@ -606,12 +606,16 @@ main { position: relative; z-index: 1; }
 .vid {
   flex: 0 0 auto;
   width: 325px; max-width: 100%;
-  aspect-ratio: 9 / 16;
+  /* phone-portrait by default; a clip of another shape sets --ar inline
+     so the frame matches the footage instead of cropping into it */
+  aspect-ratio: var(--ar, 9 / 16);
   display: block; object-fit: cover;
   border: 1px solid var(--ink); border-radius: 10px;
   background: #000;
   pointer-events: none; /* ambient loop, not a player — nothing to click */
 }
+/* landscape footage takes the whole column rather than a phone-width slot */
+.vid--wide { width: 100%; }
 /* if autoplay is refused (or reduced motion is on) they become real players */
 .vid--manual { pointer-events: auto; }
 
