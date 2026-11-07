@@ -164,7 +164,7 @@ window.GARDEN = {
           <video class="vid vid--wide" style="--ar: 960 / 444" src="/garden/assets/games-walk.mp4" poster="/garden/assets/games-walk-poster.webp" muted loop playsinline preload="none"></video>
         </div>
         <h2>Two I'm waiting to make</h2>
-        <p>With the latest AI it's become wildly easier to make a game. These two will still take a while. Partly I'm waiting for enough compute to go around; partly because real-time world generation is moving so fast that our weirdest dream visions are about to become things you can build, and play.</p>
+        <p>With the latest AI it's become wildly easier to make a game. I make mine in Unreal Engine — still the most advanced way to do it, even with AI — and model the 3D assets in Blender. These two will still take a while. Partly I'm waiting for enough compute to go around; partly because real-time world generation is moving so fast that our weirdest dream visions are about to become things you can build, and play.</p>
         <p>Both are about the same thing: recreating your own dreams and playing them, and learning about yourself on the way. I've made a video series on Instagram for each — the themes the games will be built around.</p>
         <h3>The 4th Way</h3>
         <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗</a></p>
