@@ -175,11 +175,14 @@ window.GARDEN = {
         <p>Both are about the same thing: recreating your own dreams and playing them, and learning about yourself on the way. I've made a video series on Instagram for each — the themes the games will be built around.</p>
         <h3>The 4th Way</h3>
         <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
+        <p>From it, the bonus episode on the Diamond Body — three foods, four bodies; fuel, light, fire.</p>
+        <div class="vids">
+          <video class="vid" src="/garden/assets/games-diamond-body.mp4" poster="/garden/assets/games-diamond-body-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
         <h3>Shadow to Gold</h3>
         <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
-        <p>Its last two episodes: the dream protocol, and the alchemy itself — nigredo, albedo, rubedo.</p>
+        <p>And its last episode, the alchemy itself — nigredo, albedo, rubedo.</p>
         <div class="vids">
-          <video class="vid" src="/garden/assets/games-dreams.mp4" poster="/garden/assets/games-dreams-poster.webp" muted loop playsinline preload="none"></video>
           <video class="vid" src="/garden/assets/games-alchemy.mp4" poster="/garden/assets/games-alchemy-poster.webp" muted loop playsinline preload="none"></video>
         </div>
         <h2>Why games</h2>
