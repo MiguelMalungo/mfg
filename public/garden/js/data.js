@@ -179,12 +179,20 @@ window.GARDEN = {
         <div class="vids">
           <video class="vid" src="/garden/assets/games-diamond-body.mp4" poster="/garden/assets/games-diamond-body-poster.webp" muted loop playsinline preload="none"></video>
         </div>
+        <figure>
+          <a href="/garden/assets/games-fourth-way-map.webp" target="_blank" rel="noopener noreferrer" class="fig__zoom"><img src="/garden/assets/games-fourth-way-map.webp" alt="Infographic: The Fourth Way, Gurdjieff's alchemy of conscious evolution — the four bodies of man, the three forms of nourishment, and the three laws of transformation" loading="lazy" /></a>
+          <figcaption>The philosophy behind the game: Gurdjieff's four bodies, three foods and three laws, on one page. <a class="ext" href="/garden/assets/games-fourth-way-map.webp" target="_blank" rel="noopener noreferrer">Full size ↗&#xFE0E;</a></figcaption>
+        </figure>
         <h3>Shadow to Gold</h3>
         <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
         <p>And its last episode, the alchemy itself — nigredo, albedo, rubedo.</p>
         <div class="vids">
           <video class="vid" src="/garden/assets/games-alchemy.mp4" poster="/garden/assets/games-alchemy-poster.webp" muted loop playsinline preload="none"></video>
         </div>
+        <figure>
+          <a href="/garden/assets/games-shadow-map.webp" target="_blank" rel="noopener noreferrer" class="fig__zoom"><img src="/garden/assets/games-shadow-map.webp" alt="Infographic: the mechanics of shadow integration — personal and archetypal shadow, three integration techniques, and the alchemical stages nigredo, albedo and rubedo" loading="lazy" /></a>
+          <figcaption>The philosophy behind the game: the shadow, projection, dreams, and the alchemy that turns them to gold. <a class="ext" href="/garden/assets/games-shadow-map.webp" target="_blank" rel="noopener noreferrer">Full size ↗&#xFE0E;</a></figcaption>
+        </figure>
         <h2>Why games</h2>
         <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. A museum you walk through and a dream you play are the same move: stepping inside instead of looking at. These games are that, played on purpose.</p>
         <p>Seeds in the ground. Stay tuned.</p>`,

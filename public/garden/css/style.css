@@ -579,6 +579,7 @@ main { position: relative; z-index: 1; }
 /* held to the width of a video frame — for maps and diagrams that
    gain nothing from the full column */
 .note__body figure.fig--narrow { max-width: 325px; }
+.note__body figure .fig__zoom { display: block; cursor: zoom-in; }
 .note__body figcaption {
   font-family: var(--mono); font-size: 12px; line-height: 1.55;
   letter-spacing: 0.02em; color: var(--ink-40);
