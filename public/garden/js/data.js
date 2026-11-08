@@ -194,7 +194,7 @@ window.GARDEN = {
           <figcaption>The philosophy behind the game: the shadow, projection, dreams, and the alchemy that turns them to gold. <a class="ext" href="/garden/assets/games-shadow-map.webp" target="_blank" rel="noopener noreferrer">Full size ↗&#xFE0E;</a></figcaption>
         </figure>
         <h2>Why games</h2>
-        <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. A museum you walk through and a dream you play are the same move: stepping inside instead of looking at. These games are that, played on purpose.</p>
+        <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. A museum you walk through and a dream you play are the same move: stepping inside worlds instead of just looking at. These games are that, played on purpose.</p>
         <p>Seeds in the ground. Stay tuned.</p>`,
     },
     {
