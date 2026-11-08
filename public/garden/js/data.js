@@ -144,24 +144,31 @@ window.GARDEN = {
     },
     {
       slug: "games",
-      cover: "/garden/assets/cover-games.webp",
-      title: "Games",
-      stage: "seedling",
+      aliases: ["nfts-ai"],
+      cover: "/garden/assets/cover-nfts-ai.webp",
+      title: "Games & Virtual Worlds",
+      stage: "budding",
       topics: ["Games", "Art", "AI"],
-      desc: "One art game made, and two waiting for their season — about dreams, self-discovery and soul alchemy.",
-      planted: "2026",
+      desc: "A museum you walk through, an art game, and two games waiting for their season — about dreams, self-discovery and soul alchemy.",
+      planted: "2024",
+      tended: "2026",
       order: 3,
+      href: "https://influc.my.canva.site/mfg",
+      hrefLabel: "Open the museum",
       media: ["/garden/assets/games-peek-1.webp", "/garden/assets/games-peek-2.webp"],
       body: `
-        <p>I learned some game development on a course a while back, and then — like a lot of my projects — it went on the shelf. Not abandoned. Shelved. Everything has its timing, and some ideas are seeds that need their own season. The funny part is that the season nearly always comes.</p>
-        <h2>One I made</h2>
+        <p>Worlds you move through rather than scroll past — that's the thread here. I built a museum like that, and learned some game development on a course along the way. Then, like a lot of my projects, it went on the shelf. Not abandoned. Shelved. Everything has its timing, and some ideas are seeds that need their own season. The funny part is that the season nearly always comes.</p>
+        <h2>A museum to walk through</h2>
+        <p>An interactive, gamified museum app for digital art and NFTs. The idea: collectors and artists should be able to walk through their own work, not scroll past it. I built it alongside <a class="wl" data-note="blend">Serenity</a> — both came out of the same period of playing with AI as a collaborator rather than as a tool.</p>
+        <p>The same instinct on a phone: a gallery you walk through in first person.</p>
+        <div class="vids">
+          <video class="vid vid--wide" style="--ar: 960 / 444" src="/garden/assets/games-walk.mp4" poster="/garden/assets/games-walk-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
+        <p>If you'd like your own version — your collection, your space — <a class="ext" href="/contact">get in touch</a>.</p>
+        <h2>A game in the gallery</h2>
         <p>An art game, set in a gallery. Each round a clue describes an artist — the Spaniard who co-founded Cubism and painted <em>Guernica</em>; the Russian who wrote <em>Concerning the Spiritual in Art</em> — and you play against the clock to get it right. When you do, the screen shouts <em>Right on!!!</em></p>
         <div class="vids">
           <video class="vid" style="--ar: 540 / 1124" src="/garden/assets/games-play.mp4" poster="/garden/assets/games-play-poster.webp" muted loop playsinline preload="none"></video>
-        </div>
-        <p>And a gallery to walk through, first person, from a phone — the same instinct as the <a class="wl" data-note="nfts-ai">NFT museum</a>: art you move through rather than scroll past.</p>
-        <div class="vids">
-          <video class="vid vid--wide" style="--ar: 960 / 444" src="/garden/assets/games-walk.mp4" poster="/garden/assets/games-walk-poster.webp" muted loop playsinline preload="none"></video>
         </div>
         <h2>Two I'm waiting to make</h2>
         <p>With the latest AI it's become wildly easier to make a game. I make mine in Unreal Engine — still the most advanced way to do it, even with AI — and model the 3D assets in Blender. These two will still take a while. Partly I'm waiting for enough compute to go around; partly because real-time world generation is moving so fast that our weirdest dream visions are about to become things you can build, and play.</p>
@@ -170,8 +177,13 @@ window.GARDEN = {
         <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
         <h3>Shadow to Gold</h3>
         <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
+        <p>Its last two episodes: the dream protocol, and the alchemy itself — nigredo, albedo, rubedo.</p>
+        <div class="vids">
+          <video class="vid" src="/garden/assets/games-dreams.mp4" poster="/garden/assets/games-dreams-poster.webp" muted loop playsinline preload="none"></video>
+          <video class="vid" src="/garden/assets/games-alchemy.mp4" poster="/garden/assets/games-alchemy-poster.webp" muted loop playsinline preload="none"></video>
+        </div>
         <h2>Why games</h2>
-        <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. These games are that, played on purpose.</p>
+        <p>Because I think life and reality already are one. We build the game engine in our first two years, and then we spend the rest of it playing this character — one that can feel things, through different levels. A museum you walk through and a dream you play are the same move: stepping inside instead of looking at. These games are that, played on purpose.</p>
         <p>Seeds in the ground. Stay tuned.</p>`,
     },
     {
@@ -248,22 +260,6 @@ window.GARDEN = {
         <h2>Selected work</h2>
         <p><a class="ext" href="https://sotkis.com/" target="_blank" rel="noopener noreferrer">Sotkis ↗&#xFE0E;</a> — the website, mobile app and management platform for an intelligent waste system: underground containers with fill-level sensors and Pay-As-You-Throw access, all reporting to one dashboard.</p>
         <figure><img src="/garden/assets/sotkis.webp" alt="The Sotkis website" loading="lazy" /></figure>`,
-    },
-    {
-      slug: "nfts-ai",
-      cover: "/garden/assets/cover-nfts-ai.webp",
-      title: "NFTs & Digital Art Leveraged by AI",
-      shortTitle: "NFT Museum",
-      stage: "evergreen",
-      topics: ["Art", "AI"],
-      desc: "An interactive, gamified museum app to display digital art and NFTs.",
-      tended: "2024",
-      href: "https://influc.my.canva.site/mfg",
-      hrefLabel: "Open the museum",
-      body: `
-        <p>An interactive, gamified museum app to display digital art and NFTs. The idea: collectors and artists should be able to walk through their own work, not scroll past it.</p>
-        <p>I built this alongside <a class="wl" data-note="blend">Serenity</a> — both came out of the same period of playing with AI as a collaborator rather than as a tool.</p>
-        <p>If you'd like your own version of this — your collection, your space — get in touch.</p>`,
     },
     {
       slug: "capoeira",

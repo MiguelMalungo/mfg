@@ -11,7 +11,6 @@ const GARDEN_SLUGS = [
   "blocks",
   "bus",
   "digisol",
-  "nfts-ai",
   "capoeira",
   "films",
   "photography",
@@ -41,6 +40,8 @@ const nextConfig: NextConfig = {
         destination: "/garden#:slug",
         permanent: true,
       },
+      // The NFT museum was folded into Games & Virtual Worlds.
+      { source: "/garden/nfts-ai", destination: "/garden#games", permanent: true },
       ...Object.entries(VANITY_PROJECTS).map(([vanity, url]) => ({
         source: `/${vanity}`,
         destination: url,

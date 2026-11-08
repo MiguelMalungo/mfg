@@ -30,6 +30,9 @@
     });
   });
   const bySlug = Object.fromEntries(sorted.map((n) => [n.slug, n]));
+  // Notes that absorbed another keep answering to its old slug, so links
+  // already out in the world (#nfts-ai) still land on the right page.
+  sorted.forEach((n) => (n.aliases || []).forEach((a) => (bySlug[a] = n)));
 
   /* ─── text scramble ───────────────────────────────────── */
   const SCRAMBLE = "!<>-_\\/[]{}—=+*^?#";
@@ -540,7 +543,7 @@
   function openNote(slug, push = true) {
     const n = bySlug[slug];
     if (!n) return;
-    if (push) history.pushState({ note: slug }, "", `#${slug}`);
+    if (push) history.pushState({ note: n.slug }, "", `#${n.slug}`);
 
     if (overlayOpen) {
       // swap in place
@@ -598,7 +601,10 @@
 
   function openFromHash() {
     const slug = location.hash.slice(1);
-    if (slug && bySlug[slug]) openNote(slug, false);
+    const n = slug && bySlug[slug];
+    if (!n) return;
+    if (n.slug !== slug) history.replaceState({ note: n.slug }, "", `#${n.slug}`);
+    openNote(n.slug, false);
   }
 
   document.getElementById("noteClose").addEventListener("click", () => closeNote());
