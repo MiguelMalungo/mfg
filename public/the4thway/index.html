@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base href="/the4thway/" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Fourth Way · prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root { --cream: #f2e6cc; }
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--cream); font-family: Inter, system-ui, sans-serif; }
+      canvas { display: block; }
+      .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; background: #000; transition: opacity 1.6s ease; z-index: 5; }
+      .overlay.hidden { opacity: 0; pointer-events: none; }
+      .title { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(42px, 6vw, 84px); letter-spacing: 0.18em; margin-left: 0.18em; text-align: center; line-height: 1.05; }
+      .small { font-size: 13px; letter-spacing: 0.5em; margin-left: 0.5em; text-transform: uppercase; opacity: 0.75; }
+      .prompt { font-size: 14px; letter-spacing: 0.45em; margin-left: 0.45em; text-transform: uppercase; opacity: 0.85; animation: breathe 3.2s ease-in-out infinite; }
+      @keyframes breathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.95; } }
+      #start { cursor: pointer; }
+      #end { background: rgba(0, 0, 0, 0.82); }
+      /* the end of the game: after the gate, a white-gold card */
+      #end.light { background: rgba(255, 244, 220, 0.96); color: #3a2a1a; }
+      #end.light .small { text-transform: none; letter-spacing: 0.06em; margin-left: 0; font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; text-align: center; line-height: 1.5; opacity: 0.9; }
+      #end.light .prompt { animation: none; text-transform: none; letter-spacing: 0.08em; margin-left: 0; font-size: 12px; line-height: 2; opacity: 0.6; text-align: center; }
+      #end.light .again { border-color: rgba(58, 42, 26, 0.35); }
+      #hud { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 2; pointer-events: none; transition: opacity 1s; }
+      #hints { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); display: flex; gap: 26px; z-index: 2; pointer-events: none; transition: opacity 2s; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.8; }
+      #hints div { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      kbd { font-family: Inter, sans-serif; font-size: 11px; border: 1px solid rgba(242, 230, 204, 0.5); border-radius: 4px; padding: 4px 7px; letter-spacing: 0.1em; }
+      #pause { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
+      .howto { max-width: 620px; padding: 0 24px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; line-height: 1.45; }
+      .howto p { margin: 0 0 16px; }
+      .howto b { font-weight: 600; color: #ffd89a; }
+      .howto .soft { font-size: 16px; opacity: 0.72; }
+      .howto .keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 24px; margin-top: 18px; font-family: Inter, sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.85; }
+      .howto .keys div { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      #help { background: rgba(0, 0, 0, 0.78); z-index: 6; cursor: pointer; }
+      #gems { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); display: flex; gap: 12px; z-index: 2; pointer-events: none; transition: opacity 1s; opacity: 0; }
+      #gems svg { width: 18px; height: 24px; overflow: visible; }
+      #gems .got { animation: gem 1.2s ease-out; }
+      @keyframes gem { 0% { transform: scale(2.4); filter: drop-shadow(0 0 12px #fff); } 100% { transform: scale(1); filter: none; } }
+      #goal { position: fixed; left: 50%; top: 28px; transform: translateX(-50%); z-index: 2; pointer-events: none; font-family: "Cormorant Garamond", Georgia, serif; font-size: 20px; letter-spacing: 0.06em; text-align: center; max-width: 90vw; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); transition: opacity 1.5s; opacity: 0; }
+      #end .again { font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; opacity: 0.7; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+    </script>
+  </head>
+  <body>
+    <div id="start" class="overlay">
+      <svg id="mark" width="92" height="92" viewBox="-55 -55 110 110"></svg>
+      <div class="small">Soul Spiral Studio</div>
+      <div class="title">THE FOURTH WAY</div>
+      <div class="howto">
+        <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br /><b>First read the standing stones:</b> raise your lantern at each one to take its knowledge (a diamond).<br />Then <b>find the sleeper who carries a spark of gold, raise your light to wake them, and follow.</b></p>
+        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold Space to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
+        <div class="keys">
+          <div><kbd>W A S D</kbd>walk</div>
+          <div><kbd>2-FINGER SWIPE · ← →</kbd>look</div>
+          <div><kbd>SHIFT</kbd>hurry</div>
+          <div><kbd>HOLD SPACE</kbd>remember yourself</div>
+          <div><kbd>HOLD CLICK</kbd>raise the light</div>
+          <div><kbd>H</kbd>this help</div>
+        </div>
+      </div>
+      <div class="prompt">Click to wake</div>
+    </div>
+
+    <div id="help" class="overlay hidden">
+      <div class="small">How to play</div>
+      <div class="howto">
+        <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br />One of them carries a spark of gold. <b>Find them, and raise your light to wake them.</b></p>
+        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold Space to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
+        <div class="keys">
+          <div><kbd>W A S D</kbd>walk</div>
+          <div><kbd>2-FINGER SWIPE · ← →</kbd>look</div>
+          <div><kbd>SHIFT</kbd>hurry</div>
+          <div><kbd>HOLD SPACE</kbd>remember yourself</div>
+          <div><kbd>HOLD CLICK</kbd>raise the light</div>
+          <div><kbd>H</kbd>this help</div>
+        </div>
+      </div>
+      <div class="prompt">Click or press H to return</div>
+    </div>
+
+    <div id="goal"></div>
+    <div id="gems"></div>
+    <div id="fade" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 0.7s;z-index:4"></div>
+
+    <div id="hints">
+      <div><kbd>W A S D</kbd>walk</div>
+      <div><kbd>2 FINGERS</kbd>look</div>
+      <div><kbd>HOLD SPACE</kbd>remember yourself</div>
+      <div><kbd>HOLD CLICK</kbd>raise the light</div>
+      <div><kbd>H</kbd>help</div>
+    </div>
+
+    <svg id="hud" width="54" height="54" viewBox="0 0 54 54">
+      <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(242,230,204,0.16)" stroke-width="2" />
+      <circle id="presence" cx="27" cy="27" r="22" fill="none" stroke="#ffc979" stroke-width="2" stroke-linecap="round" transform="rotate(-90 27 27)" stroke-dasharray="138.2" stroke-dashoffset="0" />
+      <circle id="core" cx="27" cy="27" r="3" fill="#ffc979" />
+    </svg>
+
+    <div id="end" class="overlay hidden">
+      <svg id="mark2" width="64" height="64" viewBox="-55 -55 110 110"></svg>
+      <div class="title" id="endTitle">THE FOURTH WAY</div>
+      <div class="small" id="endSmall">Prototype · Soul Spiral Studio</div>
+      <div class="prompt" id="endPrompt">Coming soon</div>
+      <div id="again" class="again">Keep exploring</div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

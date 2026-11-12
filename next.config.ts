@@ -57,6 +57,10 @@ const nextConfig: NextConfig = {
       // time, so this serves it from our own domain rather than bouncing
       // to another host — and there is still only one copy of the source.
       { source: "/blocks", destination: "/blocks/index.html" },
+      // The Fourth Way, the browser game. Copied in from its own project by
+      // its publish.sh (it lives outside any repo, so there is no live host
+      // to redirect to); the page pins <base href="/the4thway/">.
+      { source: "/the4thway", destination: "/the4thway/index.html" },
     ];
   },
   async headers() {
