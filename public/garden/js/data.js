@@ -201,6 +201,17 @@ window.GARDEN = {
         </figure>
         <h3>Shadow to Gold</h3>
         <p>The old alchemical idea that Jung read as psychology — that the darkest material in you is where the gold is. Dreams, the shadow, and soul alchemy. <a class="ext" href="https://www.instagram.com/reel/DfZT3HqIL7U/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
+        <p>In the game you wake at night in the house you've always lived in, and notice a door that was never there. Something follows you through the house, and it has your shape. You can't fight it and you can't outrun it: the only thing that works is to turn around and look. Your only light is a sealed glass vessel in your hand, and what moves inside it turns from black to white to red to gold. Each floor down is older than the one above it, the way Jung dreamed his own house, and going down is going in.</p>
+        <p>The trailer is out. The first playable scene is next.</p>
+        <div class="vids">
+          <a class="play-card play-card--trailer" href="https://www.instagram.com/reel/DfpUWdFI_yB/" target="_blank" rel="noopener noreferrer">
+            <img class="play-card__bg" src="/garden/assets/games-shadow-trailer.webp" alt="" loading="lazy" />
+            <span class="play-card__play" aria-hidden="true"></span>
+            <span class="play-card__studio"><img src="/garden/assets/soul-spiral-logo-light.svg" alt="" />Soul Spiral Studio</span>
+            <span class="play-card__title">Shadow to Gold</span>
+            <span class="play-card__btn">Watch the trailer ↗&#xFE0E;</span>
+          </a>
+        </div>
         <p>And its last episode, the alchemy itself — nigredo, albedo, rubedo.</p>
         <div class="vids">
           <video class="vid" src="/garden/assets/games-alchemy.mp4" poster="/garden/assets/games-alchemy-poster.webp" muted loop playsinline preload="none"></video>

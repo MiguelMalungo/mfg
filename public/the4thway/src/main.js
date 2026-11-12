@@ -127,16 +127,44 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', (e) => (keys[e.code] = false));
+/* The help screen doubles as the pause menu (H or Esc): continue, or restart from the beginning. */
+let unlockingOnPurpose = false;
 const toggleHelp = (show = $('help').classList.contains('hidden')) => {
   $('help').classList.toggle('hidden', !show);
-  if (show) document.exitPointerLock?.();
-  else lock();
+  $('restart').classList.remove('confirm');
+  $('restart').textContent = 'Restart';
+  if (show) {
+    unlockingOnPurpose = true;
+    document.exitPointerLock?.();
+  } else lock();
 };
 addEventListener('keydown', (e) => {
-  if (e.code === 'KeyH' && state.started) toggleHelp();
-  if (e.code === 'Escape' && !$('help').classList.contains('hidden')) toggleHelp(false);
+  if (!state.started || state.ended) return;
+  if (e.code === 'KeyH') toggleHelp();
+  if (e.code === 'Escape') toggleHelp($('help').classList.contains('hidden'));
+});
+// the browser takes Esc to release the mouse, so losing the lock in play opens the menu too
+document.addEventListener('pointerlockchange', () => {
+  const locked = document.pointerLockElement === renderer.domElement;
+  if (!locked && !unlockingOnPurpose && state.started && !state.ended && $('help').classList.contains('hidden')) toggleHelp(true);
+  if (!locked) unlockingOnPurpose = false;
 });
 $('help').addEventListener('click', () => toggleHelp(false));
+$('resume').addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleHelp(false);
+});
+$('restart').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const b = $('restart');
+  // ask once more: a restart loses everything gathered so far
+  if (!b.classList.contains('confirm')) {
+    b.classList.add('confirm');
+    b.textContent = 'Click again to restart';
+    return;
+  }
+  location.href = location.pathname; // from the very beginning (and without any test jumps)
+});
 $('again').addEventListener('click', () => {
   // the end card is only a pause: the plain stays open to explore, with the companion awake
   $('end').classList.add('hidden');

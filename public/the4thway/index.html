@@ -42,6 +42,10 @@
       #gems .got { animation: gem 1.2s ease-out; }
       @keyframes gem { 0% { transform: scale(2.4); filter: drop-shadow(0 0 12px #fff); } 100% { transform: scale(1); filter: none; } }
       #goal { position: fixed; left: 50%; top: 28px; transform: translateX(-50%); z-index: 2; pointer-events: none; font-family: "Cormorant Garamond", Georgia, serif; font-size: 20px; letter-spacing: 0.06em; text-align: center; max-width: 90vw; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); transition: opacity 1.5s; opacity: 0; }
+      #help .menu { display: flex; gap: 16px; }
+      #help .again { font: inherit; font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; opacity: 0.8; }
+      #help .again:hover { opacity: 1; border-color: rgba(242, 230, 204, 0.9); }
+      #help #restart.confirm { color: #ffd89a; border-color: #ffd89a; opacity: 1; }
       #end .again { font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; opacity: 0.7; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; }
     </style>
     <script type="importmap">
@@ -79,10 +83,14 @@
           <div><kbd>SHIFT</kbd>hurry</div>
           <div><kbd>HOLD SPACE</kbd>remember yourself</div>
           <div><kbd>HOLD CLICK</kbd>raise the light</div>
-          <div><kbd>H</kbd>this help</div>
+          <div><kbd>H · ESC</kbd>this help</div>
         </div>
       </div>
-      <div class="prompt">Click or press H to return</div>
+      <div class="menu">
+        <button id="resume" class="again">Continue</button>
+        <button id="restart" class="again">Restart</button>
+      </div>
+      <div class="prompt">Click to return</div>
     </div>
 
     <div id="goal"></div>
