@@ -175,6 +175,22 @@ window.GARDEN = {
         <p>Both are about the same thing: recreating your own dreams and playing them, and learning about yourself on the way. I've made a video series on Instagram for each — the themes the games will be built around.</p>
         <h3>The 4th Way</h3>
         <p>After Gurdjieff's Fourth Way: the work of observing yourself while you live, rather than leaving life to do it. <a class="ext" href="https://www.instagram.com/reel/DfDi_2aIItg/" target="_blank" rel="noopener noreferrer">The series on Instagram ↗&#xFE0E;</a></p>
+        <p>The first prototype is playable now, in the browser. Here is its trailer, and the way in.</p>
+        <div class="vids">
+          <a class="play-card play-card--trailer" href="https://www.instagram.com/reel/DfnC9JfI8V9/" target="_blank" rel="noopener noreferrer">
+            <img class="play-card__bg" src="/garden/assets/games-fourth-way-trailer.webp" alt="" loading="lazy" />
+            <span class="play-card__play" aria-hidden="true"></span>
+            <span class="play-card__title">The trailer</span>
+            <span class="play-card__btn">Watch on Instagram ↗&#xFE0E;</span>
+          </a>
+          <a class="play-card" href="/the4thway" target="_blank" rel="noopener">
+            <img class="play-card__bg" src="/garden/assets/games-fourth-way-play.webp" alt="" loading="lazy" />
+            <span class="play-card__studio"><img src="/garden/assets/soul-spiral-logo-light.svg" alt="" />Soul Spiral Studio</span>
+            <span class="play-card__title">The Fourth Way</span>
+            <span class="play-card__btn">Play the game ↗&#xFE0E;</span>
+            <span class="play-card__note">In the browser · best with a mouse and sound</span>
+          </a>
+        </div>
         <p>From it, the bonus episode on the Diamond Body — three foods, four bodies; fuel, light, fire.</p>
         <div class="vids">
           <video class="vid" src="/garden/assets/games-diamond-body.mp4" poster="/garden/assets/games-diamond-body-poster.webp" muted loop playsinline preload="none"></video>
