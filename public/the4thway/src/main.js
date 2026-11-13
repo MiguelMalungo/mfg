@@ -729,14 +729,14 @@ const tick = (now) => {
   }
 
   /* inscriptions appear in the lantern's light */
-  const next = nextStone();
+  let nearUnread = false;
   state.waitingStone = null;
   for (const s of world.steles) {
     const d = camera.position.distanceTo(s.pos);
-    // until the first stone is read, the others stay faint
-    const locked = !!next && s.required && !s.read && s !== next;
-    if (locked && d < 7) state.waitingStone = s;
-    const near = d < 7 ? 1 : 0;
+    // any stone can be read at any time; the guide only points to "Here nothing is lost" first
+    const locked = false;
+    const near = d < 9 ? 1 : 0;
+    if (near && s.required && !s.read) nearUnread = true;
     // near, the words show faintly; only the raised lantern lights them fully and takes their knowledge.
     // The lantern's progress is kept when you lower it for a moment (it fades slowly), so a brief
     // slip of the button doesn't send the reading back to the start.
@@ -760,6 +760,9 @@ const tick = (now) => {
       }
     }
   }
+
+  // on a phone, the Light button pulses while an unread stone is in reach
+  if (TOUCH) $('tLight').classList.toggle('pulse', nearUnread && state.raise < 0.5 && !state.cut);
 
   /* waking the companion */
   const c = sleepers.companion;
@@ -985,9 +988,7 @@ const tick = (now) => {
     } else if (c.awake > 0) goal = 'They are awake.';
     else if (state.gems < gemsNeeded()) {
       const ns = nearestUnread();
-      goal = state.waitingStone && !(ns && ns.d < 7)
-        ? 'This stone waits. First read the one where you woke: "Here nothing is lost."'
-        : ns && ns.d < 7
+      goal = ns && ns.d < 9
         ? (state.raise > 0.6 ? 'Hold your light on the stone…' : 'Raise your lantern (hold the mouse button) to read the stone.')
         : `Find the standing stones and read each one with your raised lantern. (${state.gems} of ${gemsNeeded()})`;
       target = ns ? ns.s.pos : null;
@@ -1126,6 +1127,12 @@ if (DEBUG) {
     world,
     keys,
     finale,
+    camera,
+    // testing: advance the game by n frames even when the page is hidden (requestAnimationFrame pauses then)
+    step(n = 1) {
+      let now = last;
+      for (let i = 0; i < n; i++) tick((now += 1000 / 60));
+    },
     tp(x, z, yaw = player.yaw, pitch = player.pitch) {
       player.pos.set(x, 0, z);
       player.vel.set(0, 0, 0);

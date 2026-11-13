@@ -28,6 +28,8 @@
       #stick.on { opacity: 1; }
       #nub { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(242, 230, 204, 0.45); }
       .tbtn { position: fixed; pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.55); background: rgba(0, 0, 0, 0.3); color: var(--cream); font: 500 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; -webkit-tap-highlight-color: transparent; touch-action: none; }
+      .tbtn.pulse { animation: tpulse 1.2s ease-in-out infinite; }
+      @keyframes tpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 216, 154, 0.0); border-color: rgba(242, 230, 204, 0.55); } 50% { box-shadow: 0 0 0 10px rgba(255, 216, 154, 0.25); border-color: #ffd89a; } }
       .tbtn.held { background: rgba(255, 216, 154, 0.35); border-color: #ffd89a; }
       #tLight { right: calc(18px + env(safe-area-inset-right)); bottom: calc(118px + env(safe-area-inset-bottom)); }
       #tBreath { right: calc(18px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); }
