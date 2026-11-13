@@ -3,7 +3,7 @@
   <head>
     <base href="/the4thway/" />
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>The Fourth Way · prototype</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,7 +11,26 @@
     <style>
       :root { --cream: #f2e6cc; }
       html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--cream); font-family: Inter, system-ui, sans-serif; }
-      canvas { display: block; }
+      canvas { display: block; touch-action: none; }
+      /* phones and tablets: touch controls instead of keys */
+      .touch-only { display: none !important; }
+      body.touch .touch-only { display: flex !important; }
+      body.touch .desk-only { display: none !important; }
+      body.touch span.touch-only { display: inline !important; }
+      body.touch { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      body.touch .overlay { overflow-y: auto; justify-content: flex-start; padding: 48px 0 40px; box-sizing: border-box; }
+      body.touch .howto { font-size: 16px; }
+      body.touch .howto .soft { font-size: 13px; }
+      body.touch .title { font-size: 38px; }
+      #touch { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+      #stick { position: fixed; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.35); background: rgba(0, 0, 0, 0.15); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+      #stick.on { opacity: 1; }
+      #nub { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(242, 230, 204, 0.45); }
+      .tbtn { position: fixed; pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.55); background: rgba(0, 0, 0, 0.3); color: var(--cream); font: 500 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; -webkit-tap-highlight-color: transparent; touch-action: none; }
+      .tbtn.held { background: rgba(255, 216, 154, 0.35); border-color: #ffd89a; }
+      #tLight { right: calc(18px + env(safe-area-inset-right)); bottom: calc(118px + env(safe-area-inset-bottom)); }
+      #tBreath { right: calc(18px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); }
+      #tPause { right: calc(16px + env(safe-area-inset-right)); top: calc(16px + env(safe-area-inset-top)); width: 44px; height: 44px; font-size: 13px; letter-spacing: 0; }
       .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; background: #000; transition: opacity 1.6s ease; z-index: 5; }
       .overlay.hidden { opacity: 0; pointer-events: none; }
       .title { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(42px, 6vw, 84px); letter-spacing: 0.18em; margin-left: 0.18em; text-align: center; line-height: 1.05; }
@@ -59,8 +78,8 @@
       <div class="title">THE FOURTH WAY</div>
       <div class="howto">
         <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br /><b>First read the standing stones:</b> raise your lantern at each one to take its knowledge (a diamond).<br />Then <b>find the sleeper who carries a spark of gold, raise your light to wake them, and follow.</b></p>
-        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold Space to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
-        <div class="keys">
+        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold <span class="desk-only">Space</span><span class="touch-only">Remember</span> to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
+        <div class="keys desk-only">
           <div><kbd>W A S D</kbd>walk</div>
           <div><kbd>2-FINGER SWIPE · ← →</kbd>look</div>
           <div><kbd>SHIFT</kbd>hurry</div>
@@ -68,22 +87,36 @@
           <div><kbd>HOLD CLICK</kbd>raise the light</div>
           <div><kbd>H</kbd>this help</div>
         </div>
+        <div class="keys touch-only">
+          <div><kbd>LEFT THUMB</kbd>walk</div>
+          <div><kbd>RIGHT THUMB, DRAG</kbd>look</div>
+          <div><kbd>HOLD REMEMBER</kbd>remember yourself</div>
+          <div><kbd>HOLD LIGHT</kbd>raise the light</div>
+          <div><kbd>II</kbd>pause · help</div>
+        </div>
+        <p class="soft touch-only" style="justify-content:center">Best with sound, and the phone held sideways.</p>
       </div>
-      <div class="prompt">Click to wake</div>
+      <div class="prompt"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
     </div>
 
     <div id="help" class="overlay hidden">
       <div class="small">How to play</div>
       <div class="howto">
         <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br />One of them carries a spark of gold. <b>Find them, and raise your light to wake them.</b></p>
-        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold Space to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
-        <div class="keys">
+        <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold <span class="desk-only">Space</span><span class="touch-only">Remember</span> to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
+        <div class="keys desk-only">
           <div><kbd>W A S D</kbd>walk</div>
           <div><kbd>2-FINGER SWIPE · ← →</kbd>look</div>
           <div><kbd>SHIFT</kbd>hurry</div>
           <div><kbd>HOLD SPACE</kbd>remember yourself</div>
           <div><kbd>HOLD CLICK</kbd>raise the light</div>
           <div><kbd>H · ESC</kbd>this help</div>
+        </div>
+        <div class="keys touch-only">
+          <div><kbd>LEFT THUMB</kbd>walk</div>
+          <div><kbd>RIGHT THUMB, DRAG</kbd>look</div>
+          <div><kbd>HOLD REMEMBER</kbd>remember yourself</div>
+          <div><kbd>HOLD LIGHT</kbd>raise the light</div>
         </div>
       </div>
       <div class="menu">
@@ -97,12 +130,19 @@
     <div id="gems"></div>
     <div id="fade" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 0.7s;z-index:4"></div>
 
-    <div id="hints">
+    <div id="hints" class="desk-only">
       <div><kbd>W A S D</kbd>walk</div>
       <div><kbd>2 FINGERS</kbd>look</div>
       <div><kbd>HOLD SPACE</kbd>remember yourself</div>
       <div><kbd>HOLD CLICK</kbd>raise the light</div>
       <div><kbd>H</kbd>help</div>
+    </div>
+
+    <div id="touch" class="touch-only">
+      <div id="stick"><div id="nub"></div></div>
+      <button id="tLight" class="tbtn">Light</button>
+      <button id="tBreath" class="tbtn">Remember</button>
+      <button id="tPause" class="tbtn" aria-label="Pause">II</button>
     </div>
 
     <svg id="hud" width="54" height="54" viewBox="0 0 54 54">

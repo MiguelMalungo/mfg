@@ -139,6 +139,8 @@ const stoneMaterial = (normalMap, color = 0x3b4049, repeat = 1) => {
 const hdr = (r, g, b, k) => new THREE.Color(r * k, g * k, b * k);
 
 export const buildWorld = (scene, renderer) => {
+  // phones and tablets get smaller shadow and reflection maps
+  const LOW = matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
   scene.fog = new THREE.FogExp2(FOG, 0.0046);
   scene.background = FOG.clone();
   const normalMap = tileNormalMap(256, 20, 2.4, 7);
@@ -221,7 +223,7 @@ export const buildWorld = (scene, renderer) => {
   const moonLight = new THREE.DirectionalLight(0xd3dcf0, 2.5);
   moonLight.position.copy(moonDir).multiplyScalar(100);
   moonLight.castShadow = true;
-  moonLight.shadow.mapSize.set(2048, 2048);
+  moonLight.shadow.mapSize.set(LOW ? 1024 : 2048, LOW ? 1024 : 2048);
   moonLight.shadow.bias = -0.0004;
   moonLight.shadow.normalBias = 0.03;
   const sc = moonLight.shadow.camera;
@@ -311,8 +313,8 @@ export const buildWorld = (scene, renderer) => {
 
   /* ── water ── */
   const water = new Water(new THREE.PlaneGeometry(760, 760), {
-    textureWidth: 1024,
-    textureHeight: 1024,
+    textureWidth: LOW ? 512 : 1024,
+    textureHeight: LOW ? 512 : 1024,
     waterNormals: normalMap,
     sunDirection: moonDir.clone(),
     sunColor: 0xc6d0e4,

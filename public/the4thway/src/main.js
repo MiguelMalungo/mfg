@@ -16,6 +16,9 @@ import { buildFinale } from './finale.js';
  */
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
+// phones and tablets: touch controls, and a lighter render
+const TOUCH = matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
+if (TOUCH) document.body.classList.add('touch');
 const $ = (id) => document.getElementById(id);
 
 /* ── the studio mark (same geometry as brand/soul-spiral-logo-*.svg) ── */
@@ -39,7 +42,7 @@ drawMark($('mark2'));
 
 /* ── renderer ── */
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio, TOUCH ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.95;
@@ -79,6 +82,8 @@ const hand = people?.buildHand();
 if (people) world.cutscene.setActor(people.makeActor(2));
 if (hand) lantern.attachHand(hand);
 const post = makePost(renderer, scene, camera);
+// on a phone the depth of field costs more than it gives
+if (TOUCH) post.dof.enabled = false;
 const sound = new Sound();
 
 /* ── sparks for the waking ── */
@@ -210,6 +215,99 @@ addEventListener(
   },
   { passive: false },
 );
+/* ── touch: a thumbstick wherever the left thumb lands, drag on the right to look, hold buttons ── */
+const touchMove = { x: 0, y: 0, mag: 0 };
+if (TOUCH) {
+  const stick = $('stick'), nub = $('nub');
+  const R = 50; // px of thumb travel for full speed
+  let stickId = null, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0;
+  const inPlay = () => state.started && !state.ended && $('help').classList.contains('hidden');
+  addEventListener(
+    'touchstart',
+    (e) => {
+      if (!inPlay() || e.target.closest?.('.tbtn')) return;
+      for (const t of e.changedTouches) {
+        if (t.clientX < innerWidth * 0.45 && stickId === null) {
+          stickId = t.identifier;
+          sx = t.clientX;
+          sy = t.clientY;
+          stick.style.left = sx + 'px';
+          stick.style.top = sy + 'px';
+          nub.style.transform = '';
+          stick.classList.add('on');
+        } else if (lookId === null) {
+          lookId = t.identifier;
+          lx = t.clientX;
+          ly = t.clientY;
+        }
+      }
+      e.preventDefault();
+    },
+    { passive: false },
+  );
+  addEventListener(
+    'touchmove',
+    (e) => {
+      for (const t of e.changedTouches) {
+        if (t.identifier === stickId) {
+          let dx = t.clientX - sx, dy = t.clientY - sy;
+          const l = Math.hypot(dx, dy);
+          if (l > R) (dx *= R / l), (dy *= R / l);
+          nub.style.transform = `translate(${dx}px, ${dy}px)`;
+          touchMove.x = dx / R;
+          touchMove.y = dy / R;
+          touchMove.mag = Math.min(1, l / R);
+        } else if (t.identifier === lookId) {
+          look((t.clientX - lx) * 0.006, (t.clientY - ly) * 0.006);
+          lx = t.clientX;
+          ly = t.clientY;
+        }
+      }
+      if (inPlay()) e.preventDefault();
+    },
+    { passive: false },
+  );
+  const end = (e) => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === stickId) {
+        stickId = null;
+        touchMove.x = touchMove.y = touchMove.mag = 0;
+        stick.classList.remove('on');
+      }
+      if (t.identifier === lookId) lookId = null;
+    }
+  };
+  addEventListener('touchend', end);
+  addEventListener('touchcancel', end);
+  // hold buttons: Light raises the lantern (as the mouse button does), Remember is Space
+  const hold = (id, on, off) => {
+    const b = $(id);
+    b.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      b.classList.add('held');
+      on();
+    }, { passive: false });
+    const up = (e) => {
+      e.preventDefault();
+      b.classList.remove('held');
+      off();
+    };
+    b.addEventListener('touchend', up);
+    b.addEventListener('touchcancel', up);
+  };
+  hold('tLight', () => {
+    mouseDown = true;
+    state.pressAt = state.t; // the lotus judges your timing by this
+  }, () => (mouseDown = false));
+  hold('tBreath', () => (keys.Space = true), () => (keys.Space = false));
+  $('tPause').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (state.started && !state.ended) toggleHelp(true);
+  }, { passive: false });
+}
+
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -259,11 +357,22 @@ const collide = (p) => {
 
 /* ── the diamonds: one for each teaching stone of the plain read with the raised lantern ── */
 const gemsNeeded = () => world.steles.filter((s) => s.required).length;
-// the stones are read in order: the first unread one is the only one the lantern can light fully
-const nextStone = () => world.steles.find((s) => s.required && !s.read) || null;
+// "Here nothing is lost", by the place you wake, is read first; after it the stones go in any order
+const firstStone = () => world.steles.find((s) => s.required) || null;
+const nextStone = () => {
+  const f = firstStone();
+  return f && !f.read ? f : null;
+};
 const nearestUnread = () => {
-  const s = nextStone();
-  return s ? { s, d: Math.hypot(player.pos.x - s.pos.x, player.pos.z - s.pos.z) } : null;
+  const f = nextStone();
+  if (f) return { s: f, d: Math.hypot(player.pos.x - f.pos.x, player.pos.z - f.pos.z) };
+  let best = null;
+  for (const s of world.steles) {
+    if (!s.required || s.read) continue;
+    const d = Math.hypot(player.pos.x - s.pos.x, player.pos.z - s.pos.z);
+    if (!best || d < best.d) best = { s, d };
+  }
+  return best;
 };
 const gemSVG = (got) =>
   `<svg viewBox="-9 -12 18 24"><path d="M0 -11 L8 -3 L0 11 L-8 -3 Z M-8 -3 L8 -3 M0 -11 L-3 -3 L0 11 L3 -3 Z" fill="${got ? 'rgba(220,235,255,0.9)' : 'none'}" stroke="${got ? '#ffffff' : 'rgba(242,230,204,0.45)'}" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
@@ -408,6 +517,10 @@ const tick = (now) => {
     if (keys.KeyS) wish.sub(forward);
     if (keys.KeyD) wish.add(right);
     if (keys.KeyA) wish.sub(right);
+    if (touchMove.mag > 0.12) {
+      wish.addScaledVector(forward, -touchMove.y);
+      wish.addScaledVector(right, touchMove.x);
+    }
     // arrow keys (and Q / E) turn and tilt the view
     const turn = (keys.ArrowLeft || keys.KeyQ ? 1 : 0) - (keys.ArrowRight || keys.KeyE ? 1 : 0);
     const tilt = (keys.ArrowUp ? 1 : 0) - (keys.ArrowDown ? 1 : 0);
@@ -439,6 +552,8 @@ const tick = (now) => {
   }
   const hurry = !controlled && !state.walk && (keys.ShiftLeft || keys.ShiftRight);
   if (wish.lengthSq() > 0) wish.normalize().multiplyScalar(state.walk ? 1.1 : controlled ? 1.2 : hurry ? 3.3 : 2.0);
+  // the thumbstick walks slower when only pushed a little
+  if (touchMove.mag > 0.12 && !controlled && !state.walk) wish.multiplyScalar(Math.max(0.35, touchMove.mag));
   player.vel.lerp(wish, 1 - Math.exp(-dt * 5));
   player.pos.addScaledVector(player.vel, dt);
   collide(player.pos);
@@ -615,21 +730,23 @@ const tick = (now) => {
   state.waitingStone = null;
   for (const s of world.steles) {
     const d = camera.position.distanceTo(s.pos);
-    // a later stone stays faint until the ones before it are read
-    const locked = s.required && !s.read && s !== next;
+    // until the first stone is read, the others stay faint
+    const locked = !!next && s.required && !s.read && s !== next;
     if (locked && d < 7) state.waitingStone = s;
     const near = d < 7 ? 1 : 0;
-    // near, the words show faintly; only the raised lantern lights them fully and takes their knowledge
-    const cap = s.read ? 1 : locked ? 0.3 : state.raise > 0.6 ? 1 : 0.3;
-    const rate = near ? (state.raise > 0.6 ? 0.45 : 0.3) : -0.25;
-    s.reveal = Math.max(0, Math.min(cap, s.reveal + rate * dt * (state.presence > 0.05 ? 1 : 0.2)));
-    if (s.reveal > cap) s.reveal = cap;
+    // near, the words show faintly; only the raised lantern lights them fully and takes their knowledge.
+    // The lantern's progress is kept when you lower it for a moment (it fades slowly), so a brief
+    // slip of the button doesn't send the reading back to the start.
+    const lit = near && !locked && state.raise > 0.6;
+    s.progress = s.read ? 1 : Math.max(0, Math.min(1, (s.progress || 0) + (lit ? 0.5 : -0.12) * dt));
+    const faint = near ? 0.3 : 0;
+    s.reveal += (Math.max(faint, s.progress) - s.reveal) * (1 - Math.exp(-dt * 3));
     s.mat.opacity = s.reveal * (0.75 + 0.25 * Math.sin(t * 2.1));
     if (!s.seen && s.reveal > 0.25) {
       s.seen = true;
       sound.bell(392, 0.06, 3);
     }
-    if (!s.read && s.reveal >= 0.999) {
+    if (!s.read && s.progress >= 1) {
       s.read = true;
       if (s.required) {
         state.gems++;
@@ -866,7 +983,7 @@ const tick = (now) => {
     else if (state.gems < gemsNeeded()) {
       const ns = nearestUnread();
       goal = state.waitingStone && !(ns && ns.d < 7)
-        ? (state.gems === 0 ? 'This stone waits. First read the one where you woke: "Here nothing is lost."' : 'This stone waits its turn. The light shows the stone to read next.')
+        ? 'This stone waits. First read the one where you woke: "Here nothing is lost."'
         : ns && ns.d < 7
         ? (state.raise > 0.6 ? 'Hold your light on the stone…' : 'Raise your lantern (hold the mouse button) to read the stone.')
         : `Find the standing stones and read each one with your raised lantern. (${state.gems} of ${gemsNeeded()})`;
@@ -879,7 +996,9 @@ const tick = (now) => {
       state.goalUntil = t + 7;
     }
     const showGoal = state.started && !state.ended && !state.cut && (t < state.goalUntil || state.breathing > 0.3 || state.presence < 0.15 || state.aimed);
-    $('goal').textContent = state.presence < 0.15 && !controlled && !F.solved ? 'Your presence is fading. Stop and hold Space.' : goal;
+    const line = state.presence < 0.15 && !controlled && !F.solved ? 'Your presence is fading. Stop and hold Space.' : goal;
+    // on a phone the lines name the on-screen buttons instead of the keys
+    $('goal').textContent = TOUCH ? line.replace(/hold the mouse button/g, 'hold Light').replace(/Hold the mouse button/g, 'Hold Light').replace(/hold Space/g, 'hold Remember').replace(/Hold Space/g, 'Hold Remember') : line;
     $('goal').style.opacity = showGoal ? '0.9' : '0';
     // remembering yourself shows the way: a gold light where the companion walks, seen through everything
     // a tall column of gold light over them, sized to stay visible from anywhere on the plain
