@@ -360,15 +360,8 @@ const collide = (p) => {
 
 /* ── the diamonds: one for each teaching stone of the plain read with the raised lantern ── */
 const gemsNeeded = () => world.steles.filter((s) => s.required).length;
-// "Here nothing is lost", by the place you wake, is read first; after it the stones go in any order
-const firstStone = () => world.steles.find((s) => s.required) || null;
-const nextStone = () => {
-  const f = firstStone();
-  return f && !f.read ? f : null;
-};
+// the stones can be read in any order; the guide points to the nearest one still unread
 const nearestUnread = () => {
-  const f = nextStone();
-  if (f) return { s: f, d: Math.hypot(player.pos.x - f.pos.x, player.pos.z - f.pos.z) };
   let best = null;
   for (const s of world.steles) {
     if (!s.required || s.read) continue;
@@ -733,7 +726,7 @@ const tick = (now) => {
   state.waitingStone = null;
   for (const s of world.steles) {
     const d = camera.position.distanceTo(s.pos);
-    // any stone can be read at any time; the guide only points to "Here nothing is lost" first
+    // any stone can be read at any time
     const locked = false;
     const near = d < 9 ? 1 : 0;
     if (near && s.required && !s.read) nearUnread = true;

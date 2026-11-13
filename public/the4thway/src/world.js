@@ -426,7 +426,6 @@ export const buildWorld = (scene, renderer) => {
   // the plain's teaching stones are the level's first task: read each one with the raised lantern
   const teach = (x, z, lines, opts) => addStele(x, z, Math.atan2(START.x - x, START.z - z), lines, { ...opts, required: true });
   teach(-6, 22, ['Self-observation:', 'see yourself as you are,', 'without judging or changing.'], { symbol: 'observe' });
-  // the stones are read in this order, beginning with the one where you wake
   addStele(-9, 6, 0.6, ['What sleeps cannot be carried.', 'Only lit.'], { symbol: 'sleep', required: true });
   teach(10, 4, ['Self-remembering:', 'attention two ways at once,', 'out to what I see, and back to me.'], { diagram: true });
   teach(-12, -22, ['Three brains: each works', 'at its own speed, and each', 'wants to rule alone.'], { symbol: 'brains' });
