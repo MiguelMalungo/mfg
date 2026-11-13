@@ -273,6 +273,9 @@ if (TOUCH) {
         stickId = null;
         touchMove.x = touchMove.y = touchMove.mag = 0;
         stick.classList.remove('on');
+        // back to its resting place
+        stick.style.left = stick.style.top = '';
+        nub.style.transform = '';
       }
       if (t.identifier === lookId) lookId = null;
     }

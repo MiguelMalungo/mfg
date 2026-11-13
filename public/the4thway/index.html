@@ -23,7 +23,8 @@
       body.touch .howto .soft { font-size: 13px; }
       body.touch .title { font-size: 38px; }
       #touch { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
-      #stick { position: fixed; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.35); background: rgba(0, 0, 0, 0.15); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+      /* the thumbstick rests, dimmed, at the bottom left so it can be found; it jumps to wherever the thumb lands */
+      #stick { position: fixed; left: calc(84px + env(safe-area-inset-left)); top: calc(100% - 200px - env(safe-area-inset-bottom)); width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.4); background: rgba(0, 0, 0, 0.18); opacity: 0.55; transition: opacity 0.2s; pointer-events: none; }
       #stick.on { opacity: 1; }
       #nub { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(242, 230, 204, 0.45); }
       .tbtn { position: fixed; pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(242, 230, 204, 0.55); background: rgba(0, 0, 0, 0.3); color: var(--cream); font: 500 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; -webkit-tap-highlight-color: transparent; touch-action: none; }
