@@ -207,7 +207,7 @@ export const TIPS = {
   // one after the other, when you wake
   wake: {
     desk: ['Walk with W A S D. Look with the mouse or two fingers on the trackpad. Space turns you round.', 'The flask in the corner is your light. Hurrying dims it.'],
-    touch: ['The left thumb walks. The right thumb looks. Tap to pick.', 'The flask in the corner is your light. Hurrying dims it.'],
+    touch: ['Drag the circle to walk; to its edge to hurry. Drag on the right to look: hold your finger at the side of the screen to keep turning.', 'Tap Pick when a mask is in reach.'],
   },
   // the first time you come to the wall
   wall: 'White masks are the faces you show. Black masks, in the dark on both walls, are what you keep out of sight. Read as many as you like. Take three black ones that are yours, and face what comes of each.',

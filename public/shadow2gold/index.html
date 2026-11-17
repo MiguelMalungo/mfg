@@ -39,6 +39,9 @@
       /* touch: a thumbstick on the left, drag on the right to look, one hold button to hurry */
       #stick { position: fixed; left: calc(84px + env(safe-area-inset-left)); top: calc(100% - 150px - env(safe-area-inset-bottom)); width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid rgba(242, 230, 204, 0.6); background: rgba(0, 0, 0, 0.3); box-shadow: 0 0 18px rgba(0, 0, 0, 0.6); opacity: 0.8; transition: opacity 0.2s; pointer-events: none; z-index: 3; }
       #stick.on { opacity: 1; }
+      .tbtn { position: fixed; z-index: 3; font: inherit; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #f2e6cc; background: rgba(0, 0, 0, 0.42); border: 2px solid rgba(242, 230, 204, 0.6); border-radius: 999px; padding: 14px 20px; box-shadow: 0 0 18px rgba(0, 0, 0, 0.6); transition: opacity 0.3s; -webkit-tap-highlight-color: transparent; touch-action: none; }
+      #pickbtn { right: calc(18px + env(safe-area-inset-right)); top: calc(100% - 290px - env(safe-area-inset-bottom)); color: #ffd89a; border-color: #ffd89a; padding: 16px 30px; font-size: 14px; }
+      .tbtn.hidden, #stick.away { opacity: 0; pointer-events: none; }
       #nub { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(242, 230, 204, 0.7); }
       /* the man / woman choice on the title card */
       .who { display: flex; gap: 14px; align-items: center; }
@@ -113,6 +116,8 @@
     </div>
 
     <div id="stick" class="touch-only"><div id="nub"></div></div>
+    <!-- touch only: a button to tap while a mask is within reach -->
+    <button id="pickbtn" class="tbtn pick touch-only hidden" type="button">Pick</button>
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>

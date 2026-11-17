@@ -218,7 +218,7 @@ addEventListener('keydown', (e) => {
 });
 /* Picking: click or E (tap on touch). The same press dismisses a text, or answers "take". */
 addEventListener('mousedown', (e) => {
-  if (!state.started || e.target.closest?.('.overlay, .say-btn')) return;
+  if (!state.started || e.target.closest?.('.overlay, .say-btn, .tbtn')) return;
   if (e.button === 2) return void words.answer('leave');
   // the click that takes the mouse is not also a pick
   if (e.button === 0 && (DEBUG || document.pointerLockElement === renderer.domElement)) act();
@@ -254,6 +254,7 @@ addEventListener(
 );
 const touchMove = { x: 0, y: 0, mag: 0 };
 const turn = { left: 0 }; // radians still to turn after Space
+const edge = { x: null }; // where the looking finger is, while it is down: held near either side of the screen, it keeps turning
 /*
  * While a mask is out you stand in the middle of the corridor, looking along it, and the view is
  * held still (owner, 2026-11-17). The mask comes to you there, clear of both walls. If you take
@@ -269,6 +270,17 @@ const standStill = () => {
   turn.left = 0;
 };
 const walkOn = () => (stand.on = false);
+/* Touch button: Pick (shown while a mask is within reach). It swallows its own touch so it neither starts the circle nor counts as a tap. */
+for (const [id, fn] of [['pickbtn', () => act()]]) {
+  const b = $(id);
+  const go = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fn();
+  };
+  b.addEventListener('touchstart', go, { passive: false });
+  b.addEventListener('click', go);
+}
 {
   const stick = $('stick'), nub = $('nub');
   const R = 50;
@@ -291,7 +303,8 @@ const walkOn = () => (stand.on = false);
           lookId = t.identifier;
           lx = t.clientX;
           ly = t.clientY;
-          tap = { x: lx, y: ly, at: performance.now(), button: !!t.target.closest?.('.say-btn') };
+          edge.x = lx;
+          tap = { x: lx, y: ly, at: performance.now(), button: !!t.target.closest?.('.say-btn, .tbtn') };
         }
       }
       e.preventDefault();
@@ -311,9 +324,11 @@ const walkOn = () => (stand.on = false);
           touchMove.y = dy / R;
           touchMove.mag = Math.min(1, l / R);
         } else if (t.identifier === lookId) {
-          look((t.clientX - lx) * 0.009, (t.clientY - ly) * 0.006);
+          // fine enough to aim at a mask (a phone's view is only about 30 degrees wide); big turns are made by holding the finger at the side
+          look((t.clientX - lx) * 0.007, (t.clientY - ly) * 0.006);
           lx = t.clientX;
           ly = t.clientY;
+          edge.x = lx;
         }
       }
       if (inPlay()) e.preventDefault();
@@ -331,6 +346,7 @@ const walkOn = () => (stand.on = false);
       }
       if (t.identifier === lookId) {
         lookId = null;
+        edge.x = null;
         // a short touch that did not move is a tap: pick, or dismiss
         if (tap && !tap.button && performance.now() - tap.at < 320 && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) < 14) act();
         tap = null;
@@ -421,6 +437,12 @@ const movePlayer = (dt) => {
   } else {
     if (keys.ArrowLeft) player.yaw += dt * 2.4;
     if (keys.ArrowRight) player.yaw -= dt * 2.4;
+  }
+  // the looking finger held near a side of the screen keeps turning that way, so a half turn needs no second swipe
+  if (edge.x != null && !stand.on) {
+    const m = Math.min(70, innerWidth * 0.2);
+    if (edge.x < m) player.yaw += dt * 2.6 * (1 - edge.x / m);
+    else if (edge.x > innerWidth - m) player.yaw -= dt * 2.6 * (1 - (innerWidth - edge.x) / m);
   }
   if (turn.left > 0) {
     const d = Math.min(turn.left, (dt * Math.PI) / 0.5);
@@ -873,6 +895,11 @@ const tick = (forceDt) => {
     masks.update(dt, t, camera);
     const free = state.started && !state.ended && !words.open && !facing && !masks.held() && !vessel.rx.on && player.pos.z > Z_END;
     candidate = free ? masks.lookedAt(camera) : null;
+  }
+  // the touch buttons and the circle follow what can be done: nothing to walk or turn while a mask is out
+  if (touch.on) {
+    $('pickbtn').classList.toggle('hidden', !(candidate && !hand?.busy && !stand.on));
+    $('stick').classList.toggle('away', !state.started || stand.on);
   }
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
   if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5) words.tip(TIPS.wall, { id: 'wall' });
