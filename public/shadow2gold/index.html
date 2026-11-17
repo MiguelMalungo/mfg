@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base href="/shadow2gold/" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Shadow to Gold · prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root { --cream: #f2e6cc; }
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--cream); font-family: Inter, system-ui, sans-serif; }
+      canvas { display: block; touch-action: none; }
+      .touch-only { display: none !important; }
+      body.touch .touch-only { display: flex !important; }
+      body.touch .desk-only { display: none !important; }
+      body.touch span.touch-only { display: inline !important; }
+      body.touch { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; background: #000; transition: opacity 2.2s ease; z-index: 5; padding: 24px; box-sizing: border-box; }
+      .overlay.hidden { opacity: 0; pointer-events: none; }
+      .title { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(40px, 6vw, 84px); letter-spacing: 0.18em; margin-left: 0.18em; text-align: center; line-height: 1.05; text-shadow: 0 0 40px rgba(242, 230, 204, 0.3); }
+      .small { font-size: 12px; letter-spacing: 0.5em; margin-left: 0.5em; text-transform: uppercase; opacity: 0.75; text-align: center; }
+      .level { font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; letter-spacing: 0.3em; margin-left: 0.3em; opacity: 0.8; }
+      .prompt { font-size: 13px; letter-spacing: 0.45em; margin-left: 0.45em; text-transform: uppercase; opacity: 0.85; animation: breathe 3.2s ease-in-out infinite; }
+      @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.95; } }
+      #start { cursor: pointer; }
+      #loading { font-size: 11px; letter-spacing: 0.4em; margin-left: 0.4em; text-transform: uppercase; opacity: 0.5; }
+      .howto { max-width: 560px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; line-height: 1.45; }
+      .howto p { margin: 0 0 14px; }
+      .howto b { font-weight: 600; color: #ffd89a; }
+      .howto .soft { font-size: 16px; opacity: 0.7; }
+      .keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 24px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.8; }
+      .keys div { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      kbd { font-family: Inter, sans-serif; font-size: 11px; border: 1px solid rgba(242, 230, 204, 0.5); border-radius: 4px; padding: 4px 7px; letter-spacing: 0.1em; }
+      #end { background: rgba(0, 0, 0, 0.9); }
+      .again { font: inherit; font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; opacity: 0.8; }
+      .again:hover { opacity: 1; border-color: rgba(242, 230, 204, 0.9); }
+      /* touch: a thumbstick on the left, drag on the right to look, one hold button to hurry */
+      #stick { position: fixed; left: calc(84px + env(safe-area-inset-left)); top: calc(100% - 150px - env(safe-area-inset-bottom)); width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid rgba(242, 230, 204, 0.6); background: rgba(0, 0, 0, 0.3); box-shadow: 0 0 18px rgba(0, 0, 0, 0.6); opacity: 0.8; transition: opacity 0.2s; pointer-events: none; z-index: 3; }
+      #stick.on { opacity: 1; }
+      #nub { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(242, 230, 204, 0.7); }
+      /* the man / woman choice on the title card */
+      .who { display: flex; gap: 14px; align-items: center; }
+      .who button { font: inherit; font-family: "Cormorant Garamond", Georgia, serif; font-size: 20px; letter-spacing: 0.22em; text-transform: uppercase; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.3); border-radius: 4px; padding: 9px 22px 9px 26px; opacity: 0.6; transition: opacity 0.3s, border-color 0.3s, background 0.3s; }
+      .who button:hover { opacity: 0.9; }
+      .who button.on { opacity: 1; border-color: #ffd89a; background: rgba(255, 216, 154, 0.08); color: #ffd89a; }
+      .restart { font: inherit; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; border: 0; cursor: pointer; opacity: 0.4; padding: 6px; }
+      .restart:hover { opacity: 0.85; }
+      /* words over the game (src/words.js): a text beside an object, the line at the bottom, a word in the middle */
+      .say, .line, .word, .whisper, .tip { position: fixed; z-index: 4; transition: opacity 0.6s ease; pointer-events: none; }
+      .say.hidden, .line.hidden, .word.hidden, .whisper.hidden, .tip.hidden, .tip.behind { opacity: 0; }
+      .tip { left: 50%; bottom: calc(66px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: min(84vw, 640px); text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-size: clamp(18px, 2.5vh, 23px); line-height: 1.35; color: #ffe2b0; text-shadow: 0 0 12px #000, 0 0 3px #000, 0 1px 2px #000; }
+      .say { width: min(380px, 84vw); padding: 18px 22px; margin: -18px -22px; border-radius: 10px; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.32) 70%, rgba(0, 0, 0, 0)); box-sizing: content-box; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(19px, 2.5vh, 26px); line-height: 1.36; text-shadow: 0 0 14px #000, 0 0 3px #000, 0 1px 2px #000; }
+      .say p { margin: 0 0 5px; }
+      .say-title { font-size: 0.6em; letter-spacing: 0.34em; text-transform: uppercase; color: #ffd89a; margin-bottom: 12px; font-family: Inter, sans-serif; }
+      .say-q { margin-top: 14px !important; color: #ffd89a; font-weight: 600; }
+      .say-choice { display: flex; gap: 12px; margin-top: 16px; }
+      .say:not(.hidden) .say-btn { pointer-events: auto; }
+      .say-btn { font: inherit; font-size: 0.74em; letter-spacing: 0.16em; text-transform: uppercase; color: inherit; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(242, 230, 204, 0.45); border-radius: 4px; padding: 9px 14px 7px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+      .say-btn.take { border-color: #ffd89a; color: #ffd89a; }
+      .say-btn small { font-family: Inter, sans-serif; font-size: 9px; letter-spacing: 0.2em; opacity: 0.65; }
+      .line { left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: min(74vw, 760px); text-align: center; font-size: 12px; letter-spacing: 0.26em; line-height: 1.7; text-transform: uppercase; opacity: 0.8; text-shadow: 0 0 10px #000, 0 0 3px #000; }
+      .word { left: 50%; top: 44%; transform: translate(-50%, -50%); text-align: center; transition: opacity 1.4s ease; }
+      .word-main { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(44px, 8vh, 92px); letter-spacing: 0.2em; margin-left: 0.2em; color: #ffd89a; text-shadow: 0 0 40px rgba(255, 200, 110, 0.45), 0 0 6px #000; }
+      .word-sub { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(17px, 2.3vh, 22px); margin-top: 10px; opacity: 0.85; text-shadow: 0 0 10px #000; }
+      .whisper { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 84vw); text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(20px, 2.8vh, 28px); line-height: 1.4; transition: opacity 1.2s ease; }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+    </script>
+  </head>
+  <body>
+    <div id="start" class="overlay">
+      <svg id="mark" width="84" height="84" viewBox="-55 -55 110 110"></svg>
+      <div class="small">Soul Spiral Studio</div>
+      <div class="title">SHADOW<br />TO GOLD</div>
+      <div class="level">I · NIGREDO</div>
+      <div class="howto">
+        <p>The house you have always lived in. A light floats beside you.<br /><b>On the wall hang the faces you wear, and the ones you hide.</b></p>
+        <p class="soft">Hurrying dims your light and makes a shadow grow.<br />Nothing is lost here. Only time.</p>
+      </div>
+      <div class="who" id="who">
+        <button type="button" data-g="man">Man</button>
+        <button type="button" data-g="woman">Woman</button>
+      </div>
+      <div class="keys desk-only">
+        <div><kbd>W A S D</kbd>walk</div>
+        <div><kbd>MOUSE · TRACKPAD · ← →</kbd>look</div>
+        <div><kbd>SPACE</kbd>turn round</div>
+        <div><kbd>CLICK · E</kbd>pick</div>
+        <div><kbd>SHIFT</kbd>hurry</div>
+      </div>
+      <div class="keys touch-only">
+        <div><kbd>LEFT THUMB</kbd>walk</div>
+        <div><kbd>RIGHT THUMB, DRAG</kbd>look</div>
+        <div><kbd>TAP</kbd>pick</div>
+      </div>
+      <div id="loading">Lighting the candles…</div>
+      <div id="choose" class="prompt" style="display: none">Choose, then wake</div>
+      <div id="go" class="prompt" style="display: none"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
+      <button id="restart" class="restart" type="button" style="display: none">Start again</button>
+    </div>
+
+    <div id="end2" class="overlay hidden">
+      <div class="level">II · ALBEDO</div>
+      <div class="howto">
+        <p>Below the house the water is black and still.</p>
+        <p class="soft">Letters float on it, sealed. Across it, someone holds up a light of their own.</p>
+      </div>
+      <div class="small">The second work · to come</div>
+      <button id="again2" class="again">Stay a while</button>
+    </div>
+
+    <div id="stick" class="touch-only"><div id="nub"></div></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

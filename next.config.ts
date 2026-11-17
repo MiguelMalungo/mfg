@@ -61,6 +61,9 @@ const nextConfig: NextConfig = {
       // its publish.sh (it lives outside any repo, so there is no live host
       // to redirect to); the page pins <base href="/the4thway/">.
       { source: "/the4thway", destination: "/the4thway/index.html" },
+      // Shadow to Gold, the second browser game, published the same way by its
+      // own publish.sh (public/shadow2gold, base href pinned in the page).
+      { source: "/shadow2gold", destination: "/shadow2gold/index.html" },
     ];
   },
   async headers() {
