@@ -44,6 +44,15 @@ const touchOn = () => {
 };
 if (TOUCH) touchOn();
 const $ = (id) => document.getElementById(id);
+/*
+ * A button that works by tap as well as by click. While the game is running it takes every touch for walking
+ * and looking (and so the browser makes no click of a tap): the pause card's Go on and Start again did nothing
+ * on a phone (owner, 2026-11-17). Each button here answers its own touchend, and that stops the click after it.
+ */
+const onTap = (el, fn) => {
+  el.addEventListener('click', fn);
+  el.addEventListener('touchend', (e) => (e.preventDefault(), fn(e)), { passive: false });
+};
 
 /* ── the studio mark: three spiral arms ── */
 {
@@ -166,13 +175,13 @@ const showChoice = () => {
   $('restart').style.display = save.hasProgress ? '' : 'none';
 };
 whoButtons.forEach((b) =>
-  b.addEventListener('click', (e) => {
+  onTap(b, (e) => {
     e.stopPropagation();
     gender = b.dataset.g;
     showChoice();
   }),
 );
-$('restart').addEventListener('click', (e) => {
+onTap($('restart'), (e) => {
   e.stopPropagation();
   save.reset();
   location.reload();
@@ -230,14 +239,14 @@ const resume = () => {
   lastT = performance.now(); // no jump in time for the pause
   if (!touch.on && !DEBUG) lock();
 };
-$('resume').addEventListener('click', (e) => (e.stopPropagation(), resume()));
-$('restartgame').addEventListener('click', (e) => {
+onTap($('resume'), (e) => (e.stopPropagation(), resume()));
+onTap($('restartgame'), (e) => {
   e.stopPropagation();
   // asked twice: it forgets every mask faced
   const b = $('restartgame');
   if (b.dataset.sure !== '1') {
     b.dataset.sure = '1';
-    b.textContent = 'Forget everything? Click again';
+    b.textContent = touch.on ? 'Forget everything? Tap again' : 'Forget everything? Click again';
     return;
   }
   save.reset();
