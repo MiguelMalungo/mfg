@@ -13,6 +13,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  */
 
 const LEVEL = 1.45; // how brightly the hand is lit, whatever its distance from the flask (tuned by eye against i24a)
+const SKIN = new THREE.Color(0.52, 0.47, 0.42); // multiplies the baked colour map: dark, a little warm
+const NORMAL_SCALE = 1.7;
+const ROUGH = 0.95; // multiplies the baked roughness: a little greasy sheen on the pads
+const FLASK_SHARE = 0.3; // of the flask's direct light on the hand
+const KEY = 1.6; // the grazing light from above, relative to the flask's light at the palm
+const RIM = 0.7; // the edge light, same units
+const KEY_DIR = new THREE.Vector3(0.3, 0.88, 0.36).normalize(); // view space: from above, a little right and in front
+const WARM = new THREE.Color(1.0, 0.72, 0.45);
+const WRIST_CREASE = { man: 0.022, woman: 0.024 }; // m above the 'hand' bone's head where the forearm starts to go dark
 const POSE_TIMES = { rest: 0, reach: 10 / 24, touch: 20 / 24, hold: 30 / 24 - 1e-3 };
 const ss = (a, b, x) => {
   const k = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -32,46 +41,85 @@ export const makeHand = async (camera, who) => {
   mesh.castShadow = true; // the flask throws the hand's shadow on the wall it reaches for
   mesh.receiveShadow = true;
 
-  /* The skin: dark and sooty, as in the reference frames. The scan's creases are in the normal
-     map; the second map darkens them further (soot settles in the lines of a hand). */
+  /* The skin (rebuilt 2026-11-17, BUILD.md "The hand"): the colour map carries the soot (in every
+     crease, on the fingertips and the finger pads, under the nails) and the normal map the relief
+     (cracked dry skin, wrinkles over the knuckles, the palm's creases), both baked in Blender. The
+     third map is red = occlusion, green = roughness, blue = how deep in a line the point lies. */
   const occ = new THREE.TextureLoader().load(`./assets/hands/${who}-occ.jpg`);
   occ.flipY = false;
   const src = mesh.material;
-  // the geometry keeps the scan's own origin; the rig node carries it to the wrist
-  let wristY = 0;
-  model.traverse((o) => o.name.endsWith('_rig') && (wristY = -o.position.y));
-  const u = { occMap: { value: occ }, uGain: { value: 0.3 }, uCap: { value: 0.3 }, uWristY: { value: wristY } };
+  // the wrist's height in the geometry's own space (exports differ in where they put the origin): measured, as the
+  // mean rest height of the vertices that the skinning places in the plane of the 'hand' bone's head
+  const wristY = (() => {
+    model.updateMatrixWorld(true);
+    const hb = model.getObjectByName('hand');
+    const hp = hb.getWorldPosition(new THREE.Vector3());
+    const ax = new THREE.Vector3(0, 1, 0).transformDirection(hb.matrixWorld);
+    const pos = mesh.geometry.attributes.position, v = new THREE.Vector3();
+    let s = 0, n = 0;
+    for (let i = 0; i < pos.count; i++) {
+      mesh.getVertexPosition(i, v).applyMatrix4(mesh.matrixWorld);
+      if (Math.abs(v.sub(hp).dot(ax)) < 0.003) (s += pos.getY(i)), n++;
+    }
+    // the skin crease of the wrist lies a little above the bone's head (more so on the man's scan)
+    return (n ? s / n : 0) + (WRIST_CREASE[who] ?? 0);
+  })();
+  const u = {
+    occMap: { value: occ },
+    uGain: { value: 0.3 }, // scales the light so the skin sits at LEVEL whatever the flask's distance (update())
+    uCap: { value: 0.3 }, // soft ceiling that only tames glints
+    uWristY: { value: wristY },
+    uFlaskK: { value: FLASK_SHARE }, // how much of the flask's own (frontal, flattening) light the hand keeps
+    uKeyDir: { value: new THREE.Vector3() }, // view space: a grazing warm light from above, as in i24a
+    uKeyCol: { value: new THREE.Color() },
+    uRimCol: { value: new THREE.Color() },
+  };
   const mat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(0.26, 0.175, 0.12),
+    color: SKIN,
+    map: src.map,
     normalMap: src.normalMap,
-    normalScale: new THREE.Vector2(2.0, 2.0),
-    roughness: 0.6,
+    normalScale: new THREE.Vector2(NORMAL_SCALE, NORMAL_SCALE),
+    roughnessMap: occ, // green
+    roughness: ROUGH,
     metalness: 0,
   });
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vRestY; uniform float uWristY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRestY = position.y;\n// the sleeve stands a little proud of the wrist\ntransformed += objectNormal * 0.007 * smoothstep(0.0, -0.012, position.y - uWristY);');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vRestY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRestY = position.y;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D occMap; uniform float uGain; uniform float uCap; uniform float uWristY; varying float vRestY;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D occMap; uniform float uGain; uniform float uCap; uniform float uWristY; uniform float uFlaskK; uniform vec3 uKeyDir; uniform vec3 uKeyCol; uniform vec3 uRimCol; varying float vRestY;')
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
         vec3 oc = texture2D(occMap, vNormalMapUv).rgb;
-        // creases (green: dark in the lines) and the larger hollows between the fingers (red)
-        float crease = smoothstep(0.28, 0.56, oc.g);
-        float sootK = mix(0.22, 1.0, crease) * mix(0.45, 1.0, oc.r);
-        // below the wrist the scan ends: a plain forearm was added in Blender, and here it is a dark sleeve
-        float forearm = smoothstep(0.003, -0.004, vRestY - uWristY);
-        sootK = mix(sootK, 0.07, forearm);
-        diffuseColor.rgb *= sootK;`,
+        diffuseColor.rgb *= mix(0.45, 1.0, oc.r) * (1.0 - 0.3 * oc.b);
+        // the forearm goes into the dark a few centimetres below the wrist
+        float fore = smoothstep(0.0, -0.06, vRestY - uWristY);
+        diffuseColor.rgb *= mix(1.0, 0.06, fore);`,
       )
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(0.82, roughnessFactor, crease), 1.0, forearm);')
-      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal, nonPerturbedNormal, forearm));')
+      .replace(
+        '#include <lights_fragment_end>',
+        `// the flask sits low beside the eye and lights the palm head-on, which flattens it: keep only part of that,
+        // add a grazing key from above (the light of i24a) and a soft rim so the hand never reads as a cut-out
+        reflectedLight.directDiffuse *= uFlaskK;
+        reflectedLight.directSpecular *= uFlaskK;
+        {
+          IncidentLight key;
+          key.direction = uKeyDir;
+          key.color = uKeyCol * (1.0 - fore);
+          key.visible = true;
+          RE_Direct(key, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
+          float nv = clamp(dot(geometryNormal, geometryViewDir), 0.0, 1.0);
+          float rim = pow(1.0 - nv, 3.0) * smoothstep(-0.4, 0.6, dot(geometryNormal, uKeyDir));
+          reflectedLight.directDiffuse += uRimCol * rim * mix(1.0, 0.25, oc.b) * (1.0 - fore);
+        }
+        #include <lights_fragment_end>`,
+      )
       // the flask can be a hand's breadth away. update() sets uGain from how strong its light is at the palm, so the
       // skin is lit to the same dark level however near the flask is, and keeps its shading; uCap only tames glints
       .replace('#include <opaque_fragment>', 'outgoingLight *= uGain; outgoingLight = outgoingLight / (1.0 + outgoingLight / uCap);\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey = () => 'st2g-hand-v1';
+  mat.customProgramCacheKey = () => 'st2g-hand-v2';
   mesh.material = mat;
 
   /* The four poses, read once from the animation. */
@@ -172,7 +220,11 @@ export const makeHand = async (camera, who) => {
       const d = Math.max(0.06, light.getWorldPosition(_l).distanceTo(palmBone.getWorldPosition(_p)));
       const E = light.intensity / Math.pow(d, light.decay);
       u.uGain.value = Math.min(1, LEVEL / Math.max(E, 1e-3));
+      // the key and the rim are in the same units as the flask's light at the palm, so uGain treats them alike
+      u.uKeyCol.value.copy(WARM).multiply(light.color).multiplyScalar(E * KEY);
+      u.uRimCol.value.copy(WARM).multiply(light.color).multiplyScalar(E * RIM);
     }
+    u.uKeyDir.value.copy(KEY_DIR);
   };
 
   /** Closes on the thing. Resolves nothing: the caller starts what happens next on its own clock. */
