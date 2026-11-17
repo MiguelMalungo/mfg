@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { parquet, wallpaper, wood, stone, rng } from './textures.js';
-import { doorLeaf, doorCase, doorKnob, wainscotBay, cornerShade } from './joinery.js';
+import { doorLeaf, doorCase, doorKnob, wainscotBay, cornerShade, moulding, board } from './joinery.js';
 
 /*
  * Level 1, the house: one long corridor (refs/v08.jpg): herringbone parquet, dark panelling under
@@ -105,15 +105,20 @@ export const buildHouse = (scene, glowTex) => {
     // skirting and chair rail, in lengths that stop at each door's case; the cornice runs through
     let from = Z_BACK;
     const stops = SIDE_DOORS.filter(([s]) => s === side).map(([, z]) => z).sort((a, b) => b - a);
+    // moulded in the doors' cherry (joinery.js: moulding); the left wall's profiles are the right's mirrored
+    const run = (kind, len, y, z0) => {
+      const m = add(new THREE.Mesh(moulding(kind, len), joinMat), kind !== 'skirting');
+      m.position.set(x, y, z0);
+      m.scale.x = -side;
+      return m;
+    };
     for (const z of [...stops, null]) {
-      const to = z == null ? Z_END : z + DOOR_GAP, len = from - to, mid = (from + to) / 2;
-      box(0.04, 0.16, len, woodMat, x - side * 0.02, 0.08, mid);
-      box(0.06, 0.07, len, woodMat, x - side * 0.03, WAINSCOT, mid);
-      box(0.035, 0.03, len, woodMat, x - side * 0.018, WAINSCOT - 0.06, mid);
+      const to = z == null ? Z_END : z + DOOR_GAP, len = from - to;
+      run('skirting', len, 0, from);
+      run('chairRail', len, WAINSCOT, from);
       if (z != null) from = z - DOOR_GAP;
     }
-    box(0.14, 0.12, L, woodMat, x - side * 0.07, H - 0.06, zMid);
-    box(0.07, 0.07, L, woodMat, x - side * 0.035, H - 0.155, zMid);
+    run('cornice', L, H, Z_BACK);
   }
   // panelling: a framed, fielded panel every three quarters of a metre, one instanced mesh for both walls
   {
@@ -220,16 +225,20 @@ export const buildHouse = (scene, glowTex) => {
     pointLight(0, H - 0.98, z, 3.0, 16);
   }
   // two sconces light the white masks; the black ones are left in the dark
+  // (dressing.js swaps each for a brass candelabrum on a wall bracket: `sconces` lists what it hides)
+  const sconces = [];
   for (const z of MASK_SCONCES) {
     const x = W / 2 - 0.1;
-    box(0.02, 0.2, 0.09, brassMat, W / 2 - 0.012, 1.72, z);
+    const plate = box(0.02, 0.2, 0.09, brassMat, W / 2 - 0.012, 1.72, z);
     const arm = add(new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.1, 6), brassMat), true);
     arm.rotation.z = Math.PI / 2;
     arm.position.set(W / 2 - 0.06, 1.68, z);
     const cup = add(new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.012, 0.02, 10), brassMat), true);
     cup.position.set(x, 1.69, z);
+    const n0 = group.children.length;
     candle(group, x, 1.7, z, 0.09, 0.3);
-    pointLight(x - 0.3, 1.86, z, 0.34, 3.2);
+    const light = pointLight(x - 0.3, 1.86, z, 0.34, 3.2);
+    sconces.push({ z, parts: [plate, arm, cup, ...group.children.slice(n0, n0 + 3)], flame: flames[flames.length - 1], light });
   }
 
   /* ── the end wall, the narrow door, and the stair behind it ── */
@@ -239,13 +248,17 @@ export const buildHouse = (scene, glowTex) => {
     wm.position.set(s * (DOOR_W / 2 + side / 2), H / 2, Z_END);
     const wn = add(new THREE.Mesh(metricPlane(side, WAINSCOT, 0.9, 0.9), panelMat));
     wn.position.set(s * (DOOR_W / 2 + side / 2), WAINSCOT / 2, Z_END + 0.012);
-    box(side, 0.07, 0.06, woodMat, s * (DOOR_W / 2 + side / 2), WAINSCOT, Z_END + 0.03);
-    box(side, 0.16, 0.04, woodMat, s * (DOOR_W / 2 + side / 2), 0.08, Z_END + 0.02);
-    box(0.09, DOOR_H + 0.1, 0.16, woodMat, s * (DOOR_W / 2 + 0.045), (DOOR_H + 0.1) / 2, Z_END + 0.02);
+    // the end wall's rails, turned to run across it; the narrow door's jambs as boards of the same wood
+    for (const [kind, y] of [['skirting', 0], ['chairRail', WAINSCOT], ['cornice', H]]) {
+      const m = add(new THREE.Mesh(moulding(kind, side), joinMat));
+      m.rotation.y = -Math.PI / 2;
+      m.position.set(s < 0 ? -W / 2 : DOOR_W / 2, y, Z_END);
+    }
+    add(new THREE.Mesh(board(0.09, DOOR_H + 0.1, 0.16, s * (DOOR_W / 2 + 0.045), (DOOR_H + 0.1) / 2, Z_END + 0.02, 'y'), joinMat), true);
   }
   const lintel = add(new THREE.Mesh(metricPlane(DOOR_W, H - DOOR_H, 1.7, 1.7), wallMat));
   lintel.position.set(0, (H + DOOR_H) / 2, Z_END);
-  box(DOOR_W + 0.3, 0.12, 0.16, woodMat, 0, DOOR_H + 0.06, Z_END + 0.02);
+  add(new THREE.Mesh(board(DOOR_W + 0.3, 0.12, 0.16, 0, DOOR_H + 0.06, Z_END + 0.02, 'x'), joinMat), true);
   // the leaf, hinged on the left, standing ajar into the corridor (openDoor swings it wide)
   const hinge = new THREE.Group();
   hinge.position.set(-DOOR_W / 2, 0, Z_END + 0.03);
@@ -524,5 +537,5 @@ export const buildHouse = (scene, glowTex) => {
     }
   };
 
-  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat };
+  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat, sconces };
 };

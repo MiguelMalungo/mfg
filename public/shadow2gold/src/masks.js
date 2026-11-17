@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WHITE, BLACK } from './texts.js';
+import { varnishEnv } from './dressing.js';
 
 /*
  * The hall of masks (PLAN.md 10.4), on both walls of one stretch of the corridor. The right wall
@@ -30,6 +31,9 @@ const makeMaterial = (black, seed, tint) => {
       : { color: new THREE.Color(0.4, 0.375, 0.32).multiply(tint), roughness: 0.36, clearcoat: 0.55, clearcoatRoughness: 0.3 },
   );
   mat.side = THREE.DoubleSide;
+  // the glaze and the gold catch the candles (the same candle-lit panorama the varnish and brass reflect)
+  mat.envMap = varnishEnv();
+  mat.envMapIntensity = black ? 0.8 : 0.5;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
@@ -62,23 +66,36 @@ const makeMaterial = (black, seed, tint) => {
         float hollow = smoothstep(0.03, 0.0, vMaskP.z);
         float craze = mh(vMaskP * 600.0) * 0.12;
         diffuseColor.rgb *= (1.0 - 0.5 * rim) * (1.0 - 0.45 * hollow) * (0.9 + craze);
-        // the gold seam: where it broke, it is mended with gold (a crack down the face, and one branch)
-        float sx = vMaskP.x - (0.012 * sin(vMaskP.y * 38.0 + uSeed * 6.0) + 0.006 * sin(vMaskP.y * 97.0 + uSeed * 11.0) + 0.016 * (uSeed - 0.5));
-        float seamK = smoothstep(0.0042, 0.0018, abs(sx));
-        float sb = vMaskP.y - (0.015 + 0.55 * vMaskP.x + 0.005 * sin(vMaskP.x * 120.0 + uSeed * 20.0));
-        seamK = max(seamK, smoothstep(0.0032, 0.0013, abs(sb)) * step(0.0, sx) * step(sx, 0.055));
+        // kintsugi: where it broke it is mended with gold. The cracks are the edges of a few large shards
+        // (a Voronoi pattern, its lines wandered by noise); some edges stayed whole, so the gold runs in
+        // branching lines that end, thick where the gap was wide and thin where it closed.
+        vec2 kp = vMaskP.xy * 9.0 + uSeed * 17.0;
+        kp += 0.6 * vec2(mn(vec3(vMaskP.xy * 16.0, uSeed * 5.0)) - 0.5, mn(vec3(vMaskP.yx * 16.0, uSeed * 9.0 + 3.0)) - 0.5);
+        vec2 ki = floor(kp), kf = fract(kp);
+        float d1 = 8.0, d2 = 8.0; vec2 c1 = vec2(0.0), c2 = vec2(0.0);
+        for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+          vec2 g = vec2(float(i), float(j));
+          vec2 o = vec2(mh(vec3(ki + g, 1.0)), mh(vec3(ki + g, 2.0)));
+          vec2 r = g + o - kf; float d = dot(r, r);
+          if (d < d1) { d2 = d1; c2 = c1; d1 = d; c1 = ki + g; } else if (d < d2) { d2 = d; c2 = ki + g; }
+        }
+        float edge = sqrt(d2) - sqrt(d1);
+        // whether this pair of shards broke apart at all
+        float broke = step(0.55, mh(vec3(c1 + c2 * 1.7, 4.0 + uSeed)));
+        float wid = 0.035 + 0.05 * mn(vec3(vMaskP.xy * 70.0, uSeed));
+        float seamK = smoothstep(wid, wid * 0.45, edge) * broke * step(vOval, 0.97);
         seamK *= uSeam;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8, 0.45, 0.04), seamK);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.56, 0.12), seamK);
         // the back of a mask is bare, dark clay
         if (!gl_FrontFacing) { diffuseColor.rgb = vec3(0.03, 0.022, 0.015); seamK = 0.0; }`,
       )
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.28, seamK);')
-      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 1.0, seamK);')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.52, 0.06) * seamK * 0.12;')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.22, seamK);')
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.55, seamK);')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.5, 0.06) * seamK * 0.12;')
       // held up close to the flask a mask would burn out: its light is turned down as it comes
       .replace('#include <opaque_fragment>', 'outgoingLight *= uDim;\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey = () => 'st2g-mask-v2';
+  mat.customProgramCacheKey = () => 'st2g-mask-v3';
   return { mat, u };
 };
 
@@ -94,6 +111,78 @@ const squareUp = (geo) => {
   mean.set(0, 0, 0);
   for (let i = 0; i < n.count; i++) mean.add(v.fromBufferAttribute(n, i));
   geo.rotateX(Math.atan2(mean.y, mean.z) * 0.6); // most of the tilt, not all: a face looks a little down its nose
+  geo.computeBoundingSphere();
+  return geo;
+};
+
+/*
+ * Every mask its own face. Only two faces were scanned, so each mask is one of them reshaped: wider or
+ * narrower, longer or shorter, the nose, the brows, the mouth's corners, the cheeks and the jaw moved,
+ * a little lopsided. A black mask wears the look of what it hides (anger's brows drawn down, grief's
+ * raised in the middle, shame's eyes sunk); a white one, the face it shows (the polite smile, the
+ * raised brows of the clever one). Sizes in metres on the squared-up face: nose tip near (0, 0.006),
+ * eyes near (±0.032, 0.04), mouth corners near (±0.025, -0.035), chin near -0.07.
+ */
+const LOOKS = {
+  anger: { brow: -1, mouth: -0.7, jaw: 0.6, squint: 0.6 },
+  abandonment: { brow: 1, mouth: -0.8, cheek: -0.6, deep: 0.5 },
+  confrontation: { brow: -0.6, mouth: -0.3, jaw: 0.8, nose: 0.4 },
+  judgement: { brow: 0.5, lopsided: 1, mouth: -0.4, long: 0.6 },
+  envy: { squint: 1, lopsided: 0.6, mouth: -0.3, cheek: -0.5 },
+  shame: { deep: 1, brow: 0.6, mouth: -0.5, long: 0.4 },
+  need: { brow: 0.8, mouth: 0.1, cheek: -0.8, deep: 0.6 },
+  control: { mouth: -0.2, jaw: 0.9, squint: 0.4, nose: 0.6 },
+  // white: the faces shown
+  nice: { mouth: 1, brow: 0.4, cheek: 0.8 }, strong: { jaw: 1, brow: -0.3, mouth: 0 }, clever: { brow: 0.9, lopsided: 0.5, mouth: 0.4 },
+  helper: { mouth: 0.8, brow: 0.7, cheek: 0.5 }, goodchild: { mouth: 0.6, brow: 0.8, cheek: 0.9, long: -0.6 }, joker: { mouth: 1.2, cheek: 1, squint: 0.5, lopsided: 0.6 },
+  needsnothing: { mouth: 0, jaw: 0.4, deep: 0.3 }, fine: { mouth: 0.5, brow: 0.2 }, perfect: { mouth: 0.3, nose: -0.4, long: 0.3 },
+  busy: { brow: 0.5, squint: 0.3, mouth: 0.2 }, rebel: { brow: -0.7, lopsided: 0.8, jaw: 0.5 }, above: { brow: 0.3, nose: 0.5, long: 0.8, mouth: -0.1 },
+};
+const g2 = (x, y, cx, cy, sx, sy) => Math.exp(-((x - cx) ** 2) / (2 * sx * sx) - ((y - cy) ** 2) / (2 * sy * sy));
+const varyFace = (base, look, rnd) => {
+  const geo = base.clone();
+  const p = geo.attributes.position;
+  const j = (a) => (rnd() - 0.5) * 2 * a; // a little of everything on every face, so no two are alike
+  const L = { brow: 0, mouth: 0, jaw: 0, squint: 0, cheek: 0, deep: 0, nose: 0, long: 0, lopsided: 0, ...look };
+  const k = {
+    wide: 1 + j(0.09), tall: 1 + j(0.06) + 0.06 * L.long,
+    brow: 0.0055 * L.brow + j(0.002), mouth: 0.005 * L.mouth + j(0.002), jaw: 0.1 * L.jaw + j(0.06),
+    squint: 0.004 * L.squint + j(0.0015), cheek: 0.005 * L.cheek + j(0.003), deep: 0.005 * L.deep + j(0.002),
+    nose: 0.007 * L.nose + j(0.005), noseLen: j(0.006), side: (rnd() < 0.5 ? -1 : 1) * (0.4 * L.lopsided + j(0.3)),
+  };
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const ax = Math.abs(x);
+    const sideK = 1 + 0.5 * k.side * Math.sign(x); // one side moves more than the other
+    // the brows: + raises the inner ends (grief, surprise), - draws them down and in (anger)
+    const browW = g2(ax, y, 0.022, 0.058, 0.016, 0.01);
+    y += k.brow * browW * sideK;
+    z -= Math.abs(k.brow) * 0.25 * browW;
+    // the eyes narrowed: the lids and cheeks below them rise
+    const lid = g2(ax, y, 0.032, 0.032, 0.014, 0.01);
+    y += k.squint * lid * sideK;
+    z += k.squint * 0.5 * lid;
+    // sunken eyes
+    z -= k.deep * g2(ax, y, 0.032, 0.04, 0.014, 0.012);
+    // the mouth's corners up (a smile, the cheeks lifting with it) or down
+    const corner = g2(ax, y, 0.026, -0.035, 0.012, 0.01);
+    y += k.mouth * corner * sideK;
+    z += Math.max(0, k.mouth) * 0.6 * g2(ax, y, 0.04, -0.012, 0.016, 0.014);
+    // the cheeks full or hollow
+    z += k.cheek * g2(ax, y, 0.046, -0.008, 0.016, 0.018);
+    // the nose: larger or smaller, longer or shorter
+    const nose = g2(x, y, 0, 0.012, 0.011, 0.022);
+    z += k.nose * nose;
+    y -= k.noseLen * g2(x, y, 0, 0.0, 0.01, 0.012);
+    // the jaw wider or narrower, below the mouth
+    const below = Math.min(1, Math.max(0, (-0.02 - y) / 0.05));
+    x *= 1 + k.jaw * below;
+    // the whole face wider or narrower, longer or shorter (about the nose)
+    x *= k.wide;
+    y = 0.006 + (y - 0.006) * k.tall;
+    p.setXYZ(i, x, y, z);
+  }
+  geo.computeVertexNormals();
   geo.computeBoundingSphere();
   return geo;
 };
@@ -121,7 +210,7 @@ export const buildMaskHall = (scene, people, area, wallX) => {
         const age = rnd();
         const tint = new THREE.Color(1, 1 - 0.1 * age, 1 - 0.28 * age).multiplyScalar(0.8 + 0.3 * rnd());
         const { mat, u } = makeMaterial(black, rnd(), tint);
-        const mesh = new THREE.Mesh(geos[(c + r) % 2], mat);
+        const mesh = new THREE.Mesh(varyFace(geos[(c + r) % 2], LOOKS[def.kind ?? def.id] ?? {}, rnd), mat);
         mesh.castShadow = mesh.receiveShadow = true;
         const pos = new THREE.Vector3(side * (wallX - 0.035 - rnd() * 0.012), ROWS[r] + (rnd() - 0.5) * 0.09, area.z0 - 0.35 - c * DZ + (rnd() - 0.5) * 0.1);
         // facing out from its wall, each hung a little crooked

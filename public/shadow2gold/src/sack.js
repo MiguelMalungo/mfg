@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { burlap, tfbm, rng } from './textures.js';
 
 /*
@@ -90,12 +91,12 @@ export const buildSack = (scene, at) => {
   }
 
   const maps = burlap(512, 44);
-  const u = { breath: { value: 0 }, time: { value: 0 }, open: { value: 0 } };
+  const u = { breath: { value: 0 }, time: { value: 0 }, open: { value: 0 }, hOff: { value: 0 } };
   const mat = new THREE.MeshStandardMaterial({ ...maps, roughness: 1, normalScale: new THREE.Vector2(2.6, 2.6), color: new THREE.Color(0.85, 0.78, 0.68), side: THREE.DoubleSide });
   const patch = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float breathe; attribute float neckT; uniform float breath; uniform float time; uniform float open;')
+      .replace('#include <common>', '#include <common>\nattribute float breathe; attribute float neckT; uniform float breath; uniform float time; uniform float open; uniform float hOff;')
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
@@ -110,11 +111,11 @@ export const buildSack = (scene, at) => {
       );
   };
   mat.onBeforeCompile = patch;
-  mat.customProgramCacheKey = () => 'st2g-sack-v3';
+  mat.customProgramCacheKey = () => 'st2g-sack-v4';
   // the cloth darkens where it creases and where it has been dragged along the floor
   mat.onBeforeCompile = (sh) => {
     patch(sh);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vH;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = position.y;');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vH;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = position.y + hOff;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vH;')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.45, 1.0, smoothstep(-0.56, -0.3, vH));');
@@ -127,8 +128,49 @@ export const buildSack = (scene, at) => {
   body.customDistanceMaterial.onBeforeCompile = patch;
   bag.add(body);
 
+  /*
+   * The modelled sack (blender/sack/sack.blend: cloth shrunk onto boxes, a wheel and two balls inside it, the neck
+   * gathered and tied) replaces the coded one when it has loaded, in photographed hessian. Its geometry is in metres,
+   * standing on y = 0; what breathes and what loosens is worked out here from height and side, as above.
+   */
+  new GLTFLoader().loadAsync('./assets/sack/sack.glb').then((gl) => {
+    let m = null;
+    gl.scene.traverse((o) => o.isMesh && !m && (m = o));
+    const g = m.geometry;
+    const p = g.attributes.position, n = p.count;
+    const br = new Float32Array(n), nt = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const y = p.getY(i), ang = Math.atan2(p.getZ(i), p.getX(i));
+      const t = Math.min(1, Math.max(0, (y - 0.82) / 0.62)); // 0 below the shoulder, 1 at the top of the neck
+      nt[i] = t;
+      br[i] = Math.max(0, 1 - t * 1.3) * (0.4 + 0.6 * Math.max(0, Math.cos(ang - 0.6)));
+    }
+    g.setAttribute('breathe', new THREE.BufferAttribute(br, 1));
+    g.setAttribute('neckT', new THREE.BufferAttribute(nt, 1));
+    body.geometry.dispose();
+    body.geometry = g;
+    body.position.y = 0;
+    u.hOff.value = -0.574; // the floor darkening, measured from the same place as the coded sack's
+    const L = new THREE.TextureLoader(), T = './assets/sack/hessian_230_';
+    const tex = (f, srgb) => {
+      const t = L.load(T + f);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(1 / 0.45, 1 / 0.45); // UVs in metres; the photo covers 27 cm of cloth: shown coarser, so the weave reads at a few metres
+      t.anisotropy = 8;
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    mat.map = tex('diff_1k.jpg', true);
+    mat.normalMap = tex('nor_gl_1k.jpg');
+    mat.roughnessMap = null; // sacking has no sheen
+    mat.roughness = 1;
+    mat.normalScale.set(2.4, 2.4);
+    mat.color.setRGB(0.22, 0.17, 0.12); // old, dirty sacking
+    mat.needsUpdate = true;
+  });
+
   /* the rope: wound round the neck, then to its end */
-  const ropeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.2, 0.15, 0.085), roughness: 0.95, normalMap: maps.normalMap, normalScale: new THREE.Vector2(1.5, 1.5) });
+  const ropeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.11, 0.08, 0.045), roughness: 0.95, normalMap: maps.normalMap, normalScale: new THREE.Vector2(1.5, 1.5) });
   const neckY = body.position.y + (0.5 + 0.22 * 0.75) * RY;
   const coils = [];
   for (const dy of [0, 0.028, -0.026]) {

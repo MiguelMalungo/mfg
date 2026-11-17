@@ -241,17 +241,51 @@ export const buildVessel = (glowTex) => {
     m.customProgramCacheKey = () => 'st2g-soft';
     return m;
   };
-  // a ground-glass stopper, sealed with dark wax
-  const stopper = new THREE.Mesh(
-    new THREE.LatheGeometry([new THREE.Vector2(0.0005, -0.016), new THREE.Vector2(0.0105, -0.014), new THREE.Vector2(0.0115, 0.002), new THREE.Vector2(0.017, 0.006), new THREE.Vector2(0.019, 0.016), new THREE.Vector2(0.013, 0.027), new THREE.Vector2(0.0005, 0.03)], 28),
-    soften(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.03, 0.022, 0.016), roughness: 0.35, metalness: 0.1 })),
-  );
+  /*
+   * A ground-glass stopper, sealed with dark wax. (It was a seven-point lathe and showed its facets: now a
+   * smooth profile, a tapered plug in the neck, a collar, and a flattened ball on top; the wax is a lumpy
+   * ring with three runs down the neck.)
+   */
+  const prof = [];
+  const P = (r, y) => prof.push(new THREE.Vector2(r, y));
+  P(0.0004, -0.016);
+  for (let i = 0; i <= 6; i++) P(0.0098 + 0.0016 * (i / 6), -0.016 + 0.017 * (i / 6)); // the plug, tapering into the neck
+  P(0.0112, 0.0015); P(0.0128, 0.0025); P(0.0128, 0.0045); P(0.0098, 0.0058); // the collar
+  P(0.0062, 0.0072); P(0.0058, 0.0095); // the stem
+  for (let i = 0; i <= 14; i++) {
+    const a = -Math.PI / 2 + (i / 14) * Math.PI; // the finial: a ball squashed to two thirds
+    P(Math.max(0.0004, 0.0118 * Math.cos(a)), 0.0175 + 0.0078 * Math.sin(a));
+  }
+  const stopperGeo = new THREE.LatheGeometry(prof, 48);
+  const stopper = new THREE.Mesh(stopperGeo, soften(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.035, 0.026, 0.019), roughness: 0.42, metalness: 0.05 })));
   stopper.position.y = neckTop;
   body.add(stopper);
-  const wax = new THREE.Mesh(new THREE.TorusGeometry(0.0155, 0.0045, 8, 24), soften(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.16, 0.012, 0.01), roughness: 0.45 })));
+  const waxGeo = new THREE.TorusGeometry(0.0145, 0.0042, 12, 48);
+  {
+    const p = waxGeo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const a = Math.atan2(v.y, v.x);
+      const lump = 1 + 0.18 * Math.sin(a * 5 + 1.3) + 0.1 * Math.sin(a * 11 + 0.4);
+      const c = new THREE.Vector3(Math.cos(a) * 0.0145, Math.sin(a) * 0.0145, 0);
+      v.sub(c).multiplyScalar(lump).add(c);
+      p.setXYZ(i, v.x, v.y, v.z * lump);
+    }
+    waxGeo.computeVertexNormals();
+  }
+  const waxMat = soften(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.16, 0.012, 0.01), roughness: 0.4 }));
+  const wax = new THREE.Mesh(waxGeo, waxMat);
   wax.rotation.x = Math.PI / 2;
   wax.position.y = neckTop + 0.001;
   body.add(wax);
+  // runs of wax down the neck, each thicker at its foot where it pooled
+  for (const [a, len] of [[0.6, 0.011], [2.5, 0.007], [4.3, 0.014]]) {
+    const run = new THREE.Mesh(new THREE.CapsuleGeometry(0.0026, len, 4, 10), waxMat);
+    run.scale.set(1, 1, 0.6);
+    run.position.set(Math.cos(a) * 0.0128, neckTop - len / 2 - 0.001, Math.sin(a) * 0.0128);
+    run.rotation.y = -a;
+    body.add(run);
+  }
 
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(1.0, 0.6, 0.25), transparent: true, opacity: 0.012, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false }));
   halo.scale.setScalar(0.42);

@@ -114,12 +114,19 @@ export const loadPeople = async () => {
    * its forearms are drawn a little too long.
    */
   const makeShadowFigure = (scene, glowTex, who = 'man') => {
-    const u = { time: { value: 0 }, fade: { value: 0 }, smoke: { value: 1 }, ash: { value: 0 } };
+    const u = { time: { value: 0 }, fade: { value: 0 }, smoke: { value: 1 }, ash: { value: 0 }, rim: { value: new THREE.Color(0.075, 0.022, 0.006) } };
     const core = new THREE.MeshBasicMaterial({ color: 0x000000 });
     core.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, u);
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float time; uniform float smoke; varying vec3 vObj;')
+        .replace('#include <common>', '#include <common>\nuniform float time; uniform float smoke; varying vec3 vObj; varying vec3 vRN; varying vec3 vRV;')
+        .replace('#include <project_vertex>', `#include <project_vertex>
+          #ifdef USE_SKINNING
+          vRN = normalize(normalMatrix * objectNormal);
+          #else
+          vRN = normalize(normalMatrix * normal);
+          #endif
+          vRV = -mvPosition.xyz;`)
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
@@ -129,7 +136,18 @@ export const loadPeople = async () => {
           transformed += normal * (1.0 + 1.6 * sw) * smoke;`,
         );
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float time; uniform float fade; varying vec3 vObj;\nfloat hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+        .replace('#include <common>', '#include <common>\nuniform float time; uniform float fade; uniform vec3 rim; varying vec3 vObj; varying vec3 vRN; varying vec3 vRV;\nfloat hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+        /*
+         * Black on black it was lost in the dark end of the corridor (owner, 2026-11-17): its edges smoulder,
+         * a faint ember where the body turns away from the eye, flickering, so the figure reads against any dark.
+         */
+        .replace(
+          '#include <opaque_fragment>',
+          `float edgeK = pow(1.0 - abs(dot(normalize(vRN), normalize(vRV))), 2.5);
+          float flick = 0.75 + 0.25 * sin(time * 7.0 + vObj.y * 0.05) * sin(time * 3.1 + vObj.x * 0.08);
+          outgoingLight += rim * edgeK * flick * (1.0 - fade);
+          #include <opaque_fragment>`,
+        )
         .replace(
           '#include <clipping_planes_fragment>',
           `#include <clipping_planes_fragment>
@@ -138,7 +156,7 @@ export const loadPeople = async () => {
           if (fade > 0.0 && rise + 30.0 * hh(floor(gl_FragCoord.xy * 0.5) + floor(time * 30.0)) > 30.0) discard;`,
         );
     };
-    core.customProgramCacheKey = () => 'st2g-shadow-core-v2';
+    core.customProgramCacheKey = () => 'st2g-shadow-core-v3';
     const b = makeBody(core, who);
     b.mesh.castShadow = true;
     b.mesh.receiveShadow = false;
@@ -417,11 +435,23 @@ export const loadPeople = async () => {
     mat.customProgramCacheKey = () => 'st2g-child-v1';
     mesh.material = mat;
     // a child's proportions: the head larger, legs and arms shorter
+    // Bones run along their local x: scale.x is length, y and z are girth. A child is not a small woman: the
+    // hips and chest narrow and flatten, the limbs are thinner as well as shorter, and the head is large. A
+    // bone's girth passes to its children, so the head is given back what the chest took away.
     const shape = () => {
-      bones.head && bones.head.scale.setScalar(1.42);
-      bones.neck && bones.neck.scale.setScalar(0.92);
-      for (const n of ['upperleg_l', 'upperleg_r']) bones[n] && bones[n].scale.setScalar(0.86);
-      for (const n of ['upperarm_l', 'upperarm_r']) bones[n] && bones[n].scale.setScalar(0.9);
+      const S = (n, x, y = x, z = y) => bones[n] && bones[n].scale.set(x, y, z);
+      const TORSO = 0.8;
+      S('pelvis', 1, 0.84, 0.84);
+      S('spine_01', 1, 0.95, 0.95);
+      S('spine_02', 0.97, 0.92, 0.92);
+      S('spine_03', 0.95, TORSO / (0.84 * 0.95 * 0.92), TORSO / (0.84 * 0.95 * 0.92) * 0.93);
+      S('neck', 0.9, 1 / TORSO, 1 / TORSO);
+      S('head', 1.4, 1.4, 1.4);
+      for (const sd of ['l', 'r']) {
+        S('upperleg_' + sd, 0.86, 0.95 / 0.84, 0.95 / 0.84); // the legs keep their girth against the narrowed hips, then thin
+        S('lowerleg_' + sd, 0.98, 0.84, 0.84);
+        S('upperarm_' + sd, 0.9, 1.0, 1.0); // thin already: the chest's girth passes to the arms
+      }
     };
     shape();
     const mixer = new THREE.AnimationMixer(obj);

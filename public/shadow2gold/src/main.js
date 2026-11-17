@@ -497,6 +497,75 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
+/*
+ * The puppet master (PLAN.md 10.4: "appears as fate"). While a shadow you took is loose, the house acts for it:
+ * a candle ahead of you goes out, now and then; a door ahead shudders in its frame as if slammed; and your steps
+ * drift, a slow pull to one side and back that you have to correct. It stops when you go through it: the candles
+ * come back one by one. (Control also slams every door it passes: that is its own way, in updateShadow.)
+ */
+const puppet = { k: 0, drift: 0, nextCandle: 0, door: false, out: [], since: 0 };
+const _pw = new THREE.Vector3();
+const updatePuppet = (dt, t) => {
+  const loose = !!facing && (facing.phase === 'loose' || facing.phase === 'meet');
+  if (loose && !puppet.since) ((puppet.since = t), (puppet.nextCandle = t + 5 + Math.random() * 4), (puppet.door = false));
+  if (!loose) puppet.since = 0;
+  puppet.k += ((loose ? 1 : 0) - puppet.k) * (1 - Math.exp(-dt * 0.8));
+  // the drift: a slow wander, never the same twice, at most a fifth of walking pace
+  puppet.drift = puppet.k * 0.28 * Math.sin(t * 0.37 + 1.3 * Math.sin(t * 0.13)) * Math.sin(t * 0.21 + 0.7);
+  if (loose && t > puppet.nextCandle) {
+    puppet.nextCandle = t + 9 + Math.random() * 7;
+    // a flame ahead of you, between three and twelve metres, that is still burning
+    let best = null, bestD = 1e9;
+    for (const f of house.flames) {
+      if (f.out || !f.mesh.visible) continue;
+      f.mesh.getWorldPosition(_pw);
+      const dx = _pw.x - player.pos.x, dz = _pw.z - player.pos.z, d = Math.hypot(dx, dz);
+      if (d < 3 || d > 12 || (dx * fwd.x + dz * fwd.z) / d < 0.55) continue;
+      const score = Math.abs(d - 6) + Math.random() * 2;
+      if (score < bestD) ((bestD = score), (best = f));
+    }
+    if (best) {
+      best.out = true;
+      best.haloWas = best.halo.visible;
+      best.mesh.visible = best.halo.visible = false;
+      best.mesh.getWorldPosition(_pw);
+      shadow?.wisps.puff(_pw, 8, 0.03, 0.12); // a thread of smoke where it was
+      // the light nearest to it loses a share of its strength
+      let near = null, nd = 1e9;
+      for (const l of house.lights) {
+        const d = l.position.distanceTo(_pw);
+        if (d < nd) ((nd = d), (near = l));
+      }
+      if (near && nd < 2.5) {
+        near.userData.base0 ??= near.userData.base;
+        near.userData.base = Math.max(near.userData.base0 * 0.35, near.userData.base - near.userData.base0 * 0.3);
+      }
+      puppet.out.push({ f: best, l: near && nd < 2.5 ? near : null });
+    }
+  }
+  // once, a few seconds in: a door ahead jumps in its frame with a slam (not for control, whose way is the doors)
+  if (loose && !puppet.door && facing.kind !== 'control' && t - puppet.since > 7) {
+    const d = house.doors.find((d) => {
+      const dz = d.z - player.pos.z, dx = d.side * W / 2 - player.pos.x, dist = Math.hypot(dx, dz);
+      return dist > 3 && dist < 13 && (dx * fwd.x + dz * fwd.z) / dist > 0.6 && d.shake <= 0;
+    });
+    if (d) {
+      puppet.door = true;
+      d.shake = 1;
+      sound.slam(smoothstep(30, 2, Math.abs(d.z - player.pos.z)));
+    }
+  }
+  // after: the candles come back, one at a time
+  if (!loose && puppet.out.length && t > (puppet.relight ?? 0)) {
+    puppet.relight = t + 0.45;
+    const { f, l } = puppet.out.shift();
+    f.out = false;
+    f.mesh.visible = true;
+    f.halo.visible = f.haloWas;
+    if (l) l.userData.base = l.userData.base0;
+  }
+};
+
 const movePlayer = (dt) => {
   fwd.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
   right.set(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
@@ -535,6 +604,8 @@ const movePlayer = (dt) => {
   const wet = smoothstep(WATER + 0.2, WATER - 0.4, player.y);
   const onStair = player.pos.z < Z_END - 1 && player.pos.z > Z_STAIR_END ? 0.25 : 0;
   wish.multiplyScalar((hurry ? 2.7 : 1.4) * (1 - 0.6 * sh.dread) * (1 - 0.5 * wet) * (1 - onStair));
+  // the puppet master's pull: only while you walk
+  if (wish.lengthSq() > 0.01) wish.addScaledVector(right, puppet.drift * Math.min(1, wish.length()));
   player.vel.lerp(wish, 1 - Math.exp(-dt * 7));
   player.pos.addScaledVector(player.vel, dt);
   house.collide(player.pos, 0.32, doorOpen());
@@ -1138,6 +1209,7 @@ const tick = (forceDt) => {
   // reading is never under time pressure: the world slows while a text is open
   const slow = words.open ? 0.25 : 1;
   updateShadow(dt * slow, t, hurry);
+  updatePuppet(dt * slow, t);
 
   /* the eye */
   const bob = Math.sin(player.stride * 4.2) * 0.022 * Math.min(1, player.speed / 1.4);
@@ -1152,6 +1224,9 @@ const tick = (forceDt) => {
   rig.position.copy(camera.position);
   rigQ.copy(camera.quaternion);
   rig.quaternion.slerp(rigQ, 1 - Math.exp(-dt * (state.started ? 12 : 60)));
+  // but never so late that the flask in its corner swings out of the frame on a fast turn (0.07 rad of lag at most)
+  const lag = rig.quaternion.angleTo(rigQ);
+  if (lag > 0.07) rig.quaternion.rotateTowards(rigQ, lag - 0.07);
   // the flask stays upright in the world whatever the eye does, so its liquid's "up" is the world's
   vessel.body.quaternion.copy(rig.quaternion).invert();
   // the liquid sloshes against how you speed up, slow down and turn
@@ -1308,6 +1383,7 @@ window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
+  puppet,
   LITE,
   stand, spotFor, darkestSpot, shiningSpot,
   tp: (x, z, yaw = player.yaw, pitch = player.pitch) => {

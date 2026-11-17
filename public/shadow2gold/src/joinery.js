@@ -33,7 +33,7 @@ const grain = (geo, along) => {
   return g;
 };
 
-const board = (w, h, d, x, y, z, along) => {
+export const board = (w, h, d, x, y, z, along) => {
   const g = new THREE.BoxGeometry(w, h, d);
   g.translate(x, y, z);
   return grain(g, along);
@@ -165,4 +165,57 @@ export const cornerShade = (mat, H, rail = 0, key = 'shade') => {
   };
   mat.customProgramCacheKey = () => 'st2g-' + key;
   return mat;
+};
+
+/*
+ * Mouldings run along a wall: a profile (x out from the wall, y up, metres) swept along z for `len`
+ * metres, starting at z = 0 and running toward -z. Grain runs along the run (uv.y, as in `grain`).
+ *   skirting    a tall board with an ogee on its top edge
+ *   chairRail   a rounded rail with a bead below and a fillet above, centred on y = 0
+ *   cornice     a cove under the ceiling, its top at y = 0, with a step and a bead below it
+ */
+const curve = (pts, x0, y0, x1, y1, bulge, n = 6) => {
+  for (let i = 1; i <= n; i++) {
+    const t = i / n, s = Math.sin(t * Math.PI);
+    pts.push([x0 + (x1 - x0) * t + bulge * s, y0 + (y1 - y0) * t]);
+  }
+};
+const PROFILES = {
+  skirting: () => {
+    const p = [[0, 0], [0.022, 0], [0.022, 0.135], [0.026, 0.138]];
+    curve(p, 0.026, 0.138, 0.012, 0.172, 0.006);
+    p.push([0.012, 0.178], [0, 0.178]);
+    return p;
+  },
+  chairRail: () => {
+    const p = [[0, -0.045], [0.012, -0.045]];
+    curve(p, 0.012, -0.045, 0.012, -0.025, 0.008, 5); // the bead below
+    p.push([0.018, -0.022]);
+    curve(p, 0.018, -0.022, 0.018, 0.026, 0.028, 9); // the round of the rail
+    p.push([0.026, 0.03], [0.026, 0.038], [0, 0.038]);
+    return p;
+  },
+  cornice: () => {
+    const p = [[0, -0.26], [0.012, -0.26]];
+    curve(p, 0.012, -0.26, 0.012, -0.235, 0.008, 5);
+    p.push([0.03, -0.232], [0.03, -0.2], [0.05, -0.2]);
+    curve(p, 0.05, -0.2, 0.17, -0.03, -0.055, 10); // the cove
+    p.push([0.17, -0.02], [0.19, -0.02], [0.19, 0], [0, 0]);
+    return p;
+  },
+};
+export const moulding = (kind, len) => {
+  const pts = PROFILES[kind]();
+  const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: len, bevelEnabled: false, curveSegments: 1 });
+  g.translate(0, 0, -len); // run from z = 0 toward -z
+  // UVs in metres per repeat of the wood (as `grain`): across the profile, and along the run
+  const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+  const off = Math.random() * 7;
+  for (let i = 0; i < p.count; i++) {
+    const across = Math.abs(n.getZ(i)) > 0.9 ? p.getX(i) : p.getX(i) + p.getY(i);
+    uv.setXY(i, across / GRAIN + off, p.getZ(i) / GRAIN);
+  }
+  g.computeVertexNormals();
+  return g;
 };
