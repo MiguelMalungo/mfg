@@ -4,7 +4,8 @@
  * corridor, with what you have done still done.
  */
 
-const KEY = 'st2g.save.v1';
+// ?test keeps test runs out of the real progress (it has its own slot)
+const KEY = new URLSearchParams(location.search).has('test') ? 'st2g.test.v1' : 'st2g.save.v1';
 const blank = () => ({ gender: null, level: 1, faced: [], read: [] });
 
 const read = () => {

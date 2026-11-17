@@ -9,7 +9,7 @@ import { buildMaskHall } from './masks.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS } from './texts.js';
+import { LINES, TIPS, HINTS } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 
@@ -212,7 +212,7 @@ addEventListener('keydown', (e) => {
   if (!e.repeat && e.code === 'KeyE') act();
   if (!e.repeat && e.code === 'KeyQ') words.answer('leave');
   // Space turns you round (a trackpad makes a half turn a long swipe)
-  if (!e.repeat && e.code === 'Space' && state.started && !state.ended) turn.left += Math.PI;
+  if (!e.repeat && e.code === 'Space' && state.started && !state.ended && !stand.on) turn.left += Math.PI;
   keys[e.code] = true;
   if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
 });
@@ -234,7 +234,7 @@ addEventListener('blur', () => Object.keys(keys).forEach((k) => (keys[k] = false
 
 /* Looking: mouse (locked or not), two-finger swipe, or the arrow keys. */
 const look = (dx, dy) => {
-  if (!state.started || state.ended || window.__g.noLook) return; // __g.noLook: tests hold the view still
+  if (!state.started || state.ended || stand.on || window.__g.noLook) return; // held while a mask is out; __g.noLook: tests hold the view still
   player.yaw -= dx;
   player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch - dy));
 };
@@ -254,6 +254,21 @@ addEventListener(
 );
 const touchMove = { x: 0, y: 0, mag: 0 };
 const turn = { left: 0 }; // radians still to turn after Space
+/*
+ * While a mask is out you stand in the middle of the corridor, looking along it, and the view is
+ * held still (owner, 2026-11-17). The mask comes to you there, clear of both walls. If you take
+ * it, its shadow stands up straight ahead and you can walk straight to it; if not, the mask goes
+ * back and you can move again.
+ */
+const stand = { on: false, k: 1, x0: 0, yaw0: 0, pitch0: 0, yaw1: 0 };
+const standStill = () => {
+  // look toward the door, where a shadow will have room to stand (or back up the corridor if there is none)
+  const want = player.pos.z - 12 > Z_END + 4 ? 0 : Math.PI;
+  const yaw1 = Math.round((player.yaw - want) / (2 * Math.PI)) * 2 * Math.PI + want;
+  Object.assign(stand, { on: true, k: 0, x0: player.pos.x, yaw0: player.yaw, pitch0: player.pitch, yaw1 });
+  turn.left = 0;
+};
+const walkOn = () => (stand.on = false);
 {
   const stick = $('stick'), nub = $('nub');
   const R = 50;
@@ -395,8 +410,18 @@ const movePlayer = (dt) => {
   right.set(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
   let f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - touchMove.y;
   let r = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + touchMove.x;
-  if (keys.ArrowLeft) player.yaw += dt * 2.4;
-  if (keys.ArrowRight) player.yaw -= dt * 2.4;
+  if (stand.on) {
+    // glide to the middle of the corridor and turn to look along it
+    stand.k = Math.min(1, stand.k + dt / 0.9);
+    const e = stand.k * stand.k * (3 - 2 * stand.k);
+    player.pos.x = stand.x0 * (1 - e);
+    player.yaw = stand.yaw0 + (stand.yaw1 - stand.yaw0) * e;
+    player.pitch = stand.pitch0 * (1 - e);
+    f = r = 0;
+  } else {
+    if (keys.ArrowLeft) player.yaw += dt * 2.4;
+    if (keys.ArrowRight) player.yaw -= dt * 2.4;
+  }
   if (turn.left > 0) {
     const d = Math.min(turn.left, (dt * Math.PI) / 0.5);
     turn.left -= d;
@@ -445,7 +470,6 @@ const movePlayer = (dt) => {
 /* ── picking a mask ── */
 let facing = null; // while a black mask's shadow is loose: { mask, def, kind, phase: 'smoke' | 'loose' | 'meet' | 'after', … }
 let candidate = null; // the mask the eye is on, within reach
-const pickedFrom = new THREE.Vector3();
 
 /** Click, E or tap: dismisses a text (or answers "take"), or picks what the hand is reaching for. */
 const act = () => {
@@ -455,7 +479,7 @@ const act = () => {
 };
 const pickMask = (m) => {
   candidate = null;
-  pickedFrom.copy(player.pos);
+  standStill();
   hand?.grab();
   sound.glass(m.black ? 196 : 784, 0.03, 1.2);
   m.state = 'picked'; // the hand closes first; then the mask comes off the wall
@@ -463,15 +487,25 @@ const pickMask = (m) => {
 };
 const showMask = (m) => {
   const anchor = () => m.mesh.position;
-  if (m.black) words.ask({ lines: m.def.lines, anchor, onDone: (k) => (k === 'take' ? takeMask(m) : masks.sendBack(m)) });
+  const back = () => {
+    masks.sendBack(m);
+    walkOn();
+  };
+  if (m.black) words.ask({ lines: m.def.lines, anchor, onDone: (k) => (k === 'take' ? takeMask(m) : back()) });
   else
     words.say({
       title: m.def.title,
       lines: m.def.lines,
       anchor,
       onDone: () => {
-        masks.sendBack(m);
+        back();
+        if (!save.data.read.length) words.tip(TIPS.persona, { id: 'persona' });
         save.add('read', m.id);
+        // the face you wear keeps another out of sight: that one moves on the wall
+        if (m.def.hides && !facing && masks.stir(m.def.hides)) {
+          sound.glass(147, 0.025, 1.6);
+          words.tip(TIPS.stirred, { id: 'stirred', times: 2, gap: 60 });
+        }
       },
     });
 };
@@ -480,7 +514,7 @@ const takeMask = (m) => {
   facing = { mask: m, def: m.def, kind: m.def.kind, phase: 'smoke', t0: state.t, acc: 0, spot: null, from: new THREE.Vector3(), head: new THREE.Vector3(), st: 'wait', timer: 0, hold: 0, back: 0, wait: 0, side: 1, swap: 0, homeZ: 0 };
   words.clearTips(); // what was being said about walking and masks has had its moment
   sound.exhale();
-  masks.crumble(m);
+  masks.crumble(m, walkOn); // once it has crumbled you can walk: its shadow will stand straight ahead
 };
 
 const corridorClamp = (z) => Math.max(Z_END + 1.4, Math.min(Z_BACK - 1.4, z));
@@ -782,7 +816,7 @@ const adaptExposure = (dt) => {
 /** The one instruction low on the screen: always what there is to do now. */
 const lineNow = () => {
   if (!state.started || state.ended || words.open || vessel.rx.on || player.pos.z < Z_END - 0.4) return '';
-  if (facing) return facing.phase === 'loose' || facing.phase === 'meet' ? facing.def.hint : '';
+  if (facing) return facing.phase === 'loose' || facing.phase === 'meet' ? (facing.def.hint ?? HINTS[facing.kind]) : '';
   if (state.faced >= 3) return state.t - state.doorAt < 40 ? LINES.door : LINES.doorAgain;
   if (state.faced > 0) return LINES.another(3 - state.faced);
   if (save.data.read.length) return LINES.afterWhite;
@@ -839,8 +873,6 @@ const tick = (forceDt) => {
     masks.update(dt, t, camera);
     const free = state.started && !state.ended && !words.open && !facing && !masks.held() && !vessel.rx.on && player.pos.z > Z_END;
     candidate = free ? masks.lookedAt(camera) : null;
-    // walking away from a mask you are holding: it goes back (for a black one, that is "leave it")
-    if (words.open && player.pos.distanceTo(pickedFrom) > (words.asking ? 1.1 : 1.7)) words.asking ? words.answer('leave') : words.close('walked');
   }
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
   if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5) words.tip(TIPS.wall, { id: 'wall' });
@@ -937,6 +969,7 @@ window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
+  stand,
   tp: (x, z, yaw = player.yaw, pitch = player.pitch) => {
     player.pos.set(x, 0, z);
     player.y = house.floorAt(x, z);

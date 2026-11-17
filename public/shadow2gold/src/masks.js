@@ -2,21 +2,24 @@ import * as THREE from 'three';
 import { WHITE, BLACK } from './texts.js';
 
 /*
- * The hall of masks (PLAN.md 10.4): sixteen masks on the right wall, eight white in the light of
- * two sconces, eight black in the dark between and beyond them.
+ * The hall of masks (PLAN.md 10.4), on both walls of one stretch of the corridor. The right wall
+ * has two sconces: the white masks hang in their light, with a few black ones in the dark at its
+ * ends. The left wall has no light of its own and is all black masks, found by bringing your
+ * flask near. How many there are is decided by the lists in texts.js (12 white, 20 black).
  *
- * A mask you pick leaves the wall, turns to face you and stops about 0.6 m from your eye. A white
- * mask goes back by itself. A black mask you take crumbles to smoke; once you have gone through
- * its shadow it is back on the wall, mended with a gold seam.
+ * A mask you pick leaves the wall and comes to the middle of the corridor, straight before your
+ * eye (main.js stands you in the middle, looking down the corridor, and holds the view still while
+ * it is out). A white mask goes back by itself. A black mask you take crumbles to smoke; once you
+ * have gone through its shadow it is back on the wall, mended with a gold seam.
  *
  * Each mask is its own mesh (the front of one of the two scanned faces, cut to an oval, from
- * people.faceGeometry). States: wall → coming → held → returning → wall; a black mask taken:
- * held → crumbling → gone → sealing → sealed.
+ * people.faceGeometry). States: wall → picked → coming → held → returning → wall; a black mask
+ * taken: held → crumbling → gone → sealing → sealed.
  */
 
 const COLS = 8, DZ = 0.72, ROWS = [1.36, 1.86];
-const WHITE_COLS = [1, 2, 5, 6]; // either side of each sconce; the rest of the wall is dark
-const HELD = 0.6; // metres from the eye
+const WHITE_COLS = [1, 2, 3, 4, 5, 6]; // on the right wall, between and beside its sconces; its two end columns are dark
+const HELD = 0.62; // metres from the eye
 const ease = (k) => k * k * (3 - 2 * k);
 
 const makeMaterial = (black, seed, tint) => {
@@ -103,31 +106,34 @@ export const buildMaskHall = (scene, people, area, wallX) => {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
-  // where each text hangs: the three shadows that are built are in the middle of the dark stretch
-  const blackAt = { '3,1': 'anger', '4,1': 'abandonment', '3,0': 'confrontation', '4,0': 'judgement', '0,1': 'envy', '0,0': 'shame', '7,1': 'need', '7,0': 'control' };
-  const whites = [...WHITE];
+  // Right wall (x = +wallX, facing -X): white where it is lit, black in its two dark end columns.
+  // Left wall (x = -wallX, facing +X): black. The lists are dealt out in order; if texts.js has
+  // fewer than there are places the last places stay empty, if more the extra ones are not hung.
+  const whites = [...WHITE], blacks = [...BLACK];
   const list = [];
   const e = new THREE.Euler();
-  for (let c = 0; c < COLS; c++)
-    for (let r = 0; r < ROWS.length; r++) {
-      const black = !WHITE_COLS.includes(c);
-      const def = black ? BLACK.find((b) => b.id === blackAt[`${c},${r}`]) : whites.shift();
-      const age = rnd();
-      const tint = new THREE.Color(1, 1 - 0.1 * age, 1 - 0.28 * age).multiplyScalar(0.8 + 0.3 * rnd());
-      const { mat, u } = makeMaterial(black, rnd(), tint);
-      const mesh = new THREE.Mesh(geos[(c + r) % 2], mat);
-      mesh.castShadow = mesh.receiveShadow = true;
-      const pos = new THREE.Vector3(wallX - 0.02 - rnd() * 0.012, ROWS[r] + (rnd() - 0.5) * 0.09, area.z0 - 0.35 - c * DZ + (rnd() - 0.5) * 0.1);
-      // facing out from the wall (-X), each hung a little crooked
-      e.set((rnd() - 0.5) * 0.16, -Math.PI / 2 + (rnd() - 0.5) * 0.22, (rnd() - 0.5) * 0.2, 'YXZ');
-      const quat = new THREE.Quaternion().setFromEuler(e);
-      const scale = 1.16 + (rnd() - 0.5) * 0.12;
-      mesh.position.copy(pos);
-      mesh.quaternion.copy(quat);
-      mesh.scale.setScalar(scale);
-      group.add(mesh);
-      list.push({ id: def.id, def, black, mesh, u, home: { pos, quat }, state: 'wall', k: 0, from: { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }, onHeld: null });
-    }
+  for (const side of [1, -1])
+    for (let c = 0; c < COLS; c++)
+      for (let r = 0; r < ROWS.length; r++) {
+        const black = side < 0 || !WHITE_COLS.includes(c);
+        const def = black ? blacks.shift() : whites.shift();
+        if (!def) continue;
+        const age = rnd();
+        const tint = new THREE.Color(1, 1 - 0.1 * age, 1 - 0.28 * age).multiplyScalar(0.8 + 0.3 * rnd());
+        const { mat, u } = makeMaterial(black, rnd(), tint);
+        const mesh = new THREE.Mesh(geos[(c + r) % 2], mat);
+        mesh.castShadow = mesh.receiveShadow = true;
+        const pos = new THREE.Vector3(side * (wallX - 0.035 - rnd() * 0.012), ROWS[r] + (rnd() - 0.5) * 0.09, area.z0 - 0.35 - c * DZ + (rnd() - 0.5) * 0.1);
+        // facing out from its wall, each hung a little crooked
+        e.set((rnd() - 0.5) * 0.16, -side * (Math.PI / 2) + (rnd() - 0.5) * 0.22, (rnd() - 0.5) * 0.2, 'YXZ');
+        const quat = new THREE.Quaternion().setFromEuler(e);
+        const scale = 1.16 + (rnd() - 0.5) * 0.12;
+        mesh.position.copy(pos);
+        mesh.quaternion.copy(quat);
+        mesh.scale.setScalar(scale);
+        group.add(mesh);
+        list.push({ id: def.id, def, black, side, mesh, u, home: { pos, quat }, state: 'wall', k: 0, stir: 0, from: { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }, onHeld: null });
+      }
 
   const _t = new THREE.Vector3(), _f = new THREE.Vector3(), _r = new THREE.Vector3(), _u = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
   /** The turn that makes a mask at `pos` look straight at the eye (it hangs off-centre, so this is not the camera's own turn). */
@@ -135,11 +141,15 @@ export const buildMaskHall = (scene, people, area, wallX) => {
     camera.matrixWorld.extractBasis(_r, _u, _f);
     return out.setFromRotationMatrix(_m.lookAt(camera.position, pos, _u));
   };
-  /** Where a held mask floats: in front of the eye, a little to the left so its text has room. */
+  /**
+   * Where a held mask floats: straight before the eye. main.js has stood you in the middle of the
+   * corridor looking along it, so this is the middle of the corridor too, clear of both walls.
+   * (On a tall narrow screen it sits a little high, to leave room for its text underneath.)
+   */
   const heldTarget = (camera, out) => {
     camera.matrixWorld.extractBasis(_r, _u, _f); // _f is the camera's +Z: backwards
     const narrow = innerWidth < 760 || innerWidth < innerHeight;
-    return out.copy(camera.position).addScaledVector(_f, -HELD).addScaledVector(_r, narrow ? 0 : -0.12).addScaledVector(_u, narrow ? 0.1 : -0.01);
+    return out.copy(camera.position).addScaledVector(_f, -HELD).addScaledVector(_u, narrow ? 0.1 : 0);
   };
 
   const start = (m, state) => {
@@ -180,7 +190,7 @@ export const buildMaskHall = (scene, people, area, wallX) => {
         heldTarget(camera, _t);
         o.position.lerpVectors(m.from.pos, _t, k);
         // it lifts off the wall before it turns: out into the corridor first
-        o.position.x -= Math.sin(Math.PI * k) * 0.08;
+        o.position.x -= m.side * Math.sin(Math.PI * k) * 0.08;
         o.quaternion.slerpQuaternions(m.from.quat, facingEye(camera, _t, _q), k);
         m.u.uDim.value = 1 - 0.58 * k;
         if (m.k >= 1) {
@@ -210,7 +220,7 @@ export const buildMaskHall = (scene, people, area, wallX) => {
         m.k = Math.min(1, m.k + dt / 1.2);
         const k = ease(m.k);
         o.position.lerpVectors(m.from.pos, m.home.pos, k);
-        o.position.x -= Math.sin(Math.PI * k) * 0.06;
+        o.position.x -= m.side * Math.sin(Math.PI * k) * 0.06;
         o.quaternion.slerpQuaternions(m.from.quat, m.home.quat, k);
         m.u.uDim.value = 0.42 + 0.58 * k;
         if (m.k >= 1) m.state = 'wall';
@@ -219,12 +229,30 @@ export const buildMaskHall = (scene, people, area, wallX) => {
         m.u.uCrumble.value = 1 - m.k;
         if (m.k >= 1) m.state = 'sealed';
       }
+      // stirred (a white mask that hides it was read): it rocks on its nail for a few seconds
+      if (m.stir > 0 && m.state === 'wall') {
+        m.stir = Math.max(0, m.stir - dt);
+        const a = 0.22 * Math.min(1, m.stir / 2) * Math.sin(t * 9) * Math.sin(Math.min(1, (STIR - m.stir) * 2) * Math.PI * 0.5);
+        o.quaternion.copy(m.home.quat).multiply(_q.setFromAxisAngle(_z, a));
+      }
     }
   };
+  /** Makes a black mask on the wall move, so the eye finds it. */
+  const STIR = 7, _z = new THREE.Vector3(0, 0, 1);
+  const stir = (id) => {
+    const m = list.find((x) => x.id === id);
+    if (!m || m.state !== 'wall') return false;
+    m.stir = STIR;
+    return true;
+  };
 
-  /** The mask the eye is on: on the wall, within reach, nearest the middle of the view. */
-  const lookedAt = (camera, reach = 1.5, cone = 0.2) => {
-    let best = null, bestA = cone;
+  /**
+   * The mask the eye is on: on a wall, within `reach`, nearest the middle of the view. From the
+   * middle of the corridor both walls are in reach. How squarely you must look depends on how far
+   * it is: a mask at arm's length fills more of the view than one across the corridor.
+   */
+  const lookedAt = (camera, reach = 2.8) => {
+    let best = null, bestA = 1e9;
     camera.getWorldDirection(_f);
     for (const m of list) {
       if (m.state !== 'wall') continue;
@@ -232,7 +260,7 @@ export const buildMaskHall = (scene, people, area, wallX) => {
       const d = _t.length();
       if (d > reach) continue;
       const a = Math.acos(Math.min(1, _t.dot(_f) / d));
-      if (a < bestA) (bestA = a), (best = m);
+      if (a < Math.max(0.13, 0.17 / d) && a < bestA) (bestA = a), (best = m);
     }
     return best;
   };
@@ -240,5 +268,5 @@ export const buildMaskHall = (scene, people, area, wallX) => {
   const byId = (id) => list.find((m) => m.id === id);
   /** A mask that is off the wall and in front of you (or on its way there). */
   const held = () => list.find((m) => m.state === 'picked' || m.state === 'coming' || m.state === 'held' || m.state === 'crumbling');
-  return { group, list, update, comeTo, sendBack, crumble, seal, lookedAt, byId, held, meshes: list.map((m) => m.mesh) };
+  return { group, list, update, comeTo, sendBack, crumble, seal, stir, lookedAt, byId, held, meshes: list.map((m) => m.mesh) };
 };
