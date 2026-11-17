@@ -215,6 +215,7 @@ const pause = () => {
   if (state.paused || !state.started || state.ended) return;
   state.paused = true;
   Object.keys(keys).forEach((k) => (keys[k] = false));
+  window.__releaseTouches?.();
   $('pausehow').textContent = PAUSE_HOW;
   $('restartgame').textContent = 'Start again';
   $('pause').classList.remove('hidden');
@@ -350,12 +351,41 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
   const R = 50;
   let stickId = null, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0, tap = null;
   const inPlay = () => state.started && !state.ended;
+  /*
+   * A finger lifted from a button that was taken away while it was down (the Take and Leave buttons go the
+   * moment you tap them) sends its touchend to the removed button, and it never reaches the window. The game
+   * then thought the finger was still down: held where the button was, near the side of the screen, it kept
+   * turning you round and round, and no new touch could take over (owner, 2026-11-17, after the second
+   * shadow). So: a touch that starts on a button is never a looking or walking finger; and any finger the
+   * browser no longer lists as down is let go of, at every touch.
+   */
+  const release = (which) => {
+    if (which === 'stick') {
+      stickId = null;
+      touchMove.x = touchMove.y = touchMove.mag = 0;
+      stick.classList.remove('on');
+      stick.style.left = stick.style.top = '';
+      nub.style.transform = '';
+    } else {
+      lookId = null;
+      edge.x = null;
+      tap = null;
+    }
+  };
+  const heal = (e) => {
+    const down = new Set([...e.touches].map((t) => t.identifier));
+    if (stickId !== null && !down.has(stickId)) release('stick');
+    if (lookId !== null && !down.has(lookId)) release('look');
+  };
+  window.__releaseTouches = () => (release('stick'), release('look'));
   addEventListener(
     'touchstart',
     (e) => {
       if (!touch.on) touchOn();
+      heal(e);
       if (!inPlay()) return;
       for (const t of e.changedTouches) {
+        if (t.target.closest?.('button, .say-btn, .tbtn')) continue;
         if (t.clientX < innerWidth * 0.45 && stickId === null) {
           stickId = t.identifier;
           sx = t.clientX;
@@ -368,7 +398,7 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
           lx = t.clientX;
           ly = t.clientY;
           edge.x = lx;
-          tap = { x: lx, y: ly, at: performance.now(), button: !!t.target.closest?.('.say-btn, .tbtn') };
+          tap = { x: lx, y: ly, at: performance.now(), button: false };
         }
       }
       e.preventDefault();
@@ -378,6 +408,7 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
   addEventListener(
     'touchmove',
     (e) => {
+      heal(e);
       for (const t of e.changedTouches) {
         if (t.identifier === stickId) {
           let dx = t.clientX - sx, dy = t.clientY - sy;
@@ -401,21 +432,15 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
   );
   const end = (e) => {
     for (const t of e.changedTouches) {
-      if (t.identifier === stickId) {
-        stickId = null;
-        touchMove.x = touchMove.y = touchMove.mag = 0;
-        stick.classList.remove('on');
-        stick.style.left = stick.style.top = '';
-        nub.style.transform = '';
-      }
+      if (t.identifier === stickId) release('stick');
       if (t.identifier === lookId) {
-        lookId = null;
-        edge.x = null;
         // a short touch that did not move is a tap: pick, or dismiss
-        if (tap && !tap.button && performance.now() - tap.at < 320 && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) < 14) act();
-        tap = null;
+        const wasTap = tap && performance.now() - tap.at < 320 && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) < 14;
+        release('look');
+        if (wasTap) act();
       }
     }
+    heal(e);
   };
   addEventListener('touchend', end);
   addEventListener('touchcancel', end);
@@ -1384,6 +1409,7 @@ window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
+  edge, touchMove,
   puppet,
   LITE,
   stand, spotFor, darkestSpot, shiningSpot,
