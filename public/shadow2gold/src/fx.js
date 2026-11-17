@@ -441,6 +441,41 @@ export class Sound {
     this.dragGain.filter.frequency.setTargetAtTime(420 + amount * 380, t, 0.1);
   }
 
+  /** A door slammed somewhere along the corridor: a deep knock, a rattle of the latch. amp 0..1 (how near). */
+  slam(amp = 0.6) {
+    if (!this.ctx || amp < 0.01) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.frequency.setValueAtTime(70, t);
+    o.frequency.exponentialRampToValueAtTime(34, t + 0.35);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.5 * amp, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(g);
+    g.connect(this.bus);
+    g.connect(this.wet);
+    o.start(t);
+    o.stop(t + 0.55);
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 900;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0, t);
+    ng.gain.linearRampToValueAtTime(0.35 * amp, t + 0.004);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    src.connect(f);
+    f.connect(ng);
+    ng.connect(this.bus);
+    ng.connect(this.wet);
+    src.start(t, Math.random());
+    src.stop(t + 0.2);
+    setTimeout(() => this._click(2400, 0.02 * amp, 0.05), 120); // the latch
+  }
+
   /** A heartbeat: two low thumps. */
   heart(amp) {
     if (!this.ctx || amp < 0.004) return;

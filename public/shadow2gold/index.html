@@ -42,6 +42,8 @@
       .tbtn { position: fixed; z-index: 3; font: inherit; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #f2e6cc; background: rgba(0, 0, 0, 0.42); border: 2px solid rgba(242, 230, 204, 0.6); border-radius: 999px; padding: 14px 20px; box-shadow: 0 0 18px rgba(0, 0, 0, 0.6); transition: opacity 0.3s; -webkit-tap-highlight-color: transparent; touch-action: none; }
       #pickbtn { right: calc(18px + env(safe-area-inset-right)); top: calc(100% - 290px - env(safe-area-inset-bottom)); color: #ffd89a; border-color: #ffd89a; padding: 16px 30px; font-size: 14px; }
       .tbtn.hidden, #stick.away { opacity: 0; pointer-events: none; }
+      #pausebtn { left: calc(14px + env(safe-area-inset-left)); top: calc(14px + env(safe-area-inset-top)); padding: 10px 15px; font-size: 13px; letter-spacing: 0.1em; }
+      #pause { background: rgba(0, 0, 0, 0.86); }
       #nub { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(242, 230, 204, 0.7); }
       /* the man / woman choice on the title card */
       .who { display: flex; gap: 14px; align-items: center; }
@@ -105,9 +107,32 @@
       <button id="restart" class="restart" type="button" style="display: none">Start again</button>
     </div>
 
+    <div id="pause" class="overlay hidden">
+      <div class="level">PAUSED</div>
+      <div class="keys desk-only">
+        <div><kbd>W A S D</kbd>walk</div>
+        <div><kbd>MOUSE · TRACKPAD · ← →</kbd>look</div>
+        <div><kbd>SPACE</kbd>turn round</div>
+        <div><kbd>CLICK · E</kbd>pick · take</div>
+        <div><kbd>Q · RIGHT CLICK</kbd>leave</div>
+        <div><kbd>SHIFT</kbd>hurry</div>
+        <div><kbd>ESC · P</kbd>pause</div>
+      </div>
+      <div class="keys touch-only">
+        <div><kbd>LEFT CIRCLE</kbd>walk · to its edge: hurry</div>
+        <div><kbd>RIGHT, DRAG</kbd>look · hold at a side: turn</div>
+        <div><kbd>PICK · TAP</kbd>pick</div>
+      </div>
+      <div class="howto"><p class="soft" id="pausehow"></p></div>
+      <div class="who">
+        <button id="resume" class="again" type="button">Go on</button>
+        <button id="restartgame" class="again" type="button">Start again</button>
+      </div>
+    </div>
+
     <div id="end2" class="overlay hidden">
       <div class="level">II · ALBEDO</div>
-      <div class="howto">
+      <div class="howto" id="end2text">
         <p>Below the house the water is black and still.</p>
         <p class="soft">Letters float on it, sealed. Across it, someone holds up a light of their own.</p>
       </div>
@@ -116,7 +141,8 @@
     </div>
 
     <div id="stick" class="touch-only"><div id="nub"></div></div>
-    <!-- touch only: a button to tap while a mask is within reach -->
+    <!-- touch only: a button to tap while a mask is within reach, and the pause button -->
+    <button id="pausebtn" class="tbtn touch-only" type="button" aria-label="Pause">II</button>
     <button id="pickbtn" class="tbtn pick touch-only hidden" type="button">Pick</button>
     <script type="module" src="./src/main.js"></script>
   </body>

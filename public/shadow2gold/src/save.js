@@ -6,13 +6,13 @@
 
 // ?test keeps test runs out of the real progress (it has its own slot)
 const KEY = new URLSearchParams(location.search).has('test') ? 'st2g.test.v1' : 'st2g.save.v1';
-const blank = () => ({ gender: null, level: 1, faced: [], read: [] });
+const blank = () => ({ gender: null, level: 1, faced: [], read: [], letters: [], gold: false });
 
 const read = () => {
   try {
     const d = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!d || typeof d !== 'object') return blank();
-    return { ...blank(), ...d, faced: Array.isArray(d.faced) ? d.faced : [], read: Array.isArray(d.read) ? d.read : [] };
+    return { ...blank(), ...d, faced: Array.isArray(d.faced) ? d.faced : [], read: Array.isArray(d.read) ? d.read : [], letters: Array.isArray(d.letters) ? d.letters : [] };
   } catch {
     return blank(); // private windows, blocked storage: play without saving
   }

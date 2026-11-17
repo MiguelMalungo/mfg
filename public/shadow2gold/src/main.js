@@ -1,15 +1,17 @@
 import * as THREE from 'three';
 import { glowTexture } from './textures.js';
-import { buildHouse, W, H, Z_BACK, Z_END, MASK_WALL, SACK_AT, WATER, Z_STAIR_END } from './house.js';
+import { buildHouse, W, H, Z_BACK, Z_END, MASK_WALL, MASK_SCONCES, CHANDELIERS, SACK_AT, WATER, Z_STAIR_END } from './house.js';
 import { buildVessel } from './vessel.js';
 import { loadPeople } from './people.js';
 import { buildSack } from './sack.js';
 import { buildChild } from './child.js';
 import { buildMaskHall } from './masks.js';
+import { dressHouse } from './dressing.js';
+import { buildAlbedo } from './albedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 
@@ -25,6 +27,8 @@ import { makeFloorReflection } from './reflect.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
+/* Level II (albedo) is started but not finished: off for players until the owner says go (2026-11-17). ?albedo turns the slice on for work on it. */
+const ALBEDO_ON = params.has('albedo');
 const TOUCH = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 /* Touch controls show on a touch device, and also from the first finger that lands (a laptop with a touch screen, a phone the browser did not announce). */
 const touch = { on: TOUCH };
@@ -184,12 +188,64 @@ const begin = () => {
       window.__g.hand = h;
     })
     .catch((err) => console.error('The hand did not load:', err));
-  Object.assign(window.__g, { body, shadow });
+  // level II waits under the house: its statue is the one the choice sets (Venus for a man, Apollo for a woman)
+  if (ALBEDO_ON) albedo = buildAlbedo(scene, house, people, glowTex, renderer, gender);
+  if (albedo) for (const L of albedo.list) if (save.data.letters.includes(L.id)) (L.state = 'gone'), (L.mesh.visible = false), albedo.st.read.push(L.id);
+  if (albedo && save.data.gold) {
+    const it = albedo.gallery.items[0];
+    it.done = true;
+    it.proj = 0;
+    it.w = 1;
+  }
+  Object.assign(window.__g, { body, shadow, albedo });
   $('start').classList.add('hidden');
   if (!DEBUG) sound.start();
   // how to play, said once when you first wake
   if (!save.hasProgress) later(1.5, () => TIPS.wake[touch.on ? 'touch' : 'desk'].forEach((text, i) => words.tip(text, { id: 'wake' + i })));
 };
+/* ── the pause card: Esc or P, losing the mouse, or the II button on touch ── */
+const pause = () => {
+  if (state.paused || !state.started || state.ended) return;
+  state.paused = true;
+  Object.keys(keys).forEach((k) => (keys[k] = false));
+  $('pausehow').textContent = PAUSE_HOW;
+  $('restartgame').textContent = 'Start again';
+  $('pause').classList.remove('hidden');
+  sound.ctx?.suspend?.();
+  if (document.pointerLockElement) document.exitPointerLock?.();
+};
+const resume = () => {
+  if (!state.paused) return;
+  state.paused = false;
+  $('pause').classList.add('hidden');
+  sound.ctx?.resume?.();
+  lastT = performance.now(); // no jump in time for the pause
+  if (!touch.on && !DEBUG) lock();
+};
+$('resume').addEventListener('click', (e) => (e.stopPropagation(), resume()));
+$('restartgame').addEventListener('click', (e) => {
+  e.stopPropagation();
+  // asked twice: it forgets every mask faced
+  const b = $('restartgame');
+  if (b.dataset.sure !== '1') {
+    b.dataset.sure = '1';
+    b.textContent = 'Forget everything? Click again';
+    return;
+  }
+  save.reset();
+  location.reload();
+});
+$('restartgame').addEventListener('mouseleave', () => {
+  $('restartgame').dataset.sure = '';
+  $('restartgame').textContent = 'Start again';
+});
+$('pausebtn').addEventListener('touchstart', (e) => (e.preventDefault(), e.stopPropagation(), pause()), { passive: false });
+$('pausebtn').addEventListener('click', (e) => (e.stopPropagation(), pause()));
+// losing the mouse (Esc in the browser) pauses, on a computer
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement && state.started && !state.ended && !touch.on && !DEBUG) pause();
+});
+addEventListener('blur', () => !DEBUG && pause());
 const lock = () => {
   try {
     renderer.domElement.requestPointerLock?.()?.catch?.(() => {});
@@ -211,6 +267,7 @@ $('again2').addEventListener('click', () => {
 addEventListener('keydown', (e) => {
   if (!e.repeat && e.code === 'KeyE') act();
   if (!e.repeat && e.code === 'KeyQ') words.answer('leave');
+  if (!e.repeat && (e.code === 'KeyP' || e.code === 'Escape') && state.started && !state.ended) state.paused ? resume() : pause();
   // Space turns you round (a trackpad makes a half turn a long swipe)
   if (!e.repeat && e.code === 'Space' && state.started && !state.ended && !stand.on) turn.left += Math.PI;
   keys[e.code] = true;
@@ -386,7 +443,18 @@ addEventListener('resize', () => {
 
 /* ── the people: loaded after the first frame is up ── */
 let ready = false;
-let body = null, shadow = null, masks = null, child = null, hand = null, people = null;
+let body = null, shadow = null, masks = null, child = null, hand = null, people = null, dressing = null, albedo = null;
+// the look pass: real surfaces and objects, loaded alongside the people (the house keeps its coded look until they arrive)
+// ?nodress leaves the coded look (to compare, or on a slow machine)
+(params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house))
+  .then((d) => {
+    dressing = d;
+    refl.u.reflStrength.value = d.floorReflection;
+    refl.hideAlso(d.noMirror);
+    adapt.list = null; // the eye's rays now meet the new objects too
+    window.__g.dressing = d;
+  })
+  .catch((err) => console.error('The house dressing did not load:', err));
 applyLayout();
 loadPeople()
   .then((p) => {
@@ -462,6 +530,15 @@ const movePlayer = (dt) => {
   player.vel.lerp(wish, 1 - Math.exp(-dt * 7));
   player.pos.addScaledVector(player.vel, dt);
   house.collide(player.pos, 0.32, doorOpen());
+  // round the furniture: the console, the clock, the plinths, the column below
+  if (dressing || albedo)
+    for (const c of [...(dressing?.colliders ?? []), ...(albedo?.colliders ?? [])]) {
+      const dx = player.pos.x - c.x, dz = (player.pos.z - c.z) / (c.along ? c.along / c.r : 1), rr2 = c.r + 0.25, dd = Math.hypot(dx, dz);
+      if (dd < rr2 && dd > 1e-4) {
+        player.pos.x = c.x + (dx / dd) * rr2;
+        player.pos.z = c.z + (dz / dd) * rr2 * (c.along ? c.along / c.r : 1);
+      }
+    }
   // round the sack
   const SP = sack.bag.position;
   tmp.set(player.pos.x - SP.x, 0, player.pos.z - SP.z);
@@ -497,7 +574,28 @@ let candidate = null; // the mask the eye is on, within reach
 const act = () => {
   if (!state.started || state.ended) return;
   if (words.open) return void words.click();
-  if (candidate && !hand?.busy) pickMask(candidate);
+  if (candidate && !hand?.busy) (candidate.def.title && LETTERS.includes(candidate.def) ? pickLetter(candidate) : pickMask(candidate));
+};
+/** A sealed letter: it rises from the water to your eye; read, its seal breaks and it sinks, and white comes into the flask. */
+const pickLetter = (L) => {
+  candidate = null;
+  hand?.grab();
+  sound.glass(659.3, 0.04, 2);
+  albedo.lift(L, camera);
+  L.reading = true;
+  later(1.2, () =>
+    words.say({
+      title: L.def.title,
+      lines: L.def.lines,
+      anchor: () => L.mesh.position,
+      onDone: () => {
+        L.reading = false;
+        albedo.sink(L);
+        save.add('letters', L.id);
+        vessel.react({ bloom: 0.35 });
+      },
+    }),
+  );
 };
 const pickMask = (m) => {
   candidate = null;
@@ -541,13 +639,40 @@ const takeMask = (m) => {
 
 const corridorClamp = (z) => Math.max(Z_END + 1.4, Math.min(Z_BACK - 1.4, z));
 const stepToward = (cur, want, max) => cur + Math.sign(want - cur) * Math.min(Math.abs(want - cur), max);
-/** Where a shadow first stands: further in, toward the door; one of them behind you. */
-const spotFor = (kind) => {
-  if (kind === 'abandonment') return corridorClamp(player.pos.z + (fwd.z < 0 ? 1 : -1) * 5);
-  const d = kind === 'confrontation' ? 9 : 12;
+/**
+ * Where a shadow first stands ({ x, z }): further in, toward the door; abandonment behind you;
+ * envy by a light; shame in the darkest place the corridor has.
+ */
+const ahead = (d) => {
   let z = player.pos.z - d;
   if (z < Z_END + 4) z = player.pos.z + d; // no room there: back toward the start
   return corridorClamp(z);
+};
+/** The places that shine: under the chandeliers, and by the two sconces of the masks. */
+const SHINING = [...CHANDELIERS.map((z) => ({ x: 0.55, z: z + 0.4 })), ...MASK_SCONCES.map((z) => ({ x: W / 2 - 0.55, z }))];
+const shiningSpot = (minD = 8, notZ = null) => {
+  const ok = SHINING.filter((p) => Math.abs(p.z - player.pos.z) > minD && p.z !== notZ);
+  ok.sort((a, b) => Math.abs(a.z - player.pos.z) - Math.abs(b.z - player.pos.z));
+  return ok[0] || SHINING.find((p) => p.z !== notZ) || SHINING[0];
+};
+/** The darkest place in the corridor away from you: the point furthest from every light, by a wall. */
+const darkestSpot = () => {
+  let best = null;
+  for (let z = Z_BACK - 0.9; z > Z_END + 1.2; z -= 0.25) {
+    if (Math.abs(z - player.pos.z) < 7) continue;
+    let near = 1e9;
+    for (const l of house.lights) if (l.position.y > -0.5) near = Math.min(near, Math.hypot(l.position.z - z, l.position.x * 0.5));
+    if (!best || near > best.near) best = { z, near };
+  }
+  const x = (Math.abs(best.z + 30) % 2 < 1 ? -1 : 1) * (W / 2 - 0.45);
+  return { x, z: best.z };
+};
+const spotFor = (kind) => {
+  if (kind === 'abandonment') return { x: 0.2, z: corridorClamp(player.pos.z + (fwd.z < 0 ? 1 : -1) * 5) };
+  if (kind === 'envy') return shiningSpot();
+  if (kind === 'shame') return darkestSpot();
+  const d = { confrontation: 9, need: 9, judgement: 11, control: 14 }[kind] ?? 12;
+  return { x: 0.2, z: ahead(d) };
 };
 
 /** You are inside it. The light goes; one line; then the signs that it is done, the flask, and what is next. */
@@ -594,7 +719,12 @@ const integrate = (F, t) => {
  *   anger          comes at you fast and stands over you: stand; step back and it draws off, larger, and comes again
  *   abandonment    small, keeps behind you: stop, turn round and wait, and it comes
  *   confrontation  gives way as you come: walk at it steadily; hurrying drives it off
- *   (the rest)     stands and grows: walk to it
+ *   judgement      tall, points; its look pushes you back: keep walking into it
+ *   envy           stands by a light and moves on as you come: stop near it, hold your light on it
+ *   shame          hides in the darkest place, face covered: find it, hold your light on it
+ *   need           reaches for you, then pulls away: hold out your light and wait
+ *   control        walks at you stiffly, slamming every door it passes: stand still, then walk to it
+ *   still          (spare) stands and grows: walk to it
  * Once it is close and you have done what it asks, the meeting cannot be undone: it walks into you,
  * the light goes for a breath, and what it was made of rises as pale ash.
  */
@@ -622,13 +752,15 @@ const updateShadow = (dt, t, hurry) => {
       if (n) shadow.wisps.puff(F.mask.mesh.position, n, 0.16, 0.2);
     } else {
       if (F.spot == null) {
-        F.spot = spotFor(F.kind);
+        const sp = spotFor(F.kind);
+        F.spot = sp.z;
+        F.spotX = sp.x;
         F.from.copy(F.mask.mesh.position);
         F.run0 = t;
       }
       // the smoke runs low along the floor to where it will stand
       const k = Math.min(1, (t - F.run0) / 2.2), e = k * k * (3 - 2 * k);
-      F.head.set(F.from.x + (0.2 - F.from.x) * e, F.from.y + (0.9 - F.from.y) * e - 0.55 * Math.sin(Math.PI * e), F.from.z + (F.spot - F.from.z) * e);
+      F.head.set(F.from.x + (F.spotX - F.from.x) * e, F.from.y + (0.9 - F.from.y) * e - 0.55 * Math.sin(Math.PI * e), F.from.z + (F.spot - F.from.z) * e);
       if (n) shadow.wisps.puff(F.head, n, 0.22, 0.1);
       if (k >= 1) {
         F.phase = 'loose';
@@ -636,9 +768,11 @@ const updateShadow = (dt, t, hurry) => {
         words.tip(TIPS.taken, { id: 'taken' });
         if (F.kind !== 'abandonment') words.tip(TIPS.light, { id: 'light' });
         F.timer = 0;
-        sh.pos.set(0.2, 0, F.spot);
+        sh.pos.set(F.spotX, 0, F.spot);
         sh.prev.copy(sh.pos);
-        Object.assign(sh, { fade: 1, grow: 0, meet: false, scale: F.kind === 'abandonment' ? 0.62 : 1, prevDist: 99 });
+        Object.assign(sh, { fade: 1, grow: 0, meet: false, scale: F.kind === 'abandonment' ? 0.62 : F.kind === 'shame' ? 0.82 : 1, prevDist: 99 });
+        Object.assign(F, { hold: 0, slips: 0, pose: { point: 0, reach: 0, cover: 0 }, found: false, doorsLeft: null, still: 0, pushed: 0 });
+        if (F.kind === 'envy') F.light = { x: F.spotX, z: F.spot };
         shadow.u.ash.value = 0;
         F.side = Math.sign(F.spot - player.pos.z) || 1;
       }
@@ -663,13 +797,13 @@ const updateShadow = (dt, t, hurry) => {
       // it grows toward the ceiling over about a minute; three times as fast while you hurry; and not at all while
       // you face it with your light
       const lit = looking && dist < 14;
-      if (F.kind !== 'abandonment') sh.grow = Math.min(1, sh.grow + (dt / 60) * (hurry ? 3 : lit ? 0 : 1));
+      if (F.kind !== 'abandonment' && F.kind !== 'shame') sh.grow = Math.min(1, sh.grow + (dt / 60) * (hurry ? 3 : lit ? 0 : 1));
       // tips, when they are of use
       F.unseen = looking ? 0 : F.unseen + dt;
       if (hurry && player.speed > 2) words.tip(TIPS.hurry, { id: 'hurry', times: 2, gap: 25 });
       if (F.kind === 'abandonment') {
         if (looking && player.speed > 0.4 && F.timer > 4) words.tip(TIPS.waitForIt, { id: 'wait', times: 2, gap: 20 });
-      } else if (F.unseen > 7 && F.st !== 'recoil') words.tip(TIPS.growing, { id: 'growing', times: 3, gap: 22 });
+      } else if (F.unseen > 7 && F.st !== 'recoil' && F.kind !== 'shame') words.tip(TIPS.growing, { id: 'growing', times: 3, gap: 22 });
       if ((F.kind === 'still' || F.kind === 'confrontation') && looking && dist < 3.2 && player.speed < 0.3 && F.timer > 3) words.tip(TIPS.through, { id: 'through', times: 2, gap: 20 });
       if (F.kind === 'anger') {
         const stop = player.pos.z + away * 1.25;
@@ -737,13 +871,128 @@ const updateShadow = (dt, t, hurry) => {
           }
         }
         if (reach < 1.6 && !hurry) sh.meet = true;
+      } else if (F.kind === 'judgement') {
+        // tall, pointing at you; while you face it its look pushes you back, harder the nearer you are
+        F.pose.point = Math.min(1, F.pose.point + dt);
+        if (looking && dist < 10) {
+          // walking into it, it takes up to 60% of your stride (so you always get there); standing, it moves you back
+          const k = smoothstep(10, 2.5, dist);
+          const push = toward > 0.2 ? toward * 0.6 * k : 0.55 * k;
+          player.pos.addScaledVector(toSh, -push * dt);
+          house.collide(player.pos, 0.32, doorOpen());
+          F.pushed = toward < 0.15 ? F.pushed + dt : Math.max(0, F.pushed - dt);
+          if (F.pushed > 2.5) words.tip(TIPS.pushed, { id: 'pushed', times: 2, gap: 15 });
+        }
+        if (reach < 1.6) sh.meet = true;
+      } else if (F.kind === 'envy') {
+        // it stands by a light, its back to you, gazing up into it
+        if (F.swap > 0) {
+          const before = F.swap;
+          F.swap -= dt / 0.9;
+          fadeWant = F.swap > 0.5 ? 1 : 0;
+          if (before > 0.5 && F.swap <= 0.5) {
+            F.light = shiningSpot(7, F.light.z);
+            sh.pos.set(F.light.x, 0, F.light.z);
+            sh.prev.copy(sh.pos);
+          }
+        } else if (F.st !== 'come') {
+          const still = player.speed < 0.3;
+          // walk up to it and it moves on to another light; stop near it and hold your light on it, and it turns to yours
+          if (!still && dist < 4.2 && F.hold < 0.5) {
+            F.swap = 1;
+            F.hold = 0;
+            F.slips += 1;
+            if (F.slips === 1) words.tip(TIPS.slipped, { id: 'slipped', times: 1 });
+          } else if (still && looking && dist < 7) {
+            F.hold += dt;
+            if (F.hold > 0.8) words.tip(TIPS.holdLight, { id: 'holdLight', times: 1 });
+            if (F.hold > 2.6) F.st = 'come';
+          } else F.hold = Math.max(0, F.hold - dt * 0.5);
+        }
+        if (F.st === 'come') {
+          speed = 0.9;
+          wantZ = player.pos.z + away * 0.9;
+          if (reach < 1.3) sh.meet = true;
+        }
+      } else if (F.kind === 'shame') {
+        // it hides by a wall where no candle reaches, its back to you and its face in its hands
+        F.pose.cover = F.found ? Math.max(0, F.pose.cover - dt / 1.6) : 1;
+        if (!F.found) {
+          if (looking && dist < 4.2) {
+            F.hold += dt;
+            if (F.hold > 0.6) words.tip(TIPS.holdLight, { id: 'holdLight', times: 1 });
+            if (F.hold > 3) {
+              F.found = true;
+              sound.glass(220, 0.04, 2.5);
+            }
+          } else F.hold = Math.max(0, F.hold - dt * 0.5);
+          if (F.timer > 35 && dist > 8) words.tip(TIPS.hidden, { id: 'hidden', times: 2, gap: 40 });
+        } else {
+          // found, it turns, lowers its hands, and comes the last step itself
+          speed = F.pose.cover < 0.4 ? 0.6 : 0;
+          wantZ = player.pos.z + away * 0.8;
+          if (reach < 1.1) sh.meet = true;
+        }
+      } else if (F.kind === 'need') {
+        // it comes, arms out, and stops short; reach for it and it pulls its hands back and goes
+        if (F.st === 'withdraw') {
+          F.pose.reach = Math.max(0, F.pose.reach - dt * 3);
+          speed = 1.7;
+          wantZ = player.pos.z + away * 5;
+          if (F.timer > 2.2) (F.st = 'wait'), (F.hold = 0);
+        } else {
+          F.pose.reach = Math.min(1, F.pose.reach + dt * 0.8);
+          speed = dist > 2.6 ? 1.0 : 0;
+          wantZ = player.pos.z + away * 2.4;
+          if (toward > 0.3 && dist < 4) {
+            Object.assign(F, { st: 'withdraw', timer: 0, hold: 0 });
+            words.tip(TIPS.grabbed, { id: 'grabbed', times: 2, gap: 15 });
+          } else if (player.speed < 0.3 && looking && dist < 3.2) {
+            F.hold += dt;
+            if (F.hold > 3) (speed = 0.55), (wantZ = player.pos.z + away * 0.7);
+            if (F.hold > 3 && reach < 1.05) sh.meet = true;
+          } else F.hold = Math.max(0, F.hold - dt);
+        }
+      } else if (F.kind === 'control') {
+        // it walks at you stiffly, and every door it passes slams shut; move, and it stops dead and tightens
+        // the doors it still has to pass on its way to where it stops, 3.4 m short of you
+        const stopZ = player.pos.z + away * 3.4;
+        F.doorsLeft = house.doors.filter((d) => !d.shut && (d.z - sh.pos.z) * (d.z - stopZ) < 0);
+        const still = player.speed < 0.3;
+        F.still = still ? F.still + dt : 0;
+        if (F.doorsLeft.length) {
+          if (F.st === 'frozen') {
+            sh.grow = Math.min(1, sh.grow + dt * 0.03);
+            if (F.still > 1) F.st = 'walk';
+          } else if (!still && F.timer > 1) {
+            F.st = 'frozen';
+            words.tip(TIPS.frozen, { id: 'frozen', times: 2, gap: 15 });
+          } else {
+            speed = 0.75;
+            wantZ = stopZ;
+          }
+        } else if (reach < 1.6 && !hurry) sh.meet = true;
       } else if (reach < 1.75 && !hurry) sh.meet = true;
       if (reach < 0.7 && F.swap <= 0) sh.meet = true; // you walked into it
+      const z0 = sh.pos.z;
       sh.pos.z = corridorClamp(stepToward(sh.pos.z, wantZ, speed * dt));
+      if (F.kind === 'control') {
+        // every door it walks past slams shut behind it
+        let slammed = false;
+        for (const d of house.doors)
+          if (!d.shut && z0 !== sh.pos.z && (d.z - z0) * (d.z - sh.pos.z) <= 0) {
+            house.slamDoor(d);
+            sound.slam(smoothstep(30, 2, Math.abs(d.z - player.pos.z)));
+            slammed = true;
+          }
+        if (slammed && !house.doors.some((d) => !d.shut && (d.z - sh.pos.z) * (d.z - (player.pos.z + away * 3.4)) < 0)) words.tip(TIPS.doorsShut, { id: 'doorsShut', times: 1 });
+      }
       // it weaves a little, and walks round the sack rather than through it
       let sx = 0.22 * Math.sin(sh.pos.z * 0.4);
       // the one that comes at you comes at you, wherever in the corridor you stand
-      if ((F.kind === 'anger' && (F.st === 'charge' || F.st === 'loom')) || (F.kind === 'abandonment' && F.wait > 0.7)) sx += (player.pos.x * 0.9 - sx) * smoothstep(6, 2, dist);
+      if ((F.kind === 'anger' && (F.st === 'charge' || F.st === 'loom')) || (F.kind === 'abandonment' && F.wait > 0.7) || F.st === 'come' || F.found || (F.kind === 'need' && F.hold > 3)) sx += (player.pos.x * 0.9 - sx) * smoothstep(6, 2, dist);
+      // the ones that keep to a place keep to it
+      if ((F.kind === 'shame' && !F.found) || (F.kind === 'envy' && F.st !== 'come')) sx = F.kind === 'shame' ? F.spotX : F.light.x;
       const SP = sack.bag.position, clear = sack.radius + 0.35;
       const nearSack = Math.max(0, 1 - Math.abs(sh.pos.z - SP.z) / clear);
       if (nearSack > 0) sx += (SP.x + (SP.x < 0 ? 1 : -1) * clear - sx) * Math.min(1, nearSack * 1.6);
@@ -758,9 +1007,11 @@ const updateShadow = (dt, t, hurry) => {
     }
     sh.fade = stepToward(sh.fade, fadeWant, dt / (fadeWant ? 0.35 : 1.3)); // it gathers itself out of the smoke
     dreadWant = sh.meet ? 1 : smoothstep(7, 1.4, dist) * (looking ? 1 : 0.4) * (F.kind === 'abandonment' ? 0.45 : 1);
+    // shame is found by its heartbeat as much as by the eye: you hear it before you see it
+    if (F.kind === 'shame' && !F.found) dreadWant = Math.max(dreadWant, 0.25 * smoothstep(12, 3, dist));
     wispRate = 90 + 120 * sh.dread;
     // person-sized, growing toward the ceiling; the small one grows up as it comes; at the meeting, exactly your size
-    const tall = F.kind === 'abandonment' ? 0.62 + 0.38 * smoothstep(4.5, 1.3, dist) * (F.wait > 0.5 ? 1 : 0.25) : (F.kind === 'anger' ? 1.12 : 1) + 0.8 * sh.grow;
+    const tall = F.kind === 'abandonment' ? 0.62 + 0.38 * smoothstep(4.5, 1.3, dist) * (F.wait > 0.5 ? 1 : 0.25) : F.kind === 'shame' ? 0.82 + 0.18 * (F.found ? 1 : 0) : ({ anger: 1.12, judgement: 1.3, control: 1.06 }[F.kind] ?? 1) + 0.8 * sh.grow;
     const want = sh.meet ? 1 : Math.min(1.8, tall);
     sh.scale += (want - sh.scale) * (1 - Math.exp(-dt * (sh.meet ? 1.6 : 0.9)));
   }
@@ -781,17 +1032,30 @@ const updateShadow = (dt, t, hurry) => {
     o.position.copy(sh.pos);
     o.scale.set(0.0094 * thin, 0.0108 * s, 0.0094 * thin);
     o.rotation.y = Math.atan2(player.pos.x - sh.pos.x, player.pos.z - sh.pos.z);
+    // shame turns its back to you and its face to the wall; envy gazes into its light; until they are met
+    if (F && F.kind === 'shame' && !F.found && !sh.meet) o.rotation.y = Math.atan2(Math.sign(sh.pos.x) || 1, 0);
+    if (F && F.kind === 'envy' && F.st !== 'come' && !sh.meet) o.rotation.y += Math.PI;
+    if (window.__g.faceYaw != null) o.rotation.y = window.__g.faceYaw; // testing: hold its facing (to see it from the side)
     // walking or standing, from how fast it actually moves through the corridor
     const moved = o.position.distanceTo(sh.prev) / Math.max(dt, 1e-4);
     const approaching = dist < sh.prevDist;
     sh.prev.copy(o.position);
     sh.prevDist = dist;
     sh.gait += (smoothstep(0.08, 0.45, moved) - sh.gait) * (1 - Math.exp(-dt * 6));
-    shadow.setGait(sh.gait);
+    shadow.setGait(F?.kind === 'control' ? Math.min(sh.gait, 0.35) : sh.gait);
     shadow.walk.timeScale = (approaching ? 1 : -1) * Math.min(1.4, moved / 1.26 / Math.max(0.6, s)) + 0.0001;
+    shadow.unbend();
     shadow.mixer.update(dt);
     o.updateMatrixWorld(true);
-    shadow.posture(sh.dread * (1 - smoothstep(1.5, 0.6, dist)), smoothstep(2.2, 0.8, dist) * (sh.meet ? 1 : 0.5));
+    const P = F?.pose;
+    const bowed = F?.kind === 'shame' && !F.found ? 1 : 0, gazing = F?.kind === 'envy' && F.st !== 'come' && !sh.meet ? 1 : 0;
+    shadow.posture(Math.max(bowed, sh.dread * (1 - smoothstep(1.5, 0.6, dist))), Math.max(gazing * 1.4, smoothstep(2.2, 0.8, dist) * (sh.meet ? 1 : 0.5)));
+    if (P) {
+      // as it meets you its arms come down
+      const k = sh.meet ? Math.max(0, 1 - (F.metAt != null ? t - F.metAt : 0) / 1.2) : 1;
+      if (sh.meet && F.metAt == null) F.metAt = t;
+      shadow.arms({ point: P.point * k, reach: P.reach * k, cover: P.cover * k });
+    }
     sh.stride += moved * dt;
     if (sh.gait > 0.3 && sh.stride - sh.lastStep > 0.8 * Math.max(0.6, s)) {
       sh.lastStep = sh.stride;
@@ -837,7 +1101,15 @@ const adaptExposure = (dt) => {
 };
 /** The one instruction low on the screen: always what there is to do now. */
 const lineNow = () => {
-  if (!state.started || state.ended || words.open || vessel.rx.on || player.pos.z < Z_END - 0.4) return '';
+  if (!state.started || state.ended || words.open || vessel.rx.on) return '';
+  if (player.pos.z < Z_END - 0.4) {
+    if (!albedo) return player.pos.z < Z_STAIR_END ? 'Wade out into the water.' : '';
+    if (player.pos.z > Z_STAIR_END) return '';
+    const left = LETTERS.length - albedo.st.read.length;
+    if (left > 0) return left === 3 ? 'Find the three sealed letters.' : left === 2 ? 'Two letters remain.' : 'One letter remains.';
+    if (!albedo.st.gold) return ALBEDO.statue[albedo.gallery.items[0].who];
+    return ALBEDO.done;
+  }
   if (facing) return facing.phase === 'loose' || facing.phase === 'meet' ? (facing.def.hint ?? HINTS[facing.kind]) : '';
   if (state.faced >= 3) return state.t - state.doorAt < 40 ? LINES.door : LINES.doorAgain;
   if (state.faced > 0) return LINES.another(3 - state.faced);
@@ -893,8 +1165,10 @@ const tick = (forceDt) => {
   /* the masks, the hand, the words */
   if (masks) {
     masks.update(dt, t, camera);
-    const free = state.started && !state.ended && !words.open && !facing && !masks.held() && !vessel.rx.on && player.pos.z > Z_END;
-    candidate = free ? masks.lookedAt(camera) : null;
+    const free = state.started && !state.ended && !words.open && !facing && !masks.held() && !vessel.rx.on;
+    const below = player.pos.z < Z_END - 1;
+    const reading = albedo?.list.some((L) => L.state === 'rising' || L.state === 'held');
+    candidate = free && !below ? masks.lookedAt(camera) : free && below && albedo && !reading ? albedo.lookedAt(camera) : null;
   }
   // the touch buttons and the circle follow what can be done: nothing to walk or turn while a mask is out
   if (touch.on) {
@@ -912,6 +1186,9 @@ const tick = (forceDt) => {
   if (child) child.update(dt * slow, t, player.pos);
   else sack.update(t, 0, 0);
   if (child && child.st.phase !== 'wait' && child.st.phase !== 'drag') sack.update(t, smoothstep(2.4, 1.3, dSack), 0);
+  // after the third shadow the sack's tie slips and something warm shows at its neck
+  state.loose = (state.loose ?? 0) + ((state.doorAt != null ? 1 : 0) - (state.loose ?? 0)) * (1 - Math.exp(-dt * 0.5));
+  sack.loosen(state.loose, t);
   const breathLoud = Math.max(0, sack.u.breath.value) * smoothstep(11, 2.5, dSack) * (1 - smoothstep(2.4, 1.3, dSack));
 
   /* the vessel: what is in the glass answers what you do */
@@ -931,7 +1208,8 @@ const tick = (forceDt) => {
   // the liquid rises and falls with the sack's breath
   V.heave = 0.07 * sack.u.breath.value * smoothstep(10, 2.5, dSack);
   // the work: black; a little less black for each one faced; after the third, the first white
-  const wantStage = demo.stage ?? [0, 0.1, 0.2, 0.55][Math.min(n, 3)] + 0.03 * Math.max(0, n - 3);
+  const lettersRead = save.data.letters.length, goldBack = albedo?.st.gold ? 1 : 0;
+  const wantStage = demo.stage ?? Math.min(1, [0, 0.1, 0.2, 0.55][Math.min(n, 3)] + 0.03 * Math.max(0, n - 3) + 0.1 * lettersRead + 0.15 * goldBack);
   V.stage = ease(V.stage, wantStage, 0.5);
   vessel.update(t);
   house.update(t);
@@ -968,7 +1246,7 @@ const tick = (forceDt) => {
   post.haze.uniforms.time.value = t;
   post.finish.uniforms.time.value = t;
   post.finish.uniforms.close.value = sh.dread * (1 - sh.fade);
-  post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)], 0.4);
+  post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)] * (1 - 0.3 * goldBack), 0.4);
   // ?norefl turns the floor's reflection off (to compare, or on a slow machine)
   adaptExposure(dt);
   post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0));
@@ -977,8 +1255,32 @@ const tick = (forceDt) => {
   waterRefl.update(params.has('norefl') || player.pos.z > Z_END + 1.5);
   // the door swings open once three shadows have been faced
   if (state.doorAt != null) house.openDoor(smoothstep(0, 3.5, t - state.doorAt));
-  // wading out across the black water: the threshold of the second work
-  if (!state.ended && !state.albedo && player.pos.z < Z_STAIR_END - 3.5) {
+  // below the house: level II, albedo (albedo.js)
+  if (albedo) {
+    vessel.light.getWorldPosition(tmp);
+    albedo.update(dt, t, camera, tmp, sound, player);
+    if (!state.albedo && player.pos.z < Z_STAIR_END - 0.5) {
+      state.albedo = true;
+      words.word(ALBEDO.title, ALBEDO.enter, 4.5);
+      later(5, () => words.tip(ALBEDO.letters, { id: 'albedoLetters' }));
+    }
+    if (albedo.st.gold && !save.data.gold) {
+      save.set({ gold: true });
+      words.tip(ALBEDO.goldBack, { id: 'goldBack' });
+      later(6, () => words.tip(ALBEDO.otherWaits, { id: 'otherWaits' }));
+      vessel.react({ bloom: 0.4 });
+    }
+    if (albedo.st.done && !state.albedoDone && !words.open && !vessel.rx.on) {
+      state.albedoDone = true;
+      later(4, () => {
+        state.ended = true;
+        $('end2text').innerHTML = ALBEDO.endCard;
+        $('end2').classList.remove('hidden');
+        document.exitPointerLock?.();
+      });
+    }
+  } else if (!state.ended && !state.albedo && player.pos.z < Z_STAIR_END - 3.5) {
+    // level II is not open yet: wading out across the black water shows its threshold card
     state.albedo = true;
     state.ended = true;
     $('end2').classList.remove('hidden');
@@ -987,7 +1289,9 @@ const tick = (forceDt) => {
   post.composer.render(dt);
 };
 const frame = () => {
-  tick();
+  // paused: the picture stays, nothing moves (dt 0: no walking, no clock, no timers)
+  if (state.paused) tick(0);
+  else tick();
   requestAnimationFrame(frame);
 };
 
@@ -996,7 +1300,7 @@ window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
-  stand,
+  stand, spotFor, darkestSpot, shiningSpot,
   tp: (x, z, yaw = player.yaw, pitch = player.pitch) => {
     player.pos.set(x, 0, z);
     player.y = house.floorAt(x, z);

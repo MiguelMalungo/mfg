@@ -138,6 +138,8 @@ export const buildHouse = (scene, glowTex) => {
 
   /* ── closed doors along the walls ── */
   const sideLeafGeo = doorLeaf(0.95, 2.2, 0.045), sideCaseGeo = doorCase(0.95, 2.2), knobGeo = doorKnob();
+  /** The closed doors along the walls: a shadow of control slams them as it passes (`slamDoor`). */
+  const doors = [];
   const sideDoor = (side, z) => {
     const x = (side * W) / 2;
     const w = 0.95, h = 2.2;
@@ -146,6 +148,7 @@ export const buildHouse = (scene, glowTex) => {
     const leaf = add(new THREE.Mesh(sideLeafGeo, joinMat));
     leaf.rotation.y = rotY;
     leaf.position.set(x - side * 0.024, 0, z);
+    doors.push({ side, z, leaf, x0: leaf.position.x, shake: 0, shut: false });
     const frame = add(new THREE.Mesh(sideCaseGeo, joinMat));
     frame.rotation.y = rotY;
     frame.position.set(x, 0, z);
@@ -185,8 +188,10 @@ export const buildHouse = (scene, glowTex) => {
     return l;
   };
 
+  const chandeliers = [];
   for (const z of CHANDELIERS) {
     const g = new THREE.Group();
+    chandeliers.push(g);
     g.position.set(0, H - 1.05, z);
     group.add(g);
     const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.05, 6), brassMat);
@@ -451,8 +456,22 @@ export const buildHouse = (scene, glowTex) => {
     return ROOM_Y;
   };
 
+  /** A door jolts in its frame as if slammed from the other side, and stays shut. */
+  const slamDoor = (d) => {
+    d.shake = 1;
+    d.shut = true;
+  };
+  let lastT = 0;
   /** Candle flicker: flames lean and stretch, their lights breathe. */
   const update = (t) => {
+    const dt = Math.min(0.05, Math.max(0, t - lastT));
+    lastT = t;
+    for (const d of doors) {
+      if (d.shake <= 0) continue;
+      d.shake = Math.max(0, d.shake - dt * 2.2);
+      // it jumps out of its frame toward the corridor and settles back, rattling
+      d.leaf.position.x = d.x0 - d.side * 0.035 * d.shake * Math.abs(Math.sin(d.shake * 26));
+    }
     // the letters ride the water; the far light breathes
     for (const m of letters) {
       m.position.y = WATER + 0.004 + 0.004 * Math.sin(t * 0.9 + m.userData.seed);
@@ -463,7 +482,10 @@ export const buildHouse = (scene, glowTex) => {
       f.position.x += 0.0004 * Math.sin(t * 0.13 + f.userData.seed);
       f.userData.light?.position.set(f.position.x, WATER + 0.3, f.position.z);
     }
-    farLight.intensity = 0.9 * (1 + 0.15 * Math.sin(t * 0.7));
+    farLight.intensity = 0.9 * (1 + 0.15 * Math.sin(t * 0.7)) * (farLight.userData.dim ?? 1);
+    farHalo.position.copy(farLight.position);
+    farCore.position.copy(farLight.position);
+    farHalo.material.opacity = 0.22 * (farLight.userData.dim ?? 1);
     rip.offset.set(t * 0.004, t * 0.0025);
     for (const f of flames) {
       const a = Math.sin(t * 11.3 + f.seed) * Math.sin(t * 5.1 + f.seed * 1.7);
@@ -502,5 +524,5 @@ export const buildHouse = (scene, glowTex) => {
     }
   };
 
-  return { group, floor, floorMat, water, waterMat, openDoor, floorAt, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat };
+  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat };
 };

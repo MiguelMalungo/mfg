@@ -31,6 +31,7 @@ export const buildSack = (scene, at) => {
   const uv0 = geo.attributes.uv;
   const uv = new Float32Array(pos.count * 2);
   const breathe = new Float32Array(pos.count);
+  const neckT = new Float32Array(pos.count); // 0 on the body, up to 1 at the top of the neck: what loosens
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
@@ -70,9 +71,11 @@ export const buildSack = (scene, at) => {
     uv[i * 2] = a01 * 10;
     uv[i * 2 + 1] = yy * 2.8;
     breathe[i] = Math.max(0, 1 - t * 1.3) * (0.4 + 0.6 * Math.max(0, Math.cos(ang - 0.6)));
+    neckT[i] = t;
   }
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   geo.setAttribute('breathe', new THREE.BufferAttribute(breathe, 1));
+  geo.setAttribute('neckT', new THREE.BufferAttribute(neckT, 1));
   geo.computeVertexNormals();
   // the seam's two columns are the same points: share their normals so no line shows
   {
@@ -87,22 +90,27 @@ export const buildSack = (scene, at) => {
   }
 
   const maps = burlap(512, 44);
-  const u = { breath: { value: 0 }, time: { value: 0 } };
+  const u = { breath: { value: 0 }, time: { value: 0 }, open: { value: 0 } };
   const mat = new THREE.MeshStandardMaterial({ ...maps, roughness: 1, normalScale: new THREE.Vector2(2.6, 2.6), color: new THREE.Color(0.85, 0.78, 0.68), side: THREE.DoubleSide });
   const patch = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float breathe; uniform float breath; uniform float time;')
+      .replace('#include <common>', '#include <common>\nattribute float breathe; attribute float neckT; uniform float breath; uniform float time; uniform float open;')
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
         // something inside draws breath: the whole side swells, and a slow shift moves under the cloth
         float stir = sin(position.y * 5.0 + time * 0.6) * sin(position.x * 4.0 - time * 0.4);
-        transformed += normal * breathe * (breath * 0.045 + stir * 0.006);`,
+        transformed += normal * breathe * (breath * 0.045 + stir * 0.006);
+        // loosened: the neck falls open and droops, the cloth slack
+        // the neck no longer stands: it flops over to one side and hangs open
+        transformed += normal * open * neckT * 0.035;
+        transformed.x += open * neckT * neckT * 0.2;
+        transformed.y -= open * neckT * neckT * 0.24;`,
       );
   };
   mat.onBeforeCompile = patch;
-  mat.customProgramCacheKey = () => 'st2g-sack-v2';
+  mat.customProgramCacheKey = () => 'st2g-sack-v3';
   // the cloth darkens where it creases and where it has been dragged along the floor
   mat.onBeforeCompile = (sh) => {
     patch(sh);
@@ -122,13 +130,20 @@ export const buildSack = (scene, at) => {
   /* the rope: wound round the neck, then to its end */
   const ropeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.2, 0.15, 0.085), roughness: 0.95, normalMap: maps.normalMap, normalScale: new THREE.Vector2(1.5, 1.5) });
   const neckY = body.position.y + (0.5 + 0.22 * 0.75) * RY;
+  const coils = [];
   for (const dy of [0, 0.028, -0.026]) {
     const coil = new THREE.Mesh(new THREE.TorusGeometry(0.15 * RX + 0.012, 0.014, 8, 28), ropeMat);
     coil.rotation.x = Math.PI / 2 + (dy ? 0.08 : -0.05);
     coil.position.y = neckY + dy;
     coil.castShadow = true;
+    coil.userData = { y: neckY + dy, rx: coil.rotation.x, dy };
+    coils.push(coil);
     bag.add(coil);
   }
+  // what is inside shows, once the neck is loose: a warm light from the opening
+  const glow = new THREE.PointLight(new THREE.Color(1.0, 0.62, 0.25), 0, 3.2, 2);
+  glow.position.set(0.12, neckY - 0.08, 0);
+  bag.add(glow);
   const rope = new THREE.Mesh(new THREE.BufferGeometry(), ropeMat);
   rope.castShadow = rope.receiveShadow = true;
   rope.frustumCulled = false;
@@ -210,5 +225,21 @@ export const buildSack = (scene, at) => {
     body.rotation.x = -0.1 * lurch;
     body.scale.set(1 + 0.03 * lurch, 1 - 0.04 * lurch, 1 + 0.02 * lurch);
   };
-  return { group: bag, bag, body, drum, update, setRope, u, radius: RX * 1.12, neck };
+  /**
+   * After the third shadow (PLAN.md 10.4 step 8): the tie slips, the neck falls open, the sack slumps,
+   * and a little warm light comes out of it. k 0..1.
+   */
+  const loosen = (k, t = 0) => {
+    u.open.value = k;
+    for (const c of coils) {
+      // the coils slide down the neck and hang loose and crooked
+      c.position.y = c.userData.y - 0.15 * k - 0.6 * k * c.userData.dy;
+      c.position.x = 0.05 * k;
+      c.rotation.x = c.userData.rx + 0.25 * k * (c.userData.dy >= 0 ? 1 : -1);
+      c.scale.setScalar(1 + 0.75 * k);
+    }
+    bag.scale.set(1 + 0.05 * k, 1 - 0.1 * k, 1 + 0.05 * k);
+    glow.intensity = 0.9 * k * (1 + 0.15 * Math.sin(t * 2.3) * Math.sin(t * 1.1));
+  };
+  return { group: bag, bag, body, drum, update, setRope, loosen, u, radius: RX * 1.12, neck, glow };
 };

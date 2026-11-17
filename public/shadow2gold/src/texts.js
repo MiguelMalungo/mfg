@@ -36,14 +36,18 @@ export const WHITE = [
  * Black masks: the shadow, what was put out of sight. Each begins as an irritation with other
  * people (the first technique of the infographic: what you can not stand in others) and turns.
  * The question is added by the game.
- *   kind      how the shadow behaves once the mask is taken (main.js). Four ways are built:
+ *   kind      how the shadow behaves once the mask is taken (main.js, PLAN.md 10.4). Eight ways:
  *               'anger'          comes at you fast and stands over you: stand, do not step back
  *               'abandonment'    small, keeps behind you: stop, turn round, wait for it
  *               'confrontation'  gives way as you come: walk at it steadily, never hurrying
- *               'still'          stands and grows: face it, walk to it
+ *               'judgement'      tall, points at you; its look pushes you back: keep walking into it
+ *               'envy'           stands by whatever shines, and moves on as you come: stop near it, hold your light on it
+ *               'shame'          hides in the darkest place, face covered: find it, hold your light on it
+ *               'need'           reaches for you, then pulls its hands away: hold out your light and wait
+ *               'control'        walks at you stiffly; doors slam as it passes: stand still, let it shut every one, then walk
+ *               'still'          (spare) stands and grows: face it, walk to it
  *             Each mask is given the way that suits what it is (grief waits behind you until you
- *             stop; truth backs away; cruelty comes at you). Stage D of the plan gives judgement,
- *             envy, shame, need and control ways of their own.
+ *             stop; truth backs away; cruelty comes at you; the victim points).
  *   inside    the one line shown in the dark as you go through it
  *   strength  what it gives back, in one word; `gives` says it in full under the word
  *   hint      optional: the bottom line while this shadow is loose (otherwise HINTS[kind])
@@ -68,31 +72,31 @@ export const BLACK = [
     strength: 'Voice', gives: 'Your own voice.',
   },
   {
-    id: 'judgement', kind: 'still',
+    id: 'judgement', kind: 'judgement',
     lines: ['You see at once what is wrong with people.', 'You keep a list.', 'Your own name is at the top of it.'],
     inside: 'The hardest sentence was the one you passed on yourself.',
     strength: 'Discernment', gives: 'Seeing clearly, without the sentence.',
   },
   {
-    id: 'envy', kind: 'still',
+    id: 'envy', kind: 'envy',
     lines: ['People who show what they have bore you.', 'You know exactly what they have.'],
     inside: 'All along it was pointing at what you want.',
     strength: 'Desire', gives: 'Knowing what you want.',
   },
   {
-    id: 'shame', kind: 'still',
+    id: 'shame', kind: 'shame',
     lines: ['People who make a scene make you look away.', 'No one has ever seen you fall.'],
     inside: 'It only ever hid what wanted to be seen.',
     strength: 'Seen', gives: 'Being seen.',
   },
   {
-    id: 'need', kind: 'still',
+    id: 'need', kind: 'need',
     lines: ['Needy people wear you out.', 'You have not asked for anything in years.'],
     inside: 'The hand it held out was your own.',
     strength: 'Receiving', gives: 'Being able to receive.',
   },
   {
-    id: 'control', kind: 'still',
+    id: 'control', kind: 'control',
     lines: ['Careless people make you furious.', 'If you let go of one thing, everything goes.'],
     inside: 'It held everything, so that you would not feel it fall.',
     strength: 'Trust', gives: 'Trust.',
@@ -110,7 +114,7 @@ export const BLACK = [
     strength: 'Rest', gives: 'Rest, without earning it.',
   },
   {
-    id: 'worth', kind: 'still',
+    id: 'worth', kind: 'envy',
     lines: ['People who think they are special irritate you.', 'Quietly, you have always believed that you are.', 'You have never dared to find out.'],
     inside: 'It was not vanity. It was what you are for, kept in the dark.',
     strength: 'Worth', gives: 'Taking your own measure.',
@@ -134,7 +138,7 @@ export const BLACK = [
     strength: 'Truth', gives: 'Saying what is so.',
   },
   {
-    id: 'selfishness', kind: 'still',
+    id: 'selfishness', kind: 'need',
     lines: ['Selfish people enrage you.', 'You can not remember the last thing you did only because you wanted to.'],
     inside: 'It was keeping your share for you, all this time.',
     strength: 'Mine', gives: 'Taking your own share.',
@@ -152,7 +156,7 @@ export const BLACK = [
     strength: 'Courage', gives: 'Going, afraid.',
   },
   {
-    id: 'victim', kind: 'still',
+    id: 'victim', kind: 'judgement',
     lines: ['People who are always the victim exhaust you.', 'You keep an exact account of what was done to you.', 'You read it every night.'],
     inside: 'It held the wound open so that someone would see it. You have seen it.',
     strength: 'Authorship', gives: 'Your life as your own doing.',
@@ -176,6 +180,11 @@ export const HINTS = {
   anger: 'It is coming. Stand. Do not step back.',
   abandonment: 'It keeps behind you. Stop, turn round, and wait for it.',
   confrontation: 'It backs away. Walk to it steadily. Do not hurry.',
+  judgement: 'Its look pushes you back. Keep walking into it.',
+  envy: 'It stands by whatever shines. Stop near it, and hold your light on it.',
+  shame: 'It hides where it is darkest. Find it, and hold your light on it.',
+  need: 'It reaches for you, and pulls away. Hold out your light, and wait.',
+  control: 'Doors shut as it passes. Stand still and let it shut every one. Then walk to it.',
   still: 'It stands in the corridor and grows. Face it, walk to it, and through.',
 };
 
@@ -224,7 +233,47 @@ export const TIPS = {
   through: 'Go on. Walk into it, and through.',
   steppedBack: 'You stepped back, and it grew. Stand where you are.',
   waitForIt: 'Stand still and keep looking at it. Let it come.',
+  // the five later ways
+  pushed: 'It is pushing you back. Keep walking into it.',
+  slipped: 'It went to the next light. This time, stop near it and hold yours on it.',
+  hidden: 'No candle reaches where it hides. Look in the corners.',
+  holdLight: 'Hold your light on it. Do not move.',
+  grabbed: 'You reached for it, and it pulled away. Let it come to you.',
+  frozen: 'It stopped when you moved. Stand still, and let it shut the doors.',
+  doorsShut: 'Every door is shut. Now walk to it.',
 };
+
+/**
+ * Level II, albedo: the three sealed letters on the water (PLAN.md 10.5). Each is one way of
+ * working with a dream (the infographic's second technique). Proposals, in the same voice.
+ */
+export const LETTERS = [
+  {
+    id: 'room', title: 'The Secret Room',
+    lines: ['You dream of your own house, and find a door you never saw.', 'Behind it, a room that was always there.', 'Whatever you find in it is a part of you not yet lived in.'],
+  },
+  {
+    id: 'feeling', title: 'The Feeling of the Dream',
+    lines: ['Something chases you through the night.', 'Do not ask what it was. Ask what you felt as you ran:', 'fear, or shame, or a strange relief.', 'The feeling is the letter. The story is only the envelope.'],
+  },
+  {
+    id: 'other', title: 'The Other Role',
+    lines: ['Dream it again, as the one who chases.', 'Now you can see what it carried in its hands.', 'It was never trying to catch you. It was trying to give you something.'],
+  },
+];
+export const ALBEDO = {
+  title: 'II · Albedo',
+  enter: 'Below the house the water is black and still.',
+  letters: 'Three letters float sealed, brighter than the rest. Find them.',
+  statue: { goddess: 'On the column, a goddess shines gold. Hold your light on her face.', god: 'On the column, a god shines gold. Hold your light on his face.' },
+  goldBack: 'A statue, not a god. The gold is in your own flask.',
+  otherWaits: 'Across the water, the one with the other light has stopped. They are waiting.',
+  done: 'The black has turned white.',
+  endCard: '<p>The gold you put on another is back in your own vessel, and the black has turned white.</p><p class="soft">Across the water, someone with a light of their own is waiting.</p>',
+};
+
+/** On the pause card: what the level asks of you, in one line. */
+export const PAUSE_HOW = 'Read the masks. Take three black ones that are yours, and face what each becomes: turn to it, hold your light on it, and walk into it.';
 
 /** How long a text stays on screen, in seconds. */
 export const readingTime = (text) => 2 + 0.35 * String(text).trim().split(/\s+/).length;

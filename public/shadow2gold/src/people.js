@@ -45,6 +45,9 @@ const inPlace = (clip, hipScale = 1) => {
   return c;
 };
 
+/** Which way a turn about the body's side axis swings an arm forward (checked against side-view screenshots, 2026-11-17). */
+const ARM_SIGN = -1;
+const ARM_SWAP = false;
 const _q = new THREE.Quaternion();
 const _pq = new THREE.Quaternion();
 /** Adds a rotation around a world axis to a bone, after the animation has posed it. */
@@ -318,19 +321,66 @@ export const loadPeople = async () => {
      * Its bearing after the animation: the head bowed and the shoulders a little forward while it
      * follows; `lean` bows it further as it comes; `lift` raises the head to meet your eyes.
      */
+    /*
+     * Bends on top of the animation must be undone before the next frame: the mixer only writes a
+     * bone when the animation's value for it has changed, so a held pose (or a frame drawn again
+     * without time moving) would otherwise add the same bend twice (found 2026-11-17: arms raised
+     * twice as far as asked). `unbend()` is called before each `mixer.update`.
+     */
+    const saved = new Map();
+    const bend = (bone, axis, angle) => {
+      if (!bone || angle === 0) return;
+      if (!saved.has(bone)) saved.set(bone, bone.quaternion.clone());
+      bendBone(bone, axis, angle);
+    };
+    const unbend = () => {
+      for (const [bone, q] of saved) bone.quaternion.copy(q);
+      saved.clear();
+    };
     const posture = (lean, lift = 0) => {
       stretch();
       const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(b.obj.quaternion);
-      bendBone(b.bones.spine_03, ax, 0.06 + 0.1 * lean - 0.08 * lift);
-      bendBone(b.bones.neck, ax, 0.18 + 0.12 * lean - 0.26 * lift);
-      bendBone(b.bones.head, ax, 0.22 + 0.15 * lean - 0.3 * lift);
+      bend(b.bones.spine_03, ax, 0.06 + 0.1 * lean - 0.08 * lift);
+      bend(b.bones.neck, ax, 0.18 + 0.12 * lean - 0.26 * lift);
+      bend(b.bones.head, ax, 0.22 + 0.15 * lean - 0.3 * lift);
+    };
+    /**
+     * Its arms, after the animation (0..1 each): `point` the right arm raised straight at you
+     * (judgement), `reach` both arms held out (need), `cover` both hands over the face (shame).
+     */
+    const arms = ({ point = 0, reach = 0, cover = 0 } = {}) => {
+      // which body axis swings an arm forward, and which way, is read off a screenshot (ARM below);
+      // __g.armDebug = { swap, sign } overrides it while testing
+      const dbg = window.__g?.armDebug;
+      const X = new THREE.Vector3(1, 0, 0).applyQuaternion(b.obj.quaternion);
+      const Z = new THREE.Vector3(0, 0, 1).applyQuaternion(b.obj.quaternion);
+      const swap = dbg?.swap ?? ARM_SWAP;
+      const side = swap ? Z : X, fwdA = swap ? X : Z;
+      const A = dbg?.sign ?? ARM_SIGN;
+      if (point > 0) {
+        bend(b.bones.upperarm_r, side, A * 1.65 * point);
+        bend(b.bones.lowerarm_r, side, -A * 0.5 * point); // the elbow straightened: a pointing arm
+        bend(b.bones.upperarm_r, fwdA, 0.25 * point);
+      }
+      if (reach > 0)
+        for (const [s, k] of [['l', -1], ['r', 1]]) {
+          bend(b.bones['upperarm_' + s], side, A * 1.25 * reach);
+          bend(b.bones['lowerarm_' + s], side, -A * 0.35 * reach);
+          bend(b.bones['upperarm_' + s], fwdA, k * 0.15 * reach);
+        }
+      if (cover > 0)
+        for (const [s, k] of [['l', -1], ['r', 1]]) {
+          bend(b.bones['upperarm_' + s], side, A * 0.95 * cover);
+          bend(b.bones['upperarm_' + s], fwdA, k * 0.35 * cover);
+          bend(b.bones['lowerarm_' + s], side, A * 1.9 * cover);
+        }
     };
     /** move 0..1: how much it is walking rather than standing. */
     const setGait = (move) => {
       walk.weight = move;
       idle.weight = 1 - move;
     };
-    return { ...b, u, posture, setGait, idle, shells, wisps };
+    return { ...b, u, posture, arms, unbend, setGait, idle, shells, wisps };
   };
 
   /**
