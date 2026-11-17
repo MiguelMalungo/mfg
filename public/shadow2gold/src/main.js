@@ -781,6 +781,7 @@ const integrate = (F, t) => {
       bloom: state.faced === 3 ? 0.55 : 0.3,
       onDone: () => {
         if (state.faced >= 3 && state.doorAt == null) {
+          words.whisper(LINES.more, 3.4);
           state.doorAt = state.t; // the door that was never there swings open
           sound.glass(261.6, 0.1, 8);
         }

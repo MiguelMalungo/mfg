@@ -203,7 +203,10 @@ export const LINES = {
   start: 'Walk down the corridor.',
   wall: { desk: 'Look at a mask. Click, or press E, to pick it.', touch: 'Look at a mask. Tap to pick it.' },
   afterWhite: 'The black ones hang in the dark, on both walls. Find one that is yours.',
-  another: (left) => (left === 2 ? 'Find another. Two remain.' : left === 1 ? 'Find another. One remains.' : ''),
+  // a person has one shadow with countless faces (Jung, CW 9i): the count is the door's, not yours
+  another: (left) => (left === 2 ? 'The door waits for two more.' : left === 1 ? 'The door waits for one more.' : ''),
+  // after the third, as the door opens
+  more: 'There are more. There always are.',
   door: 'The door that was never there is open. Go down.',
   doorAgain: 'The door is open. The masks you left are still on the wall.',
 };
@@ -219,7 +222,7 @@ export const TIPS = {
     touch: ['Drag the circle to walk; to its edge to hurry. Drag on the right to look: hold your finger at the side of the screen to keep turning.', 'Tap Pick when a mask is in reach.'],
   },
   // the first time you come to the wall
-  wall: 'White masks are the faces you show. Black masks, in the dark on both walls, are what you keep out of sight. Read as many as you like. Take three black ones that are yours, and face what comes of each.',
+  wall: 'White masks are the faces you show. Black masks, in the dark on both walls, are what you keep out of sight. Every black mask is a face of the one you do not show. Read as many as you like. Take one that is yours, and face what comes of it.',
   // after the first white mask
   persona: 'A mask is not a lie. The danger is forgetting that it is a mask.',
   // when a white mask you read makes a black one move
@@ -273,7 +276,7 @@ export const ALBEDO = {
 };
 
 /** On the pause card: what the level asks of you, in one line. */
-export const PAUSE_HOW = 'Read the masks. Take three black ones that are yours, and face what each becomes: turn to it, hold your light on it, and walk into it.';
+export const PAUSE_HOW = 'Read the masks. Take a black one that is yours, and face what it becomes: turn to it, hold your light on it, and walk into it. The door at the end opens after three.';
 
 /** How long a text stays on screen, in seconds. */
 export const readingTime = (text) => 2 + 0.35 * String(text).trim().split(/\s+/).length;
