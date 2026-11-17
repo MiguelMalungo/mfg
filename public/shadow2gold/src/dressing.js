@@ -59,7 +59,8 @@ const rougher = (url, lo, repeat) =>
     img.src = url;
   });
 
-export const dressHouse = async (scene, house) => {
+/** lite: the phone setting (main.js): the surfaces and the console only; no chandelier models, busts, clock or paintings. */
+export const dressHouse = async (scene, house, { lite = false } = {}) => {
   const loader = new THREE.TextureLoader();
   const T = './assets/house/tex/';
 
@@ -73,14 +74,27 @@ export const dressHouse = async (scene, house) => {
   // the walls and ceiling: stained old wallpaper, darkened and greyed toward the references
   surface(house.wallMat, loader, T + 'decrepit_wallpaper', '2k', 1.7, 2.5, { color: new THREE.Color(0.5, 0.43, 0.33), normal: 0.8, rough: 1 });
   surface(house.ceilMat, loader, T + 'decrepit_wallpaper', '2k', 2.2, 2.5, { color: new THREE.Color(0.3, 0.27, 0.22), normal: 0.6, rough: 1 });
-  // the woodwork: joinery UVs repeat every 0.9 m; the dark wood photo covers 2 m
-  for (const m of [house.joinMat, house.panelMat]) surface(m, loader, T + 'dark_wood', '1k', 0.9, 2.0, { color: new THREE.Color(0.2, 0.16, 0.135), normal: 0.7, rough: 1 });
+  /*
+   * The woodwork: old lacquered cherry, dark and glossy, so the candles catch in the varnish. (Owner, 2026-11-17:
+   * the first wood "looks terrible": its grain ran across every stile and rail, and it was a flat matt brown.)
+   * Joinery UVs run the grain along v and repeat every 0.9 m; the photo's grain runs along u and covers 1.2 m,
+   * so the maps are turned a quarter round.
+   */
+  for (const m of [house.joinMat, house.panelMat]) {
+    surface(m, loader, T + 'lacquered_cherry_wood', '2k', 0.9, 1.2, { color: new THREE.Color(1.15, 1.0, 0.88), normal: 0.8, rough: 1 });
+    for (const t of [m.map, m.normalMap, m.roughnessMap]) (t.rotation = Math.PI / 2), t.center.set(0.5, 0.5);
+    m.metalness = 0;
+    // varnish needs something to reflect: a dim room with candles in it, seen only in the wood's gloss
+    m.envMap = varnishEnv();
+    m.envMapIntensity = 0.9;
+  }
 
   /* objects */
   const gltf = new GLTFLoader();
   const M = './assets/house/models/';
   const load = (id) => gltf.loadAsync(`${M}${id}/${id}_1k.gltf`).then((g) => g.scene);
-  const [chandelier, console_, clock, bust, frame] = await Promise.all(['Chandelier_03', 'ClassicConsole_01', 'vintage_grandfather_clock_01', 'marble_bust_01', 'fancy_picture_frame_01'].map(load));
+  const all = ['Chandelier_03', 'ClassicConsole_01', 'vintage_grandfather_clock_01', 'marble_bust_01', 'fancy_picture_frame_01'];
+  const [chandelier, console_, clock, bust, frame] = await Promise.all(all.map((id) => (lite && id !== 'ClassicConsole_01' ? null : load(id))));
   const shadowed = (o, cast = true) => o.traverse((c) => c.isMesh && ((c.castShadow = cast), (c.receiveShadow = true)));
   const colliders = [];
   // what is too heavy to draw twice more: left out of the floor's mirror (main.js), and casting no shadow from the flask
@@ -93,9 +107,9 @@ export const dressHouse = async (scene, house) => {
    * model's own candles, found as the tops of the white candle sleeves (local maxima of height in
    * the ring between 0.1 and 0.4 m from the stem).
    */
-  const tips = candleTips(chandelier);
+  const tips = chandelier ? candleTips(chandelier) : [];
   const S = 1.15; // a little larger than life, for a high corridor
-  for (const g of house.chandeliers) {
+  if (chandelier) for (const g of house.chandeliers) {
     g.traverse((o) => {
       if (o !== g && (o.isMesh || o.isSprite)) o.visible = false;
     });
@@ -134,7 +148,7 @@ export const dressHouse = async (scene, house) => {
   }
 
   /* the grandfather clock: behind you at the start, in the corner (the ticking you hear) */
-  {
+  if (clock) {
     const c = clock.clone();
     c.rotation.y = Math.PI; // facing down the corridor
     c.scale.setScalar(0.95);
@@ -145,7 +159,7 @@ export const dressHouse = async (scene, house) => {
   }
 
   /* marble busts on dark plinths at both ends of the hall of masks, either side of the corridor (i11) */
-  {
+  if (bust) {
     const plinthMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.035, 0.03, 0.026), roughness: 0.32, metalness: 0 });
     const plinth = new THREE.Group();
     const add = (geo, y) => {
@@ -174,7 +188,7 @@ export const dressHouse = async (scene, house) => {
   }
 
   /* old paintings in heavy frames, where the walls are bare */
-  {
+  if (frame) {
     for (const [s, z] of [[1, -3.3], [-1, -7.6], [1, -21.6], [-1, -27.0], [1, -31.2], [-1, -39.6]]) {
       const f = frame.clone();
       f.scale.setScalar(1.55);
@@ -195,6 +209,36 @@ export const dressHouse = async (scene, house) => {
 
   // the photographed parquet is smoother than the coded one: it would mirror like water at the old strength
   return { colliders, tips, noMirror, floorReflection: 2.2 };
+};
+
+/**
+ * What the varnished wood reflects: a dark room with a candle glow down the corridor each way and a dimmer
+ * warmth at the sides, painted as a small panorama (three.js prefilters it for gloss). Only the woodwork
+ * uses it; it is not the scene's light. (A PMREM rendered from a little 3D room came out white on some loads.)
+ */
+let _env = null;
+const varnishEnv = () => {
+  if (_env) return _env;
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = 'rgb(10,7,5)';
+  x.fillRect(0, 0, 512, 256);
+  const blob = (u, v, r, a) => {
+    const g = x.createRadialGradient(u, v, 0, u, v, r);
+    g.addColorStop(0, `rgba(255,190,120,${a})`);
+    g.addColorStop(0.25, `rgba(200,120,60,${a * 0.5})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.fillRect(u - r, v - r, 2 * r, 2 * r);
+  };
+  for (const u of [128, 384]) blob(u, 105, 40, 1), blob(u, 112, 14, 1); // the corridor's two ends
+  for (const u of [0, 256, 512]) blob(u, 140, 70, 0.25); // the walls
+  _env = new THREE.CanvasTexture(c);
+  _env.mapping = THREE.EquirectangularReflectionMapping;
+  _env.colorSpace = THREE.SRGBColorSpace;
+  return _env;
 };
 
 /** The tops of the model's candles, in its own space. */

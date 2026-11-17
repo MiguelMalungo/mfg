@@ -30,6 +30,12 @@ const DEBUG = params.has('debug');
 /* Level II (albedo) is started but not finished: off for players until the owner says go (2026-11-17). ?albedo turns the slice on for work on it. */
 const ALBEDO_ON = params.has('albedo');
 const TOUCH = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
+/*
+ * The lighter setting for phones: on a touch device, or with ?lite (?full forces the whole look on a phone).
+ * The surfaces and the console stay; the chandelier models, busts, clock and paintings, the floor's mirror
+ * and the masks' shadows go, and the flask's shadow map is halved.
+ */
+const LITE = (TOUCH && !params.has('full')) || params.has('lite');
 /* Touch controls show on a touch device, and also from the first finger that lands (a laptop with a touch screen, a phone the browser did not announce). */
 const touch = { on: TOUCH };
 const touchOn = () => {
@@ -72,6 +78,7 @@ const glowTex = glowTexture();
 const house = buildHouse(scene, glowTex);
 const sack = buildSack(scene, SACK_AT);
 const vessel = buildVessel(glowTex);
+if (LITE) vessel.light.shadow.mapSize.set(512, 512);
 const post = makePost(renderer, scene, camera);
 // the floor mirrors the corridor; the haze motes and the dust are left out of the mirror
 const refl = makeFloorReflection(renderer, scene, camera, house.floorMat);
@@ -446,7 +453,7 @@ let ready = false;
 let body = null, shadow = null, masks = null, child = null, hand = null, people = null, dressing = null, albedo = null;
 // the look pass: real surfaces and objects, loaded alongside the people (the house keeps its coded look until they arrive)
 // ?nodress leaves the coded look (to compare, or on a slow machine)
-(params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house))
+(params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house, { lite: LITE }))
   .then((d) => {
     dressing = d;
     refl.u.reflStrength.value = d.floorReflection;
@@ -460,6 +467,7 @@ loadPeople()
   .then((p) => {
     people = p;
     masks = buildMaskHall(scene, people, MASK_WALL, W / 2);
+    if (LITE) masks.meshes.forEach((m) => (m.castShadow = false));
     // what has been faced stays faced: those masks hang mended
     for (const id of save.data.faced) {
       const m = masks.byId(id);
@@ -1250,9 +1258,9 @@ const tick = (forceDt) => {
   // ?norefl turns the floor's reflection off (to compare, or on a slow machine)
   adaptExposure(dt);
   post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0));
-  refl.update(params.has('norefl') || player.y < -1.2);
+  refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
-  waterRefl.update(params.has('norefl') || player.pos.z > Z_END + 1.5);
+  waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5);
   // the door swings open once three shadows have been faced
   if (state.doorAt != null) house.openDoor(smoothstep(0, 3.5, t - state.doorAt));
   // below the house: level II, albedo (albedo.js)
@@ -1300,6 +1308,7 @@ window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
+  LITE,
   stand, spotFor, darkestSpot, shiningSpot,
   tp: (x, z, yaw = player.yaw, pitch = player.pitch) => {
     player.pos.set(x, 0, z);
