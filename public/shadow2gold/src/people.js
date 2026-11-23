@@ -633,5 +633,20 @@ export const loadPeople = async () => {
     return out;
   };
 
-  return { makeBodyCaster, makeShadowFigure, makeChild, bustGeometry, makeStatueFigure, faceGeometry, src: { nathanFBX, sophiaFBX } };
+  /** A figure that walks and stands (albedo: the Other, the figure in the dream). setGait(0..1) blends standing to walking. */
+  const makeFigure = (material, who = 'man', { neutral = false } = {}) => {
+    const b = makeBody(material, who);
+    // neutral: stand as the walk stands between strides (feet together, arms down), not in Sophia's
+    // hand-on-hip idle, which reads as a pose and as a woman's whoever wears it
+    const stand = neutral ? THREE.AnimationUtils.subclip(b.walk.getClip(), 'stand', 36, 38, 30) : IDLE[who];
+    const idle = b.mixer.clipAction(stand);
+    idle.play();
+    const setGait = (move) => {
+      b.walk.weight = move;
+      idle.weight = 1 - move;
+    };
+    setGait(0);
+    return { ...b, idle, setGait };
+  };
+  return { makeBodyCaster, makeShadowFigure, makeChild, makeFigure, bustGeometry, makeStatueFigure, faceGeometry, src: { nathanFBX, sophiaFBX } };
 };

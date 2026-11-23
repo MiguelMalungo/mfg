@@ -329,12 +329,14 @@ export const buildHouse = (scene, glowTex) => {
   const rCeil = add(new THREE.Mesh(metricPlane(ROOM_W, roomLen, 1.4, 1.4), stoneMat));
   rCeil.rotation.x = Math.PI / 2;
   rCeil.position.set(0, CEIL, roomMid);
-  // stone ribs of a vault across the ceiling
+  // stone ribs of a vault across the ceiling (albedo.js hides them when it panels the cellar as a flooded corridor)
+  const vault = [];
   for (let z = Z_STAIR_END - 2.2; z > Z_ROOM_END + 0.5; z -= 3.2) {
     const rib = add(new THREE.Mesh(new THREE.TorusGeometry(ROOM_W / 2 - 0.05, 0.16, 8, 32, Math.PI), stoneMat), true);
     rib.position.set(0, CEIL - ROOM_W / 2 + 0.4, z);
     rib.scale.y = (CEIL - (CEIL - ROOM_W / 2 + 0.4)) / (ROOM_W / 2 - 0.05);
-    for (const s2 of [-1, 1]) box(0.36, CEIL - ROOM_W / 2 + 0.4 - ROOM_Y, 0.36, stoneMat, (s2 * (ROOM_W / 2 - 0.18)), (ROOM_Y + CEIL - ROOM_W / 2 + 0.4) / 2, z);
+    vault.push(rib);
+    for (const s2 of [-1, 1]) vault.push(box(0.36, CEIL - ROOM_W / 2 + 0.4 - ROOM_Y, 0.36, stoneMat, (s2 * (ROOM_W / 2 - 0.18)), (ROOM_Y + CEIL - ROOM_W / 2 + 0.4) / 2, z));
   }
   // the water: black, still, a mirror (main.js gives it its own reflection pass)
   const rip = (() => {
@@ -372,6 +374,7 @@ export const buildHouse = (scene, glowTex) => {
   // doors standing half under the water, as if the house had sunk round them
   const rnd2 = rng(41);
   const sunkLeafGeo = doorLeaf(0.95, 2.2, 0.05, true);
+  const sunk = []; // albedo.js opens them onto the dream rooms
   for (const [x, z, ry] of [[-1.6, Z_STAIR_END - 3.2, 0.5], [1.7, Z_STAIR_END - 6.0, -0.35], [-1.2, Z_STAIR_END - 9.6, 0.2]]) {
     const g2 = new THREE.Group();
     g2.position.set(x, ROOM_Y - 0.1, z);
@@ -384,42 +387,124 @@ export const buildHouse = (scene, glowTex) => {
     fr.scale.set(1, 1, 0.6);
     g2.add(fr);
     group.add(g2);
+    sunk.push({ group: g2, leaf: lf, x, z, ry });
   }
   // sealed letters floating on the water
+  // old envelopes gone soft in the water (i16): stained, foxed and darkened at the edges, the flap's folds,
+  // a few lines of faded ink showing through, and a red wax seal with a raised rim and a drip
   const letterTex = (() => {
     const c = document.createElement('canvas');
-    c.width = 256;
-    c.height = 168;
+    c.width = 512;
+    c.height = 336;
     const x = c.getContext('2d');
-    x.fillStyle = '#c9b48f';
-    x.fillRect(0, 0, 256, 168);
-    x.strokeStyle = 'rgba(70,50,30,0.35)';
+    const R = rng(77);
+    // paper, warmer and darker toward the edges
+    const base = x.createRadialGradient(256, 168, 40, 256, 168, 330);
+    base.addColorStop(0, '#cdb68c');
+    base.addColorStop(0.7, '#a88f63');
+    base.addColorStop(1, '#5e4a2f');
+    x.fillStyle = base;
+    x.fillRect(0, 0, 512, 336);
+    // fibres and foxing
+    for (let i = 0; i < 1400; i++) {
+      x.fillStyle = `rgba(${70 + R() * 40},${50 + R() * 30},${25 + R() * 20},${R() * 0.07})`;
+      x.fillRect(R() * 512, R() * 336, 1 + R() * 5, 1 + R() * 2);
+    }
+    for (let i = 0; i < 26; i++) {
+      x.fillStyle = `rgba(110,72,30,${0.05 + R() * 0.12})`;
+      x.beginPath();
+      x.arc(R() * 512, R() * 336, 1 + R() * 4, 0, Math.PI * 2);
+      x.fill();
+    }
+    // water stains: pale centres with dark tide lines
+    for (let i = 0; i < 5; i++) {
+      const cx = R() * 512, cy = R() * 336, r = 30 + R() * 90;
+      const g = x.createRadialGradient(cx, cy, r * 0.6, cx, cy, r);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.85, 'rgba(70,45,20,0.18)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g;
+      x.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+    }
+    // ink of the address, faded, showing through
+    x.strokeStyle = 'rgba(40,28,18,0.22)';
     x.lineWidth = 2;
+    for (let l = 0; l < 4; l++) {
+      x.beginPath();
+      let px = 70 + R() * 30;
+      const py = 210 + l * 24;
+      x.moveTo(px, py);
+      while (px < 330 + R() * 90) {
+        px += 6 + R() * 10;
+        x.lineTo(px, py + (R() - 0.5) * 6);
+      }
+      x.stroke();
+    }
+    // the flap's folds, dark where they crease
+    x.strokeStyle = 'rgba(55,38,20,0.45)';
+    x.lineWidth = 3;
     x.beginPath();
     x.moveTo(0, 0);
-    x.lineTo(128, 92);
-    x.lineTo(256, 0);
+    x.lineTo(256, 188);
+    x.lineTo(512, 0);
     x.stroke();
-    for (let i = 0; i < 300; i++) {
-      x.fillStyle = `rgba(80,60,40,${Math.random() * 0.08})`;
-      x.fillRect(Math.random() * 256, Math.random() * 168, 3 + Math.random() * 20, 2 + Math.random() * 8);
-    }
-    x.fillStyle = '#7a0d08';
+    x.strokeStyle = 'rgba(255,240,210,0.12)';
+    x.lineWidth = 2;
     x.beginPath();
-    x.arc(128, 92, 20, 0, Math.PI * 2);
+    x.moveTo(0, 4);
+    x.lineTo(256, 192);
+    x.lineTo(512, 4);
+    x.stroke();
+    // the seal: a drip, the body with a soft highlight, a raised rim, a pressed mark
+    x.fillStyle = '#5e0805';
+    x.beginPath();
+    x.ellipse(268, 222, 9, 22, 0.2, 0, Math.PI * 2);
     x.fill();
-    x.strokeStyle = 'rgba(30,0,0,0.6)';
+    const sg = x.createRadialGradient(248, 178, 4, 256, 188, 40);
+    sg.addColorStop(0, '#b3271c');
+    sg.addColorStop(0.6, '#7d0e08');
+    sg.addColorStop(1, '#3d0403');
+    x.fillStyle = sg;
     x.beginPath();
-    x.arc(128, 92, 13, 0, Math.PI * 2);
+    for (let k = 0; k <= 24; k++) {
+      const a = (k / 24) * Math.PI * 2, r = 38 + (R() - 0.5) * 6;
+      k ? x.lineTo(256 + Math.cos(a) * r, 188 + Math.sin(a) * r) : x.moveTo(256 + Math.cos(a) * r, 188 + Math.sin(a) * r);
+    }
+    x.fill();
+    x.strokeStyle = 'rgba(25,0,0,0.6)';
+    x.lineWidth = 4;
+    x.beginPath();
+    x.arc(256, 188, 25, 0, Math.PI * 2);
     x.stroke();
+    x.strokeStyle = 'rgba(255,150,120,0.25)';
+    x.lineWidth = 2;
+    x.beginPath();
+    x.arc(255, 186, 25, Math.PI * 1.1, Math.PI * 1.7);
+    x.stroke();
+    x.fillStyle = 'rgba(30,0,0,0.5)';
+    x.font = 'italic bold 28px Georgia, serif';
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText('S', 256, 190);
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
     return t;
   })();
-  const letterMat = new THREE.MeshStandardMaterial({ map: letterTex, roughness: 0.85, side: THREE.DoubleSide });
+  const letterMat = new THREE.MeshStandardMaterial({ map: letterTex, roughness: 0.8, color: new THREE.Color(0.6, 0.56, 0.5), side: THREE.DoubleSide });
+  // a little curled by the wet: the corners lift
+  const letterGeo = new THREE.PlaneGeometry(0.24, 0.16, 10, 6);
+  {
+    const p = letterGeo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const u = p.getX(i) / 0.12, v = p.getY(i) / 0.08;
+      p.setZ(i, 0.006 * (u * u * u * u) + 0.004 * (v * v) * Math.abs(u));
+    }
+    letterGeo.computeVertexNormals();
+  }
   const letters = [];
   for (let i = 0; i < 16; i++) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.16), letterMat);
+    const m = new THREE.Mesh(letterGeo, letterMat);
     m.rotation.x = -Math.PI / 2;
     m.rotation.z = rnd2() * Math.PI * 2;
     m.position.set((rnd2() - 0.5) * (ROOM_W - 0.8), WATER + 0.004, waterZ0 - 0.6 - rnd2() * (waterLen - 1.5));
@@ -462,7 +547,10 @@ export const buildHouse = (scene, glowTex) => {
   const openDoor = (k) => (hinge.rotation.y = 1.12 + (1.95 - 1.12) * k);
 
   /** Height of the floor under a point: corridor, landing, the steps, the cellar floor. */
+  const ext = { floorAt: null, collide: null }; // level II (albedo.js) adds its own places: the hall beyond the cellar, the dream rooms
   const floorAt = (x, z) => {
+    const e = ext.floorAt?.(x, z);
+    if (e != null) return e;
     if (z > Z_END - 1.0) return 0;
     const i = Math.floor((Z_END - 1.0 - z) / RUN);
     if (i < STEPS) return -RISE * (i + 1);
@@ -519,6 +607,7 @@ export const buildHouse = (scene, glowTex) => {
    */
   const gap = DOOR_W / 2 - 0.16;
   const collide = (p, r = 0.32, doorOpen = false) => {
+    if (ext.collide?.(p, r)) return;
     if (!doorOpen || p.z > Z_END + r) {
       p.x = Math.max(-W / 2 + r, Math.min(W / 2 - r, p.x));
       // the end wall, except through the gap of the open door
@@ -537,5 +626,5 @@ export const buildHouse = (scene, glowTex) => {
     }
   };
 
-  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat, sconces };
+  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat, sconces, stoneMat, ext, cellar: { endW, sunk, CEIL, waterZ0, metricPlane, vault } };
 };

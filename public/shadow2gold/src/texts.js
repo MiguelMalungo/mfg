@@ -267,12 +267,54 @@ export const LETTERS = [
 export const ALBEDO = {
   title: 'II · Albedo',
   enter: 'Below the house the water is black and still.',
+  // the horse (PLAN.md 10.5, step 2): instinct met, not mastered
+  horseLine: 'Stand still. Lower your eyes, and your light.',
+  horsePushed: 'It will not be driven, and it will not let you past.',
+  horseHint: 'It is afraid of your light. Stop, and lower your eyes.',
+  horseCame: 'It came to you.',
+  horseFollow: 'Follow it.',
+  // the letters and the sunken doors
   letters: 'Three letters float sealed, brighter than the rest. Find them.',
+  letterLine: (left) => (left === 3 ? 'Find the first sealed letter.' : left === 2 ? 'Find the next letter.' : 'Find the last letter.'),
+  door: 'A door under the water has opened. Go through it.',
+  rooms: {
+    room: {
+      line: 'A room you never saw. Look round it.',
+      pick: 'On the table, a box. Open it.',
+      title: 'The Secret Room',
+      lines: ['It was furnished, and warm, and no one had lived in it.', 'It was always part of the house.', 'It is yours now.'],
+    },
+    feeling: {
+      line: 'Something is coming. Do not run. Choose what you feel.',
+      words: { fear: 'Fear', shame: 'Shame', relief: 'Relief' },
+      lines: {
+        fear: ['Fear. And it stopped.', 'What chased you was the fear, running beside you.'],
+        shame: ['Shame. And it turned its face away, as you would.', 'It was ashamed too.'],
+        relief: ['Relief. And it stood still and lowered its head.', 'You had been waiting for it a long time.'],
+      },
+      title: 'The Feeling of the Dream',
+    },
+    other: {
+      line: 'Now you are the one who follows. Something is in your hands.',
+      give: 'It has stopped. Give it what you carry.',
+      title: 'The Other Role',
+      lines: ['It was never running from you.', 'You were bringing it something all along.'],
+    },
+  },
+  back: 'The door closes behind you. White comes into the flask.',
+  hallOpen: 'At the end of the water, a door has opened.',
   statue: { goddess: 'On the column, a goddess shines gold. Hold your light on her face.', god: 'On the column, a god shines gold. Hold your light on his face.' },
+  otherFar: 'Someone far off holds up a light of their own.',
+  otherRecedes: 'The nearer you come, the further they go.',
   goldBack: 'A statue, not a god. The gold is in your own flask.',
-  otherWaits: 'Across the water, the one with the other light has stopped. They are waiting.',
+  otherWaits: 'The one with the other light has stopped. They are waiting.',
+  goToOther: 'Go to them.',
+  bird: 'White.',
+  follow: 'Follow them down.',
   done: 'The black has turned white.',
-  endCard: '<p>The gold you put on another is back in your own vessel, and the black has turned white.</p><p class="soft">Across the water, someone with a light of their own is waiting.</p>',
+  endCard: '<p>The gold you put on another is back in your own vessel, and the black has turned white.</p><p class="soft">Someone with a light of their own walks beside you now.</p>',
+  next: 'III · Rubedo · to come',
+  pauseHow: 'Below the house: let the horse come to you, read the three letters and go through the doors they open, then take back the gold from the statue.',
 };
 
 /** On the pause card: what the level asks of you, in one line. */

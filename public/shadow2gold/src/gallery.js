@@ -99,10 +99,35 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
     if (pl.column) {
       // a tall column up out of the water, fluted by its segments
       const h = (pl.y ?? 0) - pl.column.from;
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, h, 24), capMat);
-      col.position.y = -h / 2;
-      col.castShadow = col.receiveShadow = true;
-      holder.add(col);
+      // a fluted shaft (twenty flutes cut into it), a moulded base on a square plinth, a ring under the top (i13a)
+      const shaftG = new THREE.CylinderGeometry(0.4, 0.44, h - 0.5, 80, 6, true);
+      {
+        const p = shaftG.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), z = p.getZ(i), a = Math.atan2(z, x), r = Math.hypot(x, z);
+          const k = 1 - 0.045 * Math.pow(Math.abs(Math.cos(a * 10)), 0.6);
+          p.setX(i, (x / r) * r * k);
+          p.setZ(i, (z / r) * r * k);
+        }
+        shaftG.computeVertexNormals();
+      }
+      const parts = [];
+      const shaft = new THREE.Mesh(shaftG, capMat);
+      shaft.position.y = -h + 0.38 + (h - 0.5) / 2;
+      parts.push(shaft);
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.26, 1.2), capMat);
+      plinth.position.y = -h + 0.13;
+      parts.push(plinth);
+      for (const [r, t, y] of [[0.54, 0.07, -h + 0.31], [0.48, 0.045, -h + 0.4], [0.47, 0.04, -0.16]]) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 48), capMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = y;
+        parts.push(ring);
+      }
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.41, 0.14, 48), capMat);
+      neck.position.y = -0.07;
+      parts.push(neck);
+      for (const m of parts) ((m.castShadow = m.receiveShadow = true), holder.add(m));
     }
     holder.rotation.y = Math.atan2(face.x, face.z);
     group.add(holder);

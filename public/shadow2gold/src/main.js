@@ -27,8 +27,8 @@ import { makeFloorReflection } from './reflect.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
-/* Level II (albedo) is started but not finished: off for players until the owner says go (2026-11-17). ?albedo turns the slice on for work on it. */
-const ALBEDO_ON = params.has('albedo');
+/* Level II (albedo, src/albedo.js) is under the house. On since 2026-11-23 (the owner: "build albedo now"); ?noalbedo shows the old threshold card instead. */
+const ALBEDO_ON = !params.has('noalbedo');
 const TOUCH = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 /*
  * The lighter setting for phones: on a touch device, or with ?lite (?full forces the whole look on a phone).
@@ -205,13 +205,15 @@ const begin = () => {
     })
     .catch((err) => console.error('The hand did not load:', err));
   // level II waits under the house: its statue is the one the choice sets (Venus for a man, Apollo for a woman)
-  if (ALBEDO_ON) albedo = buildAlbedo(scene, house, people, glowTex, renderer, gender);
-  if (albedo) for (const L of albedo.list) if (save.data.letters.includes(L.id)) (L.state = 'gone'), (L.mesh.visible = false), albedo.st.read.push(L.id);
-  if (albedo && save.data.gold) {
-    const it = albedo.gallery.items[0];
-    it.done = true;
-    it.proj = 0;
-    it.w = 1;
+  if (ALBEDO_ON) {
+    albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
+    albedo.restore(save.data);
+    // ?at=albedo: start at the top of the stair, level I counted as done for this visit only (nothing is saved)
+    if (params.get('at') === 'albedo') {
+      state.faced = Math.max(3, state.faced);
+      state.doorAt = -10;
+      teleport(0, Z_END - 0.9, 0, -0.25);
+    }
   }
   Object.assign(window.__g, { body, shadow, albedo });
   $('start').classList.add('hidden');
@@ -225,7 +227,7 @@ const pause = () => {
   state.paused = true;
   Object.keys(keys).forEach((k) => (keys[k] = false));
   window.__releaseTouches?.();
-  $('pausehow').textContent = PAUSE_HOW;
+  $('pausehow').textContent = albedo && (player.pos.z < Z_END - 0.4 || player.pos.z > 100) ? ALBEDO.pauseHow : PAUSE_HOW;
   $('restartgame').textContent = 'Start again';
   $('pause').classList.remove('hidden');
   sound.ctx?.suspend?.();
@@ -687,7 +689,16 @@ let candidate = null; // the mask the eye is on, within reach
 const act = () => {
   if (!state.started || state.ended) return;
   if (words.open) return void words.click();
-  if (candidate && !hand?.busy) (candidate.def.title && LETTERS.includes(candidate.def) ? pickLetter(candidate) : pickMask(candidate));
+  if (candidate && !hand?.busy) {
+    // level II's things to pick (letters, the box, the feelings, the figure) say what picking them does
+    if (candidate.onPick) {
+      const c = candidate;
+      candidate = null;
+      hand?.grab();
+      return void c.onPick();
+    }
+    pickMask(candidate);
+  }
 };
 /** A sealed letter: it rises from the water to your eye; read, its seal breaks and it sinks, and white comes into the flask. */
 const pickLetter = (L) => {
@@ -1216,13 +1227,9 @@ const adaptExposure = (dt) => {
 /** The one instruction low on the screen: always what there is to do now. */
 const lineNow = () => {
   if (!state.started || state.ended || words.open || vessel.rx.on) return '';
-  if (player.pos.z < Z_END - 0.4) {
+  if (player.pos.z < Z_END - 0.4 || player.pos.z > 100) {
     if (!albedo) return player.pos.z < Z_STAIR_END ? 'Wade out into the water.' : '';
-    if (player.pos.z > Z_STAIR_END) return '';
-    const left = LETTERS.length - albedo.st.read.length;
-    if (left > 0) return left === 3 ? 'Find the three sealed letters.' : left === 2 ? 'Two letters remain.' : 'One letter remains.';
-    if (!albedo.st.gold) return ALBEDO.statue[albedo.gallery.items[0].who];
-    return ALBEDO.done;
+    return albedo.line(player);
   }
   if (facing) return facing.phase === 'loose' || facing.phase === 'meet' ? (facing.def.hint ?? HINTS[facing.kind]) : '';
   if (state.faced >= 3) return state.t - state.doorAt < 40 ? LINES.door : LINES.doorAgain;
@@ -1286,7 +1293,8 @@ const tick = (forceDt) => {
     const free = state.started && !state.ended && !words.open && !facing && !masks.held() && !vessel.rx.on;
     const below = player.pos.z < Z_END - 1;
     const reading = albedo?.list.some((L) => L.state === 'rising' || L.state === 'held');
-    candidate = free && !below ? masks.lookedAt(camera) : free && below && albedo && !reading ? albedo.lookedAt(camera) : null;
+    const dream = player.pos.z > 100; // albedo's dream rooms are built far behind the house
+    candidate = free && !below && !dream ? masks.lookedAt(camera) : free && (below || dream) && albedo && !reading ? albedo.lookedAt(camera) : null;
   }
   // the touch buttons and the circle follow what can be done: nothing to walk or turn while a mask is out
   if (touch.on) {
@@ -1294,7 +1302,7 @@ const tick = (forceDt) => {
     $('stick').classList.toggle('away', !state.started || stand.on);
   }
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
-  if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5) words.tip(TIPS.wall, { id: 'wall' });
+  if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) words.tip(TIPS.wall, { id: 'wall' }); // at the wall of masks only, not below the house
   words.update(t);
   words.line(lineNow());
 
@@ -1380,7 +1388,6 @@ const tick = (forceDt) => {
     if (!state.albedo && player.pos.z < Z_STAIR_END - 0.5) {
       state.albedo = true;
       words.word(ALBEDO.title, ALBEDO.enter, 4.5);
-      later(5, () => words.tip(ALBEDO.letters, { id: 'albedoLetters' }));
     }
     if (albedo.st.gold && !save.data.gold) {
       save.set({ gold: true });
@@ -1393,6 +1400,7 @@ const tick = (forceDt) => {
       later(4, () => {
         state.ended = true;
         $('end2text').innerHTML = ALBEDO.endCard;
+        $('end2small').textContent = ALBEDO.next;
         $('end2').classList.remove('hidden');
         document.exitPointerLock?.();
       });
@@ -1414,6 +1422,17 @@ const frame = () => {
 };
 
 /* testing hooks: ?debug skips the title and the mouse lock; __g.tp(x, z, yaw, pitch) jumps */
+/** Puts you somewhere at once (albedo's dream rooms and back; the tests). */
+function teleport(x, z, yaw = player.yaw, pitch = player.pitch) {
+  player.pos.set(x, 0, z);
+  player.y = house.floorAt(x, z);
+  player.yaw = yaw;
+  player.pitch = pitch;
+  player.vel.set(0, 0, 0);
+  prevVel.set(0, 0, 0);
+  prevYaw = yaw;
+  rig.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+}
 window.__g = {
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
@@ -1422,16 +1441,7 @@ window.__g = {
   puppet,
   LITE,
   stand, spotFor, darkestSpot, shiningSpot,
-  tp: (x, z, yaw = player.yaw, pitch = player.pitch) => {
-    player.pos.set(x, 0, z);
-    player.y = house.floorAt(x, z);
-    player.yaw = yaw;
-    player.pitch = pitch;
-    player.vel.set(0, 0, 0);
-    prevVel.set(0, 0, 0);
-    prevYaw = yaw;
-    rig.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
-  },
+  tp: (x, z, yaw = player.yaw, pitch = player.pitch) => teleport(x, z, yaw, pitch),
   applyLayout, demo,
   /** Runs n frames by hand (the pane throttles animation when it is hidden). */
   step: (n = 1, dt = 1 / 60) => {
