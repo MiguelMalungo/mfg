@@ -911,17 +911,67 @@ orbHalo.material.opacity = 0.22;
   const gallery = buildGallery(scene, people, house, glowTex, ROOM_W, renderer, [{ who, x: 0, z: COLUMN_Z, y: COLUMN_TOP, face: new THREE.Vector3(0, 0, 1), column: { from: HALL_Y, tall: true }, near: 11, look: 0.985 }]);
   // the opening, and the shaft of pale light that falls through it onto the statue
   const skyTop = HALL_Y + HALL_H;
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.42, 0.45, 0.5), fog: false })); // pale sky; brighter blooms the whole vault
+  /*
+   * The opening (i13a): a well cut up through the thickness of the vault, its mouth carved in rings (a bead, a
+   * deep cove, a ring of brackets, an outer moulding), the sky only a dim disc at the top of the well. The stone
+   * of the well is lit by the sky above it, brightest near the top; a haze hangs in the mouth where the shaft begins.
+   */
+  const WELL = 1.6, OR = 1.05;
+  const skyLit = (mat, top, bottom, k) => {
+    const m = mat.clone();
+    m.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vSkyY;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvSkyY = (modelMatrix * vec4(transformed, 1.0)).y;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vSkyY;')
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          totalEmissiveRadiance += diffuseColor.rgb * vec3(0.75, 0.8, 0.9) * ${k.toFixed(3)} * pow(clamp((vSkyY - ${bottom.toFixed(2)}) / ${(top - bottom).toFixed(2)}, 0.0, 1.0), 2.0);`);
+    };
+    m.customProgramCacheKey = () => 'st2g-skylit-' + k;
+    return m;
+  };
+  const wellMat = skyLit(hallStone, skyTop + WELL, skyTop - 0.6, 0.55);
+  const well = new THREE.Mesh(new THREE.CylinderGeometry(OR, OR * 1.12, WELL, 40, 4, true), wellMat);
+  well.material.side = THREE.BackSide;
+  well.position.set(0, skyTop + WELL / 2, COLUMN_Z);
+  group.add(well);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(OR, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.2, 0.215, 0.24), fog: false })); // the sky, dim, seen up the well
   disc.rotation.x = Math.PI / 2;
-  disc.position.set(0, skyTop - 0.01, COLUMN_Z);
+  disc.position.set(0, skyTop + WELL - 0.01, COLUMN_Z);
   group.add(disc);
-  // the opening's moulded rim, two rings, catching the daylight (i13a)
-  for (const [r, t, dy] of [[1.12, 0.11, -0.08], [1.34, 0.08, -0.22]]) {
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 48), hallStone);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.set(0, skyTop + dy, COLUMN_Z);
-    group.add(rim);
+  // the carved mouth: a bead, a cove, sixteen brackets, an outer moulding
+  {
+    const parts = [];
+    const ring = (r, t, y) => {
+      const g = new THREE.TorusGeometry(r, t, 10, 56);
+      g.rotateX(Math.PI / 2);
+      g.translate(0, y, 0);
+      parts.push(g.toNonIndexed());
+    };
+    ring(OR + 0.06, 0.07, -0.02);
+    const cove = new THREE.CylinderGeometry(OR + 0.12, OR + 0.42, 0.32, 56, 1, true);
+    cove.translate(0, -0.2, 0);
+    parts.push(cove.toNonIndexed());
+    ring(OR + 0.45, 0.06, -0.37);
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const b = new THREE.BoxGeometry(0.14, 0.2, 0.3);
+      b.translate(0, -0.5, OR + 0.62);
+      b.rotateY(a);
+      parts.push(b.toNonIndexed());
+    }
+    ring(OR + 0.85, 0.09, -0.62);
+    ring(OR + 1.0, 0.05, -0.72);
+    for (const g of parts) for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    const mouth = new THREE.Mesh(mergeGeometries(parts), skyLit(hallStone, skyTop + 0.1, skyTop - 1.4, 0.32));
+    mouth.material.side = THREE.DoubleSide;
+    mouth.position.set(0, skyTop, COLUMN_Z);
+    group.add(mouth);
   }
+  // the haze in the mouth, where the light comes in
+  const mouthHaze = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(0.55, 0.58, 0.66), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  mouthHaze.scale.set(3.6, 2.2, 1);
+  mouthHaze.position.set(0, skyTop - 0.3, COLUMN_Z);
+  group.add(mouthHaze);
   const shaftMat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
@@ -1034,27 +1084,50 @@ orbHalo.material.opacity = 0.22;
   const bird = { obj: new THREE.Group(), on: false, t: 0, ready: false, path: null };
   bird.obj.visible = false;
   group.add(bird.obj);
-  gltf.loadAsync('./assets/albedo/bird.glb').then((g) => {
+  gltf.loadAsync('./assets/albedo/dove.glb').then((g) => {
     const model = g.scene;
     model.traverse((o) => {
       if (!o.isMesh) return;
       o.frustumCulled = false;
       const m = (o.material = o.material.clone());
-      // white: the bird's own feathers, bleached to white and lit a little from within
+      // a real dove (a scan), its feathers repainted white, keeping the photo's shading of each feather
+      const img = m.map?.image;
+      if (img && img.width) {
+        const c = document.createElement('canvas');
+        c.width = c.height = Math.min(1024, img.width);
+        const x = c.getContext('2d');
+        x.drawImage(img, 0, 0, c.width, c.height);
+        const d = x.getImageData(0, 0, c.width, c.height);
+        for (let i = 0; i < d.data.length; i += 4) {
+          const l = (0.3 * d.data[i] + 0.59 * d.data[i + 1] + 0.11 * d.data[i + 2]) / 255;
+          const v = 255 * Math.min(1, 0.55 + 0.55 * l);
+          d.data[i] = v;
+          d.data[i + 1] = v;
+          d.data[i + 2] = v * 0.98;
+        }
+        x.putImageData(d, 0, 0);
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.flipY = m.map.flipY;
+        m.map = t;
+      }
+      m.color = new THREE.Color(0.9, 0.9, 0.9);
+      m.roughness = 0.85;
+      m.metalness = 0;
+      m.vertexColors = false;
+      if (m.emissive) m.emissive.setRGB(0, 0, 0);
+      // lit from above (the opening): its upper surfaces catch a pale light; it does not shine of itself
       m.onBeforeCompile = (sh) => {
-        sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nfloat lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));\ndiffuseColor.rgb = vec3(0.62 + 0.38 * smoothstep(0.0, 0.6, lum));');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+          vec3 upV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
+          reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(0.3, 0.32, 0.36) * pow(max(dot(normal, upV), 0.0), 1.5);`);
       };
-      m.customProgramCacheKey = () => 'st2g-white-bird';
-      m.emissive = new THREE.Color(0.1, 0.1, 0.105); // it carries its own pale light, as in i21
+      m.customProgramCacheKey = () => 'st2g-dove';
     });
     const inner = new THREE.Group();
     inner.add(model);
-    inner.scale.setScalar(1.9); // the white bird of i21, large enough to read across the hall
+    inner.scale.setScalar(1.3); // the dove of i21, large: well over a metre across the wings
     bird.inner = inner;
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(0.9, 0.92, 1.0), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-    halo.scale.setScalar(0.75);
-    halo.material.opacity = 0.16;
-    bird.obj.add(halo);
     bird.obj.add(inner);
     // the skin draws the bird several metres from its bones (the file's own offset): measure where the
     // skinned vertices land, and move the model so the bird is on its path
@@ -1114,11 +1187,14 @@ orbHalo.material.opacity = 0.22;
     } else if (bird.seg === 'perch') {
       // it sits on the hand, its wings slowing and settling, facing you
       bird.obj.position.copy(otherLight.position).y += 0.2;
+      // three-quarters to you and tipped, so the spread wings show their feathers, not their edges
       bird.obj.lookAt(camPos.x, bird.obj.position.y, camPos.z);
+      bird.obj.rotateY(1.1);
+      bird.obj.rotateX(-0.45);
       // it holds its wings up and open (the wide frame of the beat, held), lit from the opening above
       if (bird.mixer && bird.t < 0.05) {
         const act = bird.mixer._actions[0];
-        if (act) ((act.time = 15 / 24), (act.timeScale = 0));
+        if (act) ((act.time = 6 / 24), (act.timeScale = 0)); // wings spread and a little raised, mid-beat (i21)
       }
       bird.mixer?.update(dt);
       if (bird.t > BIRD_PERCH) {

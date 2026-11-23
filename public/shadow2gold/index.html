@@ -70,12 +70,43 @@
       .word-main { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(44px, 8vh, 92px); letter-spacing: 0.2em; margin-left: 0.2em; color: #ffd89a; text-shadow: 0 0 40px rgba(255, 200, 110, 0.45), 0 0 6px #000; }
       .word-sub { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(17px, 2.3vh, 22px); margin-top: 10px; opacity: 0.85; text-shadow: 0 0 10px #000; }
       .whisper { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 84vw); text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(20px, 2.8vh, 28px); line-height: 1.4; transition: opacity 1.2s ease; }
+
+      /* the introduction page, before the title card (words: src/texts.js, INTRO) */
+      #intro { z-index: 6; background: #000; overflow-y: auto; justify-content: safe center; gap: 22px; transition: opacity 0.9s ease; }
+      #intro .tag { font-size: 10px; letter-spacing: 0.4em; margin-left: 0.4em; text-transform: uppercase; color: #ffd89a; border: 1px solid rgba(255, 216, 154, 0.45); border-radius: 999px; padding: 5px 12px 4px; }
+      #intro .title { font-size: clamp(34px, 5vw, 64px); }
+      #intro .concept { max-width: 600px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(18px, 2.4vh, 22px); line-height: 1.45; }
+      #intro .concept p { margin: 0 0 6px; }
+      #intro .cards { display: flex; gap: 14px; justify-content: center; align-items: stretch; width: 100%; max-width: 780px; }
+      .lcard { flex: 1 1 0; font: inherit; color: inherit; text-align: center; background: rgba(242, 230, 204, 0.03); border: 1px solid rgba(242, 230, 204, 0.3); border-radius: 6px; padding: 16px 12px 14px; display: flex; flex-direction: column; gap: 6px; align-items: center; cursor: pointer; transition: border-color 0.3s, background 0.3s; -webkit-tap-highlight-color: transparent; }
+      .lcard:hover, .lcard:focus-visible { border-color: #ffd89a; background: rgba(255, 216, 154, 0.07); outline: none; }
+      .lcard .num { font-family: "Cormorant Garamond", Georgia, serif; font-size: 26px; color: #ffd89a; line-height: 1; }
+      .lcard .nm { font-family: "Cormorant Garamond", Georgia, serif; font-size: 20px; letter-spacing: 0.14em; text-transform: uppercase; }
+      .lcard .sb { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-size: 16px; opacity: 0.75; }
+      .lcard .tx { font-family: "Cormorant Garamond", Georgia, serif; font-size: 17px; opacity: 0.9; }
+      .lcard .try { margin-top: auto; padding-top: 8px; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.55; }
+      .lcard.off { cursor: default; opacity: 0.35; filter: grayscale(1); pointer-events: none; border-style: dashed; }
+      #intro .bigbtn { font: inherit; font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; letter-spacing: 0.35em; text-transform: uppercase; color: #ffd89a; background: rgba(255, 216, 154, 0.06); border: 1px solid #ffd89a; border-radius: 4px; padding: 12px 34px 12px 40px; cursor: pointer; }
+      #intro .bigbtn:hover, #intro .bigbtn:focus-visible { background: rgba(255, 216, 154, 0.16); outline: none; }
+      #intro .hint { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.5; text-align: center; }
+      @media (max-width: 640px) { #intro { gap: 14px; padding: 18px; } #intro .cards { flex-direction: column; gap: 8px; } .lcard { flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 10px; gap: 4px 10px; } .lcard .try { width: 100%; padding-top: 0; } #intro .concept { font-size: 17px; } #intro svg { width: 56px; height: 56px; } }
     </style>
     <script type="importmap">
       { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }
     </script>
   </head>
   <body>
+    <div id="intro" class="overlay">
+      <svg id="mark2" width="84" height="84" viewBox="-55 -55 110 110"></svg>
+      <div class="small" id="intro-studio"></div>
+      <div class="title" id="intro-title"></div>
+      <div class="tag" id="intro-tag"></div>
+      <div class="concept" id="intro-concept"></div>
+      <div class="cards" id="intro-cards"></div>
+      <button id="intro-begin" class="bigbtn" type="button"></button>
+      <div class="hint" id="intro-hint"></div>
+    </div>
+
     <div id="start" class="overlay">
       <svg id="mark" width="84" height="84" viewBox="-55 -55 110 110"></svg>
       <div class="small">Soul Spiral Studio</div>

@@ -12,15 +12,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  * Model frame: wrist at the origin, fingers along +Y, palm facing +Z, thumb toward +X.
  */
 
-const LEVEL = 0.8; // how brightly the hand is lit, whatever its distance from the flask (2026-11-23: halved; it read as pale plaster against the dark, sooty hand of i24a)
-const SKIN = new THREE.Color(0.38, 0.32, 0.27); // multiplies the baked colour map: dark, sooty, a little warm
-const NORMAL_SCALE = 1.7;
+const LEVEL = 0.6; // how brightly the hand is lit, whatever its distance from the flask (2026-11-23: lowered twice; it read as pale plaster against the dark, sooty hand of i24a)
+const SKIN = new THREE.Color(0.3, 0.245, 0.2); // multiplies the baked colour map: dark, sooty, a little warm
+const NORMAL_SCALE = 2.3; // the crackle and the creases deep enough to catch the light (i24a)
 const ROUGH = 0.95; // multiplies the baked roughness: a little greasy sheen on the pads
 const FLASK_SHARE = 0.3; // of the flask's direct light on the hand
-const KEY = 1.6; // the grazing light from above, relative to the flask's light at the palm
+const KEY = 1.9; // the warm light from the flask below, grazing up the fingers, relative to the flask's light at the palm
 const RIM = 0.7; // the edge light, same units
-const KEY_DIR = new THREE.Vector3(0.3, 0.88, 0.36).normalize(); // view space: from above, a little right and in front
-const WARM = new THREE.Color(1.0, 0.72, 0.45);
+const KEY_DIR = new THREE.Vector3(0.42, -0.62, 0.66).normalize(); // view space: from below and to the right, where the flask hangs (i24a, i24b)
+const WARM = new THREE.Color(1.0, 0.62, 0.32);
 const WRIST_CREASE = { man: 0.022, woman: 0.024 }; // m above the 'hand' bone's head where the forearm starts to go dark
 const POSE_TIMES = { rest: 0, reach: 10 / 24, touch: 20 / 24, hold: 30 / 24 - 1e-3 };
 const ss = (a, b, x) => {
@@ -92,7 +92,8 @@ export const makeHand = async (camera, who) => {
         '#include <color_fragment>',
         `#include <color_fragment>
         vec3 oc = texture2D(occMap, vNormalMapUv).rgb;
-        diffuseColor.rgb *= mix(0.45, 1.0, oc.r) * (1.0 - 0.3 * oc.b);
+        // soot in every line: the creases and the crackle go nearly black, as on the hand of i24a
+        diffuseColor.rgb *= mix(0.3, 1.0, oc.r) * (1.0 - 0.6 * oc.b);
         // the forearm goes into the dark a few centimetres below the wrist
         float fore = smoothstep(0.0, -0.06, vRestY - uWristY);
         diffuseColor.rgb *= mix(1.0, 0.06, fore);`,
@@ -119,7 +120,7 @@ export const makeHand = async (camera, who) => {
       // skin is lit to the same dark level however near the flask is, and keeps its shading; uCap only tames glints
       .replace('#include <opaque_fragment>', 'outgoingLight *= uGain; outgoingLight = outgoingLight / (1.0 + outgoingLight / uCap);\n#include <opaque_fragment>');
   };
-  mat.customProgramCacheKey = () => 'st2g-hand-v2';
+  mat.customProgramCacheKey = () => 'st2g-hand-v3';
   mesh.material = mat;
 
   /* The four poses, read once from the animation. */

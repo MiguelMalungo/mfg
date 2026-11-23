@@ -322,3 +322,28 @@ export const PAUSE_HOW = 'Read the masks. Take a black one that is yours, and fa
 
 /** How long a text stays on screen, in seconds. */
 export const readingTime = (text) => 2 + 0.35 * String(text).trim().split(/\s+/).length;
+
+/**
+ * The introduction page, shown before the title card (index.html, wired in main.js).
+ * Proposals in the owner's voice: edit freely. `cards` are the three levels; a card with
+ * `playable: false` is greyed out and cannot be clicked. `at` is the level a playable card
+ * jumps to (null = the real start). Jumping never touches the saved progress.
+ */
+export const INTRO = {
+  studio: 'Soul Spiral Studio',
+  title: ['SHADOW', 'TO GOLD'],
+  tag: 'Prototype',
+  concept: [
+    'What you push out of sight does not leave. It waits, and it takes your shape.',
+    'The old work begins in the dark, and goes by water and by fire.',
+    'What was never looked at is the lead. It can be turned to gold.',
+  ],
+  cards: [
+    { num: 'I', name: 'Nigredo', sub: 'the blackening', text: 'The house. The faces you wear.', playable: true, at: null },
+    { num: 'II', name: 'Albedo', sub: 'the whitening', text: 'The water. The Other.', playable: true, at: 'albedo' },
+    { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: null },
+  ],
+  begin: 'Begin',
+  test: 'Prototype: try any level',
+  testHint: 'for testing · your saved progress is not touched',
+};

@@ -1,0 +1,20 @@
+{
+ "ref": 1.6349352598190308,
+ "note": "Irradiance from Cycles (diffuse direct+indirect, no colour). v = sqrt(min(I/ref,1)), so I = ref*v*v. floor/ceil: u=(x+W/2)/W, v=(z-Z_END)/L. walls: u=(z-Z_END)/L, v=y/H. W 3.4 H 3.5 Z_BACK 4 Z_END -46 L 50. Source: blender/bake/corridor.blend",
+ "floor": {
+  "mean": 0.0899,
+  "p5": 0.0057
+ },
+ "ceil": {
+  "mean": 0.1232,
+  "p5": 0.0059
+ },
+ "wallL": {
+  "mean": 0.1011,
+  "p5": 0.0044
+ },
+ "wallR": {
+  "mean": 0.107,
+  "p5": 0.0069
+ }
+}

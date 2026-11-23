@@ -11,9 +11,10 @@ import { buildAlbedo } from './albedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
+import { applyBake } from './bake.js';
 
 /*
  * Shadow to Gold · level 1 (Nigredo): the corridor of the house and the hall of masks.
@@ -62,7 +63,9 @@ const onTap = (el, fn) => {
     const a = t * Math.PI * 1.55, r = 6 + t * 40;
     arm.push(`${i ? 'L' : 'M'}${(Math.cos(a) * r).toFixed(2)} ${(Math.sin(a) * r).toFixed(2)}`);
   }
-  $('mark').innerHTML = [0, 120, 240].map((d) => `<path d="${arm.join(' ')}" transform="rotate(${d})" fill="none" stroke="#f2e6cc" stroke-width="5" stroke-linecap="round"/>`).join('');
+  const svg = [0, 120, 240].map((d) => `<path d="${arm.join(' ')}" transform="rotate(${d})" fill="none" stroke="#f2e6cc" stroke-width="5" stroke-linecap="round"/>`).join('');
+  $('mark').innerHTML = svg;
+  $('mark2').innerHTML = svg;
 }
 
 /* ── renderer ── */
@@ -95,6 +98,8 @@ const refl = makeFloorReflection(renderer, scene, camera, house.floorMat);
 const waterRefl = makeFloorReflection(renderer, scene, camera, house.waterMat, { planeY: WATER, key: 'water', streak: 1 });
 waterRefl.u.reflStrength.value = 1.6;
 waterRefl.u.glowStrength.value = 0.004;
+// the candles' light baked in Blender (bake.js); ?nobake shows the corridor without it
+const bakeK = params.has('nobake') ? null : applyBake([house.floorMat, house.wallMat, house.panelMat, house.joinMat, house.ceilMat]);
 const sound = new Sound();
 const words = makeWords(camera, () => (touch.on ? 'touch' : 'desk'));
 /* Things that happen a little later, on the game's own clock (so they also run when frames are stepped by hand). */
@@ -164,6 +169,44 @@ const keys = {};
 /* ?debug: keys 1 to 4 show the four stages in the glass (black, white, red, gold); 0 returns to the game. ?demo cycles them. */
 const demo = { stage: null };
 
+
+/*
+ * The introduction page (INTRO in texts.js) before the title card. "Begin" is the real path; a playable level card
+ * sets `startAt` for this visit only, so nothing is saved by jumping. ?debug and ?at=... skip the page.
+ */
+let startAt = params.get('at');
+{
+  const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  $('intro-studio').textContent = INTRO.studio;
+  $('intro-title').innerHTML = INTRO.title.map(esc).join('<br />');
+  $('intro-tag').textContent = INTRO.tag;
+  $('intro-concept').innerHTML = INTRO.concept.map((l) => `<p>${esc(l)}</p>`).join('');
+  $('intro-begin').textContent = INTRO.begin;
+  $('intro-hint').textContent = INTRO.testHint;
+  const intro = $('intro');
+  const leave = (at) => {
+    startAt = at;
+    intro.classList.add('hidden');
+    setTimeout(() => (intro.style.display = 'none'), 1000);
+  };
+  const cards = $('intro-cards');
+  INTRO.cards.forEach((c) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'lcard' + (c.playable ? '' : ' off');
+    b.innerHTML = `<span class="num">${esc(c.num)}</span><span class="nm">${esc(c.name)}</span><span class="sb">${esc(c.sub)}</span><span class="tx">${esc(c.text)}</span>` + (c.playable ? `<span class="try">${esc(INTRO.test)}</span>` : '');
+    if (!c.playable) {
+      b.disabled = true;
+      b.setAttribute('aria-disabled', 'true');
+    } else onTap(b, (e) => (e.stopPropagation(), leave(c.at)));
+    cards.appendChild(b);
+  });
+  onTap($('intro-begin'), (e) => (e.stopPropagation(), leave(params.get('at'))));
+  if (DEBUG || params.has('at')) {
+    intro.style.display = 'none';
+  }
+}
+
 /* Man or woman (PLAN.md 10.3): chosen on the title card, saved, changeable only there. */
 let gender = params.get('g') || save.data.gender || (DEBUG ? 'man' : null);
 const whoButtons = [...document.querySelectorAll('#who button')];
@@ -209,7 +252,7 @@ const begin = () => {
     albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
     albedo.restore(save.data);
     // ?at=albedo: start at the top of the stair, level I counted as done for this visit only (nothing is saved)
-    if (params.get('at') === 'albedo') {
+    if (startAt === 'albedo') {
       state.faced = Math.max(3, state.faced);
       state.doorAt = -10;
       teleport(0, Z_END - 0.9, 0, -0.25);
@@ -1434,6 +1477,7 @@ function teleport(x, z, yaw = player.yaw, pitch = player.pitch) {
   rig.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
 }
 window.__g = {
+  bakeK,
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },
