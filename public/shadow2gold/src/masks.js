@@ -27,13 +27,14 @@ const makeMaterial = (black, seed, tint) => {
   const u = { uCrumble: { value: 0 }, uSeam: { value: 0 }, uDim: { value: 1 }, uSeed: { value: seed } };
   const mat = new THREE.MeshPhysicalMaterial(
     black
-      ? { color: new THREE.Color(0.012, 0.011, 0.012), roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12 }
+      ? { color: new THREE.Color(0.012, 0.011, 0.012), roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.32 }
       : { color: new THREE.Color(0.4, 0.375, 0.32).multiply(tint), roughness: 0.36, clearcoat: 0.55, clearcoatRoughness: 0.3 },
   );
   mat.side = THREE.DoubleSide;
   // the glaze and the gold catch the candles (the same candle-lit panorama the varnish and brass reflect)
   mat.envMap = varnishEnv();
-  mat.envMapIntensity = black ? 0.8 : 0.5;
+  // the lacquer at 0.8 and glossier showed every candle of the panorama as a sharp white dot: it read as noise
+  mat.envMapIntensity = black ? 0.35 : 0.5;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
@@ -200,6 +201,23 @@ export const buildMaskHall = (scene, people, area, wallX) => {
   // fewer than there are places the last places stay empty, if more the extra ones are not hung.
   const whites = [...WHITE], blacks = [...BLACK];
   const list = [];
+  // Each mask's shadow on the wall: a soft dark patch a little below it, as if lit from above (the
+  // sconces and chandeliers). Real shadows from those candles halved the frame rate (2026-11-23).
+  // It fades as the mask leaves the wall and comes back with it.
+  const shadeTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.6)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  const SHADE = 0.6;
+  const shadeGeo = new THREE.PlaneGeometry(0.23, 0.3);
   const e = new THREE.Euler();
   for (const side of [1, -1])
     for (let c = 0; c < COLS; c++)
@@ -221,7 +239,13 @@ export const buildMaskHall = (scene, people, area, wallX) => {
         mesh.quaternion.copy(quat);
         mesh.scale.setScalar(scale);
         group.add(mesh);
-        list.push({ id: def.id, def, black, side, mesh, u, home: { pos, quat }, state: 'wall', k: 0, stir: 0, from: { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }, onHeld: null });
+        const shade = new THREE.Mesh(shadeGeo, new THREE.MeshBasicMaterial({ map: shadeTex, color: 0x000000, transparent: true, opacity: SHADE, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        shade.position.set(side * (wallX - 0.004), pos.y - 0.075, pos.z);
+        shade.rotation.y = -side * (Math.PI / 2);
+        shade.scale.setScalar(scale);
+        shade.renderOrder = -1;
+        group.add(shade);
+        list.push({ id: def.id, def, black, side, mesh, shade, u, home: { pos, quat }, state: 'wall', k: 0, stir: 0, from: { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }, onHeld: null });
       }
 
   const _t = new THREE.Vector3(), _f = new THREE.Vector3(), _r = new THREE.Vector3(), _u = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
@@ -273,6 +297,8 @@ export const buildMaskHall = (scene, people, area, wallX) => {
   const update = (dt, t, camera) => {
     for (const m of list) {
       const o = m.mesh;
+      // its shadow on the wall stays only while it hangs there
+      m.shade.material.opacity = SHADE * Math.max(0, 1 - o.position.distanceTo(m.home.pos) / 0.12) * (m.state === 'crumbling' || m.state === 'gone' ? 0 : 1);
       if (m.state === 'coming') {
         m.k = Math.min(1, m.k + dt / 1.15);
         const k = ease(m.k);

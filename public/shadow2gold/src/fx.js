@@ -29,7 +29,8 @@ const HazeShader = {
     lightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector3()) },
     lightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector3()) },
     count: { value: 0 },
-    density: { value: 0.003 },
+    // 0.003 until 2026-11-23: the whole corridor stood in a beige veil, twice as bright as the trailer frames
+    density: { value: 0.0014 },
     time: { value: 0 },
   },
   vertexShader: quadVS,

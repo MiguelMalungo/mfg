@@ -198,7 +198,7 @@ export const dressHouse = async (scene, house, { lite = false } = {}) => {
           // the painting has gone dark under old varnish
           o.material = o.material.clone();
           o.material.color.setRGB(0.32, 0.27, 0.2);
-          o.material.roughness = 0.45;
+          o.material.roughness = 0.85; // at 0.45 the varnish mirrored the flask: the painting by the start glowed like a lamp
         }
       });
       shadowed(f, false);
