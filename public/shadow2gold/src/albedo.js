@@ -1311,22 +1311,25 @@ orbHalo.material.opacity = 0.22;
     api.later(2.2, () => roomText(O.title, O.lines, () => fig.pos.clone().setY(1.8)));
   } };
 
-  const lookedAt = (camera) => {
+  /** What the eye is on and can be picked. `wide`: on a touch screen, aimed with a thumb, the reach is longer
+   * and the cone wider (a letter floats low on the water, below the middle of the view). */
+  const lookedAt = (camera, wide = false) => {
     if (st.busy) return null;
+    const W = wide ? 1.7 : 1.25;
     const R = st.room;
     if (R) {
-      if (R.kind === 'room' && R.step === 'look') return inView(camera, box1.getWorldPosition(_t.clone()), 2.4, 0.16) < Infinity ? pickBox : null;
+      if (R.kind === 'room' && R.step === 'look') return inView(camera, box1.getWorldPosition(_t.clone()), 2.4 * W, 0.16 * W) < Infinity ? pickBox : null;
       if (R.kind === 'feeling' && !R.chosen && feelings[0].s.visible) {
         let best = null, ba = Infinity;
         for (const f of feelings) {
-          const a = inView(camera, f.s.position, 3, 0.12);
+          const a = inView(camera, f.s.position, 3 * W, 0.12 * W);
           if (a < ba) ((ba = a), (best = f));
         }
         return best;
       }
       if (R.kind === 'other' && R.step === 'turned') {
         figPick.mesh.position.copy(fig.pos).setY(1.2);
-        return inView(camera, figPick.mesh.position, 2.4, 0.3) < Infinity ? figPick : null;
+        return inView(camera, figPick.mesh.position, 2.4 * W, 0.3 * W) < Infinity ? figPick : null;
       }
       return null;
     }
@@ -1334,7 +1337,14 @@ orbHalo.material.opacity = 0.22;
     if (horse.state !== 'lead' && horse.state !== 'rest') return null;
     const L = nextLetter();
     if (!L) return null;
-    return inView(camera, L.mesh.position, 2.6, 0.12) < Infinity ? { mesh: L.mesh, def: L.def, onPick: () => readLetter(L) } : null;
+    return inView(camera, L.mesh.position, wide ? 3.6 : 3.0, 0.12 * W * 1.4) < Infinity ? { mesh: L.mesh, def: L.def, onPick: () => readLetter(L) } : null;
+  };
+
+  /** How far the next letter is from the eye, once the horse has led you in (else Infinity): for the tip. */
+  const letterNear = (camera) => {
+    if (st.room || (horse.state !== 'lead' && horse.state !== 'rest')) return Infinity;
+    const L = nextLetter();
+    return L ? L.mesh.position.distanceTo(camera.position) : Infinity;
   };
 
   /* ═════════════ each frame ═════════════ */
@@ -1464,5 +1474,5 @@ orbHalo.material.opacity = 0.22;
     }
   };
 
-  return { group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
+  return { group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, letterNear, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
 };

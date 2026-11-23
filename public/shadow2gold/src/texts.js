@@ -244,6 +244,11 @@ export const TIPS = {
   grabbed: 'You reached for it, and it pulled away. Let it come to you.',
   frozen: 'It stopped when you moved. Stand still, and let it shut the doors.',
   doorsShut: 'Every door is shut. Now walk to it.',
+  // the first time a sealed letter is within reach (level II)
+  letter: {
+    desk: 'To pick up a letter, look down at it until your hand reaches for it, then click or press E.',
+    touch: 'To pick up a letter, look down at it until your hand reaches for it, then tap Pick.',
+  },
 };
 
 /**

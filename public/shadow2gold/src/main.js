@@ -15,6 +15,7 @@ import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO } from './texts.j
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
+import { makeWater } from './water.js';
 
 /*
  * Shadow to Gold · level 1 (Nigredo): the corridor of the house and the hall of masks.
@@ -91,6 +92,9 @@ const house = buildHouse(scene, glowTex);
 const sack = buildSack(scene, SACK_AT);
 const vessel = buildVessel(glowTex);
 if (LITE) vessel.light.shadow.mapSize.set(512, 512);
+// the phone keeps the coded chandeliers (no models), whose candle halos are large: on a small screen they
+// read as blinding discs, so they are drawn smaller there
+if (LITE) for (const f of house.flames) f.haloSize *= 0.5;
 const post = makePost(renderer, scene, camera);
 // the floor mirrors the corridor; the haze motes and the dust are left out of the mirror
 const refl = makeFloorReflection(renderer, scene, camera, house.floorMat);
@@ -99,6 +103,46 @@ const waterRefl = makeFloorReflection(renderer, scene, camera, house.waterMat, {
 waterRefl.u.reflStrength.value = 1.6;
 waterRefl.u.glowStrength.value = 0.004;
 // the candles' light baked in Blender (bake.js); ?nobake shows the corridor without it
+// the water moves, rings spread from what moves in it, and you see into it (water.js)
+const water = makeWater(house.waterMat, { shallowZ: house.cellar.waterZ0, lite: LITE });
+{
+  const wz = house.cellar.waterZ0;
+  water.track(() => (player.y < WATER - 0.05 && player.pos.z < wz && player.pos.z > -1000 ? player.pos : null), 0.0032, 0.5);
+  // the candles standing at the waterline on the stair send out a slow ring now and then
+  scene.updateMatrixWorld(true);
+  const _f = new THREE.Vector3();
+  const spots = [];
+  for (const f of house.flames) {
+    f.mesh.getWorldPosition(_f);
+    // one per cluster of candles
+    if (_f.y > WATER - 0.1 && _f.y < WATER + 0.45 && _f.z < wz + 0.5 && !spots.some((q) => q.distanceTo(_f) < 0.5)) spots.push(_f.clone().setY(WATER));
+  }
+  for (const at of spots) water.bob(() => at, 0.0009, 6);
+}
+// the phone has no mirror pass: the water mirrors the nearest candle flames itself (water.js)
+const flameAt = [];
+const _fwd = new THREE.Vector3();
+let flamesAge = 9;
+const waterFlames = () => {
+  if ((flamesAge += 1) > 15 || !flameAt.length) {
+    flamesAge = 0;
+    flameAt.length = 0;
+    const f = new THREE.Vector3();
+    scene.traverseVisible((o) => {
+      if (o.material !== house.flameMat) return;
+      o.getWorldPosition(f);
+      if (f.y > WATER + 0.01 && f.z < Z_END) flameAt.push({ p: f.clone(), d: 0 });
+    });
+  }
+  // only what is ahead can be mirrored in the water before you
+  camera.getWorldDirection(_fwd);
+  for (const q of flameAt) {
+    q.d = q.p.distanceToSquared(camera.position);
+    if (_fwd.x * (q.p.x - camera.position.x) + _fwd.z * (q.p.z - camera.position.z) < 0.3) q.d += 1e6;
+  }
+  flameAt.sort((a, b) => a.d - b.d);
+  water.setFlames(flameAt.filter((q) => q.d < 1e6).map((q) => q.p));
+};
 const bakeK = params.has('nobake') ? null : applyBake([house.floorMat, house.wallMat, house.panelMat, house.joinMat, house.ceilMat]);
 const sound = new Sound();
 const words = makeWords(camera, () => (touch.on ? 'touch' : 'desk'));
@@ -251,6 +295,9 @@ const begin = () => {
   if (ALBEDO_ON) {
     albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
     albedo.restore(save.data);
+    // the horse's legs and the letters afloat break the water too
+    water.track(() => (albedo.horse.pos.z < house.cellar.waterZ0 ? albedo.horse.pos : null), 0.0038, 0.45);
+    for (const L of albedo.list) water.bob(() => (L.state === 'water' ? L.mesh.position : null), 0.0014, 4.5);
     // ?at=albedo: start at the top of the stair, level I counted as done for this visit only (nothing is saved)
     if (startAt === 'albedo') {
       state.faced = Math.max(3, state.faced);
@@ -1246,21 +1293,31 @@ const adapt = { value: 1, list: null, ray: new THREE.Raycaster(), dirs: [] };
 for (const [h, v] of [[0, 0], [-0.45, 0], [0.45, 0], [0, -0.32], [0, 0.32], [-0.35, -0.25], [0.35, -0.25], [-0.35, 0.25], [0.35, 0.25]]) adapt.dirs.push(new THREE.Vector3(Math.sin(h), Math.sin(v), -1).normalize());
 adapt.ray.far = 6;
 const adaptExposure = (dt) => {
-  if (!adapt.list) {
+  // what the eye can be close to: the house, the sack and (below the house) albedo's stair walls, flooded
+  // corridor, dream rooms and hall, whichever are shown; gathered again twice a second as parts are hidden
+  adapt.age = (adapt.age ?? 1) + dt;
+  if (!adapt.list || adapt.age > 0.5) {
+    adapt.age = 0;
     adapt.list = [];
-    const take = (root) => root.traverse((o) => o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.visible && o.material && !o.material.transparent && adapt.list.push(o));
+    const take = (root) => root?.traverseVisible((o) => o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.material && !o.material.transparent && adapt.list.push(o));
     take(house.group);
     take(sack.bag);
+    take(albedo?.group);
   }
   const list = adapt.list || [];
-  let sum = 0;
+  let sum = 0, nearest = 6;
   const d = new THREE.Vector3();
   for (const dir of adapt.dirs) {
     d.copy(dir).applyQuaternion(camera.quaternion);
     adapt.ray.set(camera.position, d);
     const hit = adapt.ray.intersectObjects(list, false)[0];
     sum += hit ? hit.distance : 6;
+    if (hit) nearest = Math.min(nearest, hit.distance);
   }
+  // pressed up against a wall or a door, the flask's light (falling off as 1/d^1.6) would burn a white
+  // spot into it: it is held lower the closer the nearest surface is
+  const dimWant = 0.22 + 0.78 * smoothstep(0.2, 1.2, nearest);
+  adapt.dim = (adapt.dim ?? 1) + (dimWant - (adapt.dim ?? 1)) * (1 - Math.exp(-dt * 5));
   const mean = sum / adapt.dirs.length;
   const want = 1 - 0.76 * smoothstep(3.4, 0.7, mean);
   // the eye closes down quickly and opens up more slowly
@@ -1337,7 +1394,7 @@ const tick = (forceDt) => {
     const below = player.pos.z < Z_END - 1;
     const reading = albedo?.list.some((L) => L.state === 'rising' || L.state === 'held');
     const dream = player.pos.z > 100; // albedo's dream rooms are built far behind the house
-    candidate = free && !below && !dream ? masks.lookedAt(camera) : free && (below || dream) && albedo && !reading ? albedo.lookedAt(camera) : null;
+    candidate = free && !below && !dream ? masks.lookedAt(camera) : free && (below || dream) && albedo && !reading ? albedo.lookedAt(camera, touch.on) : null;
   }
   // the touch buttons and the circle follow what can be done: nothing to walk or turn while a mask is out
   if (touch.on) {
@@ -1345,6 +1402,8 @@ const tick = (forceDt) => {
     $('stick').classList.toggle('away', !state.started || stand.on);
   }
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
+  // the first time a letter is within reach: how to pick it up, said for the screen you play on
+  if (albedo && state.started && !words.open && albedo.letterNear(camera) < 4.2) words.tip(TIPS.letter[touch.on ? 'touch' : 'desk'], { id: 'letter' });
   if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) words.tip(TIPS.wall, { id: 'wall' }); // at the wall of masks only, not below the house
   words.update(t);
   words.line(lineNow());
@@ -1380,7 +1439,10 @@ const tick = (forceDt) => {
   const lettersRead = save.data.letters.length, goldBack = albedo?.st.gold ? 1 : 0;
   const wantStage = demo.stage ?? Math.min(1, [0, 0.1, 0.2, 0.55][Math.min(n, 3)] + 0.03 * Math.max(0, n - 3) + 0.1 * lettersRead + 0.15 * goldBack);
   V.stage = ease(V.stage, wantStage, 0.5);
+  water.update(t, dt, player.pos.z < Z_END);
+  if (LITE && player.pos.z < Z_END) waterFlames();
   vessel.update(t);
+  vessel.light.intensity *= adapt.dim ?? 1; // held lower close to a surface (adaptExposure)
   house.update(t);
 
   /* your own unseen body, for the shadow the vessel throws behind you */
@@ -1418,7 +1480,8 @@ const tick = (forceDt) => {
   post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)] * (1 - 0.3 * goldBack), 0.4);
   // ?norefl turns the floor's reflection off (to compare, or on a slow machine)
   adaptExposure(dt);
-  post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0)) * (albedo?.st.exposure ?? 1);
+  // phones are looked at close, in the dark, on a bright screen: 15% less there (the owner found it blinding)
+  post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0)) * (albedo?.st.exposure ?? 1) * (LITE ? 0.85 : 1);
   refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
   waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5);
@@ -1478,6 +1541,7 @@ function teleport(x, z, yaw = player.yaw, pitch = player.pitch) {
 }
 window.__g = {
   bakeK,
+  water,
   THREE, scene, camera, renderer, post, refl, waterRefl, house, adapt, sack, vessel, player, state, sh, layout, dust, rig, words, save, timers, act,
   get facing() { return facing; },
   get candidate() { return candidate; },

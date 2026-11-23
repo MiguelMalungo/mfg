@@ -185,6 +185,7 @@ class SceneHazePass extends Pass {
   }
 }
 
+const BLOOM = 0.55;
 export const makePost = (renderer, scene, camera) => {
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
   const sceneRT = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(size.x, size.y) });
@@ -197,7 +198,14 @@ export const makePost = (renderer, scene, camera) => {
   dof.uniforms.near.value = camera.near;
   dof.uniforms.far.value = camera.far;
   composer.addPass(dof);
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.7, 0.9);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BLOOM, 0.7, 0.9);
+  // Nothing brighter than 6 (the flames are 5) feeds the bloom: one tiny hot highlight (the flask's light
+  // mirrored in the near water reached 240) otherwise floods half the frame with a beige veil.
+  bloom.materialHighPassFilter.fragmentShader = bloom.materialHighPassFilter.fragmentShader.replace(
+    'vec4 texel = texture2D( tDiffuse, vUv );',
+    'vec4 texel = texture2D( tDiffuse, vUv );\n\t\t\ttexel.rgb *= min(1.0, 6.0 / max(max(texel.r, texel.g), max(texel.b, 1e-4)));',
+  );
+  bloom.materialHighPassFilter.needsUpdate = true;
   composer.addPass(bloom);
   const finish = new ShaderPass(FinishShader);
   composer.addPass(finish);
@@ -223,6 +231,9 @@ export const makePost = (renderer, scene, camera) => {
     const pr = renderer.getPixelRatio();
     composer.setPixelRatio(pr);
     composer.setSize(innerWidth, innerHeight);
+    // the bloom's blur is a fixed number of pixels: on a small screen drawn at pixel ratio 1 (phones) it
+    // covers far more of the view than on a desktop, so the glow round every flame grows; scale it down
+    bloom.strength = BLOOM * THREE.MathUtils.clamp(Math.sqrt((innerHeight * pr) / 1400), 0.55, 1);
     sceneRT.setSize(Math.round(innerWidth * pr), Math.round(innerHeight * pr));
     finish.uniforms.aspect.value = innerWidth / innerHeight;
     dof.uniforms.resolution.value.set(innerWidth * pr, innerHeight * pr);
