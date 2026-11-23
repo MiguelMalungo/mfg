@@ -339,9 +339,10 @@ export const buildVessel = (glowTex) => {
   };
   const rx = { on: false, t: 0, k: 0, p: 0, dur: 4.6, bloom: 0.3, done: null };
   const RX_IN = 0.9, RX_OUT = 1.0;
-  const react = ({ seconds = 4.6, bloom = 0.3, onDone = null } = {}) => {
+  /** still: the work happens in the glass where it is, in its corner (when something else must be seen, as the bird). */
+  const react = ({ seconds = 4.6, bloom = 0.3, onDone = null, still = false } = {}) => {
     rx.done?.();
-    Object.assign(rx, { on: true, t: 0, dur: seconds, bloom, done: onDone });
+    Object.assign(rx, { on: true, t: 0, dur: seconds, bloom, done: onDone, still });
   };
   /** Advances the reaction; returns 0..1, how far forward the flask has come. */
   const stepReaction = (dt) => {
@@ -350,6 +351,7 @@ export const buildVessel = (glowTex) => {
     const total = RX_IN + rx.dur + RX_OUT;
     rx.k = ss(0, RX_IN, rx.t) * (1 - ss(RX_IN + rx.dur, total, rx.t));
     rx.p = Math.min(1, Math.max(0, (rx.t - RX_IN) / rx.dur));
+    if (rx.still) rx.k = 0;
     if (rx.t >= total) {
       rx.on = false;
       rx.k = 0;

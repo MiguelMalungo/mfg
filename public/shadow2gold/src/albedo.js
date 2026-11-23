@@ -36,12 +36,12 @@ import { LETTERS, ALBEDO } from './texts.js';
 // the hall beyond the cellar
 const ARCH_W = 1.8, ARCH_H = 2.7;
 const STEPS_UP = 6, STEP_RUN = 0.27;
-const HALL_Y = WATER + 0.12; // the hall's floor, just clear of the water
+const HALL_Y = WATER + 0.03; // the hall's floor: broken slabs just clear of the water that lies between them
 const STEP_RISE = (HALL_Y - ROOM_Y) / STEPS_UP;
 const HALL_Z0 = Z_ROOM_END - STEPS_UP * STEP_RUN; // where the steps come up into the hall
-const HALL_LEN = 19, HALL_Z1 = HALL_Z0 - HALL_LEN, HALL_HW = 2.3, HALL_H = 13;
+const HALL_LEN = 19, HALL_Z1 = HALL_Z0 - HALL_LEN, HALL_HW = 2.3, HALL_H = 11;
 const COLUMN_Z = HALL_Z0 - 6.5;
-const COLUMN_TOP = HALL_Y + 1.35; // the statue's face ends up a little above eye height, near enough to hold your light on it
+const COLUMN_TOP = HALL_Y + 5.4; // a tall slender column (i13a, i13b): the statue stands high, near the opening; you hold your light up to it
 const OTHER_Z = HALL_Z0 - 13.5;
 // the dream rooms
 const ROOM1 = new THREE.Vector3(0, 0, 130); // the secret room
@@ -124,6 +124,7 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
     read: [], gold: false, done: false, archOpen: false,
     room: null, // the dream room you are in: { i, kind, ... }
     busy: false, // a fade, a text, a letter in the air: nothing else can be picked
+    exposure: 1, // main.js multiplies the picture's exposure by it below the house
   };
   const colliders = [];
   // one light that goes where it is needed (a dream room, an open door), so the number of lights never changes
@@ -591,6 +592,67 @@ orbHalo.material.opacity = 0.22;
     dreamFig.mixer.update(dt);
   };
 
+  /* ═════════════ 1. the stair (i14) ═════════════ */
+  // Rough damp brick close on both sides, worn treads with rounded nosings that catch the candles, candles in
+  // clusters, and their light painted onto the treads and the walls (no light of their own: lights are costly).
+  {
+    const S = house.stair;
+    const tl = new THREE.TextureLoader();
+    const bt = (f, srgb) => {
+      const t = tl.load('./assets/albedo/castle_brick_01_' + f);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(1.4 / 1.5, 1.4 / 1.5); // the wall's UVs are in 1.4 m; the photo covers 1.5 m
+      t.anisotropy = 8;
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    const brick = new THREE.MeshStandardMaterial({ map: bt('diff_1k.jpg', true), normalMap: bt('nor_gl_1k.jpg'), roughnessMap: bt('rough_1k.jpg'), roughness: 1, color: new THREE.Color(0.16, 0.14, 0.12), normalScale: new THREE.Vector2(1.4, 1.4) });
+    for (const w of S.walls) w.material = brick;
+    // the treads: a worn, smoother top on each step and a rounded edge, one merged mesh
+    const parts = [];
+    for (let i = 0; i < S.steps.length; i++) {
+      const st0 = S.steps[i];
+      const y = st0.position.y + 0.2, z = st0.position.z, run = 0.3;
+      const top = new THREE.BoxGeometry(S.sx - 0.1, 0.014, run - 0.04);
+      // dished in the middle where feet have worn it
+      const p = top.attributes.position;
+      for (let k = 0; k < p.count; k++) if (p.getY(k) > 0) p.setY(k, p.getY(k) - 0.008 * Math.exp(-(p.getX(k) ** 2) / 0.08));
+      top.computeVertexNormals();
+      top.translate(0, y + 0.003, z - 0.01);
+      parts.push(top);
+      const nose = new THREE.CylinderGeometry(0.028, 0.028, S.sx - 0.04, 10);
+      nose.rotateZ(Math.PI / 2);
+      nose.translate(0, y - 0.024, z + run / 2 - 0.012);
+      parts.push(nose);
+    }
+    const treadMat = new THREE.MeshStandardMaterial({ map: house.stoneMat.map, normalMap: house.stoneMat.normalMap, color: new THREE.Color(0.22, 0.2, 0.17), roughness: 0.42 });
+    const treads = add(new THREE.Mesh(mergeGeometries(parts.map((gq) => gq.toNonIndexed())), treadMat));
+    treads.castShadow = false;
+    // more candles round each one already burning on the steps: clusters, as in i14 (halo on the first only)
+    const R = (k) => Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1;
+    const glowMat = new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(0.5, 0.25, 0.09), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+    S.candles.forEach((c, i) => {
+      for (let k = 0; k < 2; k++) {
+        const dx = (R(i * 7 + k) - 0.5) * 0.16, dz = (R(i * 13 + k) - 0.5) * 0.14;
+        const x = Math.max(-S.sx / 2 + 0.05, Math.min(S.sx / 2 - 0.05, c.x + dx));
+        const fl = house.candle(group, x, c.y, c.z + dz, 0.04 + R(i * 3 + k) * 0.1, 0.2);
+        fl.scale.multiplyScalar(0.7); // smaller flames, or the bloom of so many fills the well with milk
+        house.flames[house.flames.length - 1].halo.visible = false;
+      }
+      // its light, painted: a warm pool on the tread and a glow up the wall beside it
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), glowMat);
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(c.x * 0.6, c.y + 0.012, c.z);
+      group.add(pool);
+      const side = Math.sign(c.x) || 1;
+      const wash = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.1), glowMat);
+      wash.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      wash.position.set(side * (S.sx / 2 - 0.012), c.y + 0.35, c.z);
+      group.add(wash);
+      api.noWaterMirror?.([pool, wash]);
+    });
+  }
+
   /* ═════════════ the flooded corridor (i15, iflood) ═════════════ */
   // The cellar is dressed as a corridor of the house gone under: papered walls, panelling down into the
   // water, doors in the walls, a flat ceiling with a chandelier. The stone vault above is hidden.
@@ -711,9 +773,30 @@ orbHalo.material.opacity = 0.22;
   hallStone.color = new THREE.Color(0.42, 0.39, 0.35);
   const hallMid = (HALL_Z0 + HALL_Z1) / 2;
   {
-    const fl = add(new THREE.Mesh(mplane(HALL_HW * 2, HALL_LEN, 1.6), wet));
-    fl.rotation.x = -Math.PI / 2;
-    fl.position.set(0, HALL_Y, hallMid);
+    // the floor: broken flagstones, some tilted, some gone, black water between them (the water is the house's,
+    // so it mirrors the statue and the light as the cellar's does)
+    {
+      const slabs = [];
+      const R = (k) => Math.abs(Math.sin(k * 78.233 + 1.7) * 43758.5453) % 1;
+      let k = 0;
+      for (let z = HALL_Z0 - 0.05; z > HALL_Z1 + 0.05; z -= 0.78)
+        for (let x = -HALL_HW + 0.05; x < HALL_HW - 0.05; x += 0.92) {
+          k++;
+          if (R(k) < 0.22 && Math.abs(x) < HALL_HW - 0.9) continue; // a slab gone: water
+          const w = 0.86 - R(k + 1) * 0.08, d = 0.72 - R(k + 2) * 0.08;
+          const b = new THREE.BoxGeometry(w, 0.12, d);
+          b.rotateX((R(k + 3) - 0.5) * 0.05);
+          b.rotateZ((R(k + 4) - 0.5) * 0.05);
+          b.rotateY((R(k + 5) - 0.5) * 0.08);
+          b.translate(x + w / 2, HALL_Y - 0.06 + (R(k + 6) - 0.5) * 0.025, z - d / 2);
+          slabs.push(b.toNonIndexed());
+        }
+      add(new THREE.Mesh(mergeGeometries(slabs), wet));
+      const pool = add(new THREE.Mesh(mplane(HALL_HW * 2, HALL_LEN, 3.0), house.waterMat));
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(0, WATER, hallMid);
+      pool.receiveShadow = false;
+    }
     for (const s of [-1, 1]) {
       const wl = add(new THREE.Mesh(mplane(HALL_LEN, HALL_H, 1.6), hallStone));
       wl.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -760,7 +843,7 @@ orbHalo.material.opacity = 0.22;
           put(new THREE.CylinderGeometry(R + 0.2, R + 0.02, 0.4, 32), x, HALL_Y + COLH - 0.2, z);
           put(new THREE.BoxGeometry(0.9, 0.16, 0.9), x, HALL_Y + COLH + 0.08, z);
           // the upper order: a thinner column over each one
-          put(fluted(R * 0.7, 3.2), x, HALL_Y + COLH + 1.9, z);
+          put(fluted(R * 0.7, 1.9), x, HALL_Y + COLH + 1.25, z);
         }
         // the arches between the columns, in the plane of the wall
         for (let i = 0; i < zs.length - 1; i++) {
@@ -818,26 +901,27 @@ orbHalo.material.opacity = 0.22;
       m.position.set(s * (HALL_HW - 0.6 - Math.random() * 0.4), HALL_Y + r * 0.25, HALL_Z0 - 0.8 - Math.random() * (HALL_LEN - 2));
       add(m);
     }
-    const pud = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.01, 0.01, 0.01), roughness: 0.04, metalness: 0, normalMap: house.waterMat.normalMap, normalScale: new THREE.Vector2(0.1, 0.1) });
-    for (const [x, z, sx, sz] of [[-0.6, HALL_Z0 - 2.4, 1.3, 0.8], [0.8, COLUMN_Z + 1.6, 1.0, 1.4], [-0.4, COLUMN_Z - 2.5, 1.6, 1.0], [0.5, OTHER_Z + 1.8, 1.2, 0.9]]) {
-      const m = add(new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), pud));
-      m.rotation.x = -Math.PI / 2;
-      m.scale.set(sx, sz, 1);
-      m.position.set(x, HALL_Y + 0.004, z);
-    }
     // candles on the floor round the column's foot
-    for (const [x, dz, h] of [[-0.7, 0.6, 0.12], [-0.55, 0.85, 0.07], [0.68, 0.55, 0.15], [0.8, -0.4, 0.08]]) house.candle(group, x, HALL_Y, COLUMN_Z + dz, h, 0.26);
+    // candles on the lowest step of the column's base
+    for (const [a0, h] of [[0.5, 0.12], [0.75, 0.07], [2.4, 0.15], [2.7, 0.08], [-0.3, 0.1]]) house.candle(group, Math.sin(a0) * 0.92, HALL_Y + 0.2, COLUMN_Z + Math.cos(a0) * 0.92, h, 0.24);
   }
 
   // the statue on its column under the oculus (gallery.js: the gold, and the withdrawing of it)
   const who = gender === 'woman' ? 'god' : 'goddess';
-  const gallery = buildGallery(scene, people, house, glowTex, ROOM_W, renderer, [{ who, x: 0, z: COLUMN_Z, y: COLUMN_TOP, face: new THREE.Vector3(0, 0, 1), column: { from: HALL_Y } }]);
+  const gallery = buildGallery(scene, people, house, glowTex, ROOM_W, renderer, [{ who, x: 0, z: COLUMN_Z, y: COLUMN_TOP, face: new THREE.Vector3(0, 0, 1), column: { from: HALL_Y, tall: true }, near: 11, look: 0.985 }]);
   // the opening, and the shaft of pale light that falls through it onto the statue
   const skyTop = HALL_Y + HALL_H;
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.7, 1.9), fog: false }));
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.42, 0.45, 0.5), fog: false })); // pale sky; brighter blooms the whole vault
   disc.rotation.x = Math.PI / 2;
   disc.position.set(0, skyTop - 0.01, COLUMN_Z);
   group.add(disc);
+  // the opening's moulded rim, two rings, catching the daylight (i13a)
+  for (const [r, t, dy] of [[1.12, 0.11, -0.08], [1.34, 0.08, -0.22]]) {
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 48), hallStone);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(0, skyTop + dy, COLUMN_Z);
+    group.add(rim);
+  }
   const shaftMat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
@@ -848,7 +932,8 @@ orbHalo.material.opacity = 0.22;
     fragmentShader: /* glsl */ `uniform float time; varying vec3 vP; varying vec3 vW;
       float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       void main() {
-        float k = smoothstep(-0.5, 0.5, vP.y / ${HALL_H.toFixed(1)}) * 0.75 + 0.25;
+        // brightest between the opening and the statue, fading below it toward the water
+        float k = smoothstep(-0.5, 0.5, vP.y / ${HALL_H.toFixed(1)}) * 0.9 + 0.1;
         float edge = 1.0 - abs(dot(normalize(vec3(vP.x, 0.0, vP.z)), normalize(cameraPosition - vW)));
         float dust = 0.8 + 0.2 * h(floor(vP.xz * 40.0 + vec2(0.0, time * 2.0)));
         // looking up the shaft you see through its whole length: it must not burn white
@@ -856,17 +941,18 @@ orbHalo.material.opacity = 0.22;
         gl_FragColor = vec4(vec3(0.016, 0.0175, 0.02) * k * dust * (1.0 - edge * 0.9) * (1.0 - 0.85 * along), 1.0);
       }`,
   });
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.15, HALL_H, 40, 1, true), shaftMat);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.0, HALL_H, 40, 1, true), shaftMat);
   shaft.position.set(0, HALL_Y + HALL_H / 2, COLUMN_Z);
   group.add(shaft);
-  const spot = new THREE.SpotLight(new THREE.Color(0.8, 0.86, 1.0), 3.2, HALL_H + 4, 0.16, 0.6, 2);
+  const spot = new THREE.SpotLight(new THREE.Color(0.82, 0.88, 1.0), 9, HALL_H + 4, 0.13, 0.5, 2); // the statue is the one lit thing (i13a)
   spot.position.set(0, skyTop, COLUMN_Z + 0.3);
   spot.target.position.set(0, COLUMN_TOP + 1.2, COLUMN_Z);
   group.add(spot, spot.target);
   // the daylight from the opening spreads, faintly, down the walls and the columns: a glow in the stone itself
   // rather than another light (an extra light cost 10 to 20 frames a second)
-  hallStone.emissive = new THREE.Color(0.0038, 0.0041, 0.0048);
-  wet.emissive = new THREE.Color(0.0015, 0.0016, 0.0019);
+  // (no glow in the stone: in i13 everything but the column, the statue and the shaft is near black)
+  wet.color = new THREE.Color(0.2, 0.19, 0.17);
+  wet.roughness = 0.22;
 
   // gather the hall into its own group, so it is not drawn (nor mirrored in the water) from the cellar
   const hallG = new THREE.Group();
@@ -882,7 +968,7 @@ orbHalo.material.opacity = 0.22;
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     return t;
   };
-  const other = people.makeFigure(new THREE.MeshStandardMaterial({ map: scanTex('dif.jpg', true), normalMap: scanTex('norm.jpg'), roughness: 0.9, color: new THREE.Color(0.5, 0.48, 0.45) }), otherWho, { neutral: true });
+  const other = people.makeFigure(new THREE.MeshStandardMaterial({ map: scanTex('dif.jpg', true), normalMap: scanTex('norm.jpg'), roughness: 0.9, color: new THREE.Color(0.045, 0.04, 0.036) }), otherWho, { neutral: true }); // dark: seen by their own small light
   other.mesh.castShadow = false;
   group.add(other.obj);
   const oth = { pos: new THREE.Vector3(0.2, HALL_Y, OTHER_Z), yaw: 0, speed: 0, state: 'far', t: 0, told: false };
@@ -963,7 +1049,7 @@ orbHalo.material.opacity = 0.22;
     });
     const inner = new THREE.Group();
     inner.add(model);
-    inner.scale.setScalar(2.3); // the white bird of i21, large enough to read across the hall
+    inner.scale.setScalar(1.9); // the white bird of i21, large enough to read across the hall
     bird.inner = inner;
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(0.9, 0.92, 1.0), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     halo.scale.setScalar(0.75);
@@ -1000,7 +1086,7 @@ orbHalo.material.opacity = 0.22;
     const P = [];
     for (let i = 0; i <= 24; i++) {
       const k = i / 24, a = k * Math.PI * 4;
-      P.push(new THREE.Vector3(Math.sin(a) * 1.5 * k, skyTop - 0.5 - k * (skyTop - COLUMN_TOP - 3.4), COLUMN_Z + Math.cos(a) * 1.5 * k));
+      P.push(new THREE.Vector3(Math.sin(a) * 1.5 * k, skyTop - 0.3 - k * (skyTop - 0.3 - (COLUMN_TOP + 1.6)), COLUMN_Z + Math.cos(a) * 1.5 * k));
     }
     const lp = otherLight.position;
     P.push(new THREE.Vector3(lp.x * 0.5, lp.y + 1.1, (lp.z + COLUMN_Z) / 2), new THREE.Vector3(lp.x, lp.y + 0.22, lp.z));
@@ -1022,18 +1108,24 @@ orbHalo.material.opacity = 0.22;
         bird.seg = 'perch';
         bird.t = 0;
         st.phase = 'down';
-        api.vessel.react({ bloom: 0.6 });
+        api.vessel.react({ bloom: 0.6, still: true }); // the flask stays in its corner: the bird is what you look at
         api.words.whisper(ALBEDO.bird, 2.4);
       } else if (k >= 1) ((bird.on = false), (bird.obj.visible = false));
     } else if (bird.seg === 'perch') {
       // it sits on the hand, its wings slowing and settling, facing you
       bird.obj.position.copy(otherLight.position).y += 0.2;
       bird.obj.lookAt(camPos.x, bird.obj.position.y, camPos.z);
-      bird.mixer?.update(dt * Math.max(0.08, 1 - bird.t / 0.8));
+      // it holds its wings up and open (the wide frame of the beat, held), lit from the opening above
+      if (bird.mixer && bird.t < 0.05) {
+        const act = bird.mixer._actions[0];
+        if (act) ((act.time = 15 / 24), (act.timeScale = 0));
+      }
+      bird.mixer?.update(dt);
       if (bird.t > BIRD_PERCH) {
         // then away down the stair at the end of the hall, and the Other follows it
         bird.seg = 'away';
         bird.t = 0;
+        if (bird.mixer?._actions[0]) bird.mixer._actions[0].timeScale = 1;
         const p0 = bird.obj.position.clone();
         bird.path = new THREE.CatmullRomCurve3([p0, p0.clone().add(new THREE.Vector3(0, 0.6, -0.8)), new THREE.Vector3(0, HALL_Y + 1.8, HALL_Z1 + 0.6), new THREE.Vector3(0, HALL_Y - 0.6, HALL_Z1 - 3.2)]);
         oth.state = 'lead';
@@ -1082,7 +1174,7 @@ orbHalo.material.opacity = 0.22;
         // until the gold is withdrawn the Other keeps their distance: you cannot come within six metres
         if (!st.gold) p.z = Math.max(p.z, oth.pos.z + 6);
         // round the column
-        const cx = p.x, cz = p.z - COLUMN_Z, cd = Math.hypot(cx, cz), cr = 0.62 + r;
+        const cx = p.x, cz = p.z - COLUMN_Z, cd = Math.hypot(cx, cz), cr = 0.95 + r; // the column's stepped base
         if (cd < cr && cd > 1e-4) ((p.x = (cx / cd) * cr), (p.z = COLUMN_Z + (cz / cd) * cr));
       }
       return true;
@@ -1172,6 +1264,13 @@ orbHalo.material.opacity = 0.22;
   /* ═════════════ each frame ═════════════ */
   const update = (dt, t, camera, flaskPos, sound, player) => {
     camPos.copy(camera.position);
+    // the exposure of each place, graded against its trailer frame (mean luma: i14 0.08, iflood 0.10, i15 0.14,
+    // i13a 0.09): the flask lights the near walls strongly, so the picture is brought down where it is close
+    {
+      const z = player.pos.z;
+      const want = z > 100 ? 0.9 : z > -46.2 ? 1 : z > Z_STAIR_END ? 0.42 : z > Z_ROOM_END ? 0.8 : 0.6;
+      st.exposure += (want - st.exposure) * (1 - Math.exp(-dt * 1.5));
+    }
     // draw each place only when you can see it: the hall once its door is open and you are near it; each
     // dream room only while you are in it; the cellar not while you are in a dream room
     const inDream = player.pos.z > 100;
@@ -1218,6 +1317,12 @@ orbHalo.material.opacity = 0.22;
       d.glowMat.opacity = Math.min(1, d.open * 1.4) * (0.85 + 0.15 * Math.sin(t * 2.1));
     }
     const od = st.openDoor;
+    // on the stair the roaming light is free: it stands low among the candles, so the treads and risers below
+    // you are shaded by them (the candles' own light, without a light of their own)
+    if (!od && !st.room && player.pos.z < -46.2 && player.pos.z > Z_STAIR_END - 1.5) {
+      const zc = Math.max(Z_STAIR_END + 1.2, player.pos.z - 2.6);
+      setRoam(_t.set(0.2, house.floorAt(0, zc) + 0.25, zc), new THREE.Color(1.0, 0.6, 0.28), 0.35, 5);
+    } else if (!od && !st.room && roamLight.userData.base > 0 && player.pos.z < Z_STAIR_END - 1.5) roamLight.userData.base = 0;
     if (od) {
       setRoam(new THREE.Vector3(od.x, WATER + 1.0, od.z).addScaledVector(od.front, 0.6), new THREE.Color(1.0, 0.86, 0.66), 0.9 * od.open, 5);
       if (!st.busy && !st.room && od.open > 0.7 && Math.hypot(player.pos.x - od.x, player.pos.z - od.z) < 1.25) {

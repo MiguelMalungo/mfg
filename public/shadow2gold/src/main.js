@@ -92,7 +92,7 @@ const post = makePost(renderer, scene, camera);
 // the floor mirrors the corridor; the haze motes and the dust are left out of the mirror
 const refl = makeFloorReflection(renderer, scene, camera, house.floorMat);
 // the cellar's black water mirrors too, with its own pass (only one of the two runs at a time)
-const waterRefl = makeFloorReflection(renderer, scene, camera, house.waterMat, { planeY: WATER, key: 'water' });
+const waterRefl = makeFloorReflection(renderer, scene, camera, house.waterMat, { planeY: WATER, key: 'water', streak: 1 });
 waterRefl.u.reflStrength.value = 1.6;
 waterRefl.u.glowStrength.value = 0.004;
 const sound = new Sound();
@@ -1375,7 +1375,7 @@ const tick = (forceDt) => {
   post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)] * (1 - 0.3 * goldBack), 0.4);
   // ?norefl turns the floor's reflection off (to compare, or on a slow machine)
   adaptExposure(dt);
-  post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0));
+  post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0)) * (albedo?.st.exposure ?? 1);
   refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
   waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5);

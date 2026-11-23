@@ -280,14 +280,17 @@ export const buildHouse = (scene, glowTex) => {
   const stairMat = stoneMat;
   box(sx, 0.2, 1.0, stairMat, 0, -0.1, Z_END - 0.5, false);
   const rnd = rng(11);
+  const stair = { steps: [], walls: [], candles: [] }; // albedo.js dresses them (brick, worn treads, candle glow)
   for (let i = 0; i < STEPS; i++) {
     const z = Z_END - 1.0 - RUN * (i + 0.5);
     const y = -RISE * (i + 1);
-    box(sx, 0.4, RUN, stairMat, 0, y - 0.2, z, false);
+    stair.steps.push(box(sx, 0.4, RUN, stairMat, 0, y - 0.2, z, false));
     // candles left burning on the steps, down to the water
     if (y > WATER + 0.06 && (i % 2 === 0 || rnd() < 0.35)) {
       const cx = (rnd() < 0.5 ? -1 : 1) * (sx / 2 - 0.08 - rnd() * 0.12);
-      candle(group, cx, y, z + (rnd() - 0.5) * 0.1, 0.05 + rnd() * 0.08, 0.26);
+      const cz = z + (rnd() - 0.5) * 0.1;
+      candle(group, cx, y, cz, 0.05 + rnd() * 0.08, 0.26);
+      stair.candles.push(new THREE.Vector3(cx, y, cz));
     }
   }
   const wellLen = 1.0 + STEPS * RUN;
@@ -296,6 +299,7 @@ export const buildHouse = (scene, glowTex) => {
     const wl = add(new THREE.Mesh(metricPlane(wellLen, H + drop, 1.4, 1.4), stoneMat));
     wl.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
     wl.position.set((s * sx) / 2, (H - drop) / 2, Z_END - wellLen / 2);
+    stair.walls.push(wl);
   }
   const wellTop = add(new THREE.Mesh(metricPlane(sx, wellLen, 1.4, 1.4), stoneMat));
   wellTop.rotation.x = Math.PI / 2;
@@ -626,5 +630,5 @@ export const buildHouse = (scene, glowTex) => {
     }
   };
 
-  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat, sconces, stoneMat, ext, cellar: { endW, sunk, CEIL, waterZ0, metricPlane, vault } };
+  return { group, floor, floorMat, wallMat, ceilMat, joinMat, panelMat, chandeliers, candle, flameMat, water, waterMat, openDoor, floorAt, doors, slamDoor, letters, farLight, lights, flames, stairLight, spill, update, collide, brassMat, woodMat, sconces, stoneMat, ext, cellar: { endW, sunk, CEIL, waterZ0, metricPlane, vault }, stair: { ...stair, sx, wellLen, drop } };
 };

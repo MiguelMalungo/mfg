@@ -100,7 +100,10 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
       // a tall column up out of the water, fluted by its segments
       const h = (pl.y ?? 0) - pl.column.from;
       // a fluted shaft (twenty flutes cut into it), a moulded base on a square plinth, a ring under the top (i13a)
-      const shaftG = new THREE.CylinderGeometry(0.4, 0.44, h - 0.5, 80, 6, true);
+      const tall = !!pl.column.tall;
+      // tall: a slender shaft on a three-stepped base, under a carved capital (i13a); otherwise a short drum
+      const base = tall ? 0.6 : 0.38, capH = tall ? 0.55 : 0.16, rad = tall ? 0.3 : 0.4;
+      const shaftG = new THREE.CylinderGeometry(rad, rad * 1.12, h - base - capH, 80, 6, true);
       {
         const p = shaftG.attributes.position;
         for (let i = 0; i < p.count; i++) {
@@ -113,20 +116,54 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
       }
       const parts = [];
       const shaft = new THREE.Mesh(shaftG, capMat);
-      shaft.position.y = -h + 0.38 + (h - 0.5) / 2;
+      shaft.position.y = -h + base + (h - base - capH) / 2;
       parts.push(shaft);
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.26, 1.2), capMat);
-      plinth.position.y = -h + 0.13;
-      parts.push(plinth);
-      for (const [r, t, y] of [[0.54, 0.07, -h + 0.31], [0.48, 0.045, -h + 0.4], [0.47, 0.04, -0.16]]) {
+      if (tall) {
+        for (const [w, hh, y] of [[1.9, 0.2, 0.1], [1.5, 0.18, 0.29], [1.1, 0.14, 0.45]]) {
+          const st = new THREE.Mesh(new THREE.BoxGeometry(w, hh, w), capMat);
+          st.position.y = -h + y;
+          parts.push(st);
+        }
+        // the capital: a bell, two rings of curling leaves round it, volutes at the corners, the abacus on top
+        const bell = new THREE.Mesh(new THREE.LatheGeometry([0.3, 0.31, 0.34, 0.4, 0.48].map((r, i) => new THREE.Vector2(r, i * 0.1)), 32), capMat);
+        bell.position.y = -capH;
+        parts.push(bell);
+        for (const [ring, n, y0, len] of [[0, 8, 0.0, 0.26], [1, 8, 0.16, 0.3]]) {
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2 + ring * (Math.PI / n);
+            const leaf = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6, 0, Math.PI), capMat);
+            leaf.scale.set(0.07, len, 0.045);
+            leaf.position.set(Math.sin(a) * (0.33 + ring * 0.04), -capH + y0 + len * 0.55, Math.cos(a) * (0.33 + ring * 0.04));
+            leaf.rotation.set(-0.35, a, 0, 'YXZ');
+            parts.push(leaf);
+          }
+        }
+        for (let i = 0; i < 4; i++) {
+          const a = Math.PI / 4 + (i * Math.PI) / 2;
+          const vol = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.025, 6, 16), capMat);
+          vol.position.set(Math.sin(a) * 0.5, -0.12, Math.cos(a) * 0.5);
+          vol.rotation.y = a;
+          parts.push(vol);
+        }
+        const abacus = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.1, 1.08), capMat);
+        abacus.position.y = -0.05;
+        parts.push(abacus);
+      } else {
+        const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.26, 1.2), capMat);
+        plinth.position.y = -h + 0.13;
+        parts.push(plinth);
+      }
+      for (const [r, t, y] of (tall ? [[rad * 1.25, 0.06, -h + base + 0.04], [rad * 1.15, 0.04, -capH - 0.03]] : [[0.54, 0.07, -h + 0.31], [0.48, 0.045, -h + 0.4], [0.47, 0.04, -0.16]])) {
         const ring = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 48), capMat);
         ring.rotation.x = Math.PI / 2;
         ring.position.y = y;
         parts.push(ring);
       }
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.41, 0.14, 48), capMat);
-      neck.position.y = -0.07;
-      parts.push(neck);
+      if (!tall) {
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.41, 0.14, 48), capMat);
+        neck.position.y = -0.07;
+        parts.push(neck);
+      }
       for (const m of parts) ((m.castShadow = m.receiveShadow = true), holder.add(m));
     }
     holder.rotation.y = Math.atan2(face.x, face.z);
@@ -171,7 +208,7 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
     const head = new THREE.Object3D();
     head.position.set(0, P + 1.72, 0.06);
     holder.add(head);
-    items.push({ kind: 'statue', who: pl.who, mat, statue, glow, halo, head, w: 0, done: false, proj: 1 });
+    items.push({ kind: 'statue', who: pl.who, mat, statue, glow, halo, head, w: 0, done: false, proj: 1, near: pl.near ?? NEAR, look: pl.look ?? LOOK });
   }
 
   /* what flows out of them into your flask: gold sparks (the dark stream is kept for later figures) */
@@ -245,7 +282,7 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
       it.head.getWorldPosition(_to);
       const fromEye = _to.clone().sub(camera.position);
       const d = fromEye.length();
-      const looking = !it.done && d < NEAR && _dir.dot(fromEye.divideScalar(d)) > LOOK;
+      const looking = !it.done && d < it.near && _dir.dot(fromEye.divideScalar(d)) > it.look;
       if (looking) it.w = Math.min(1, it.w + dt / HOLD);
       else if (!it.done) it.w = Math.max(0, it.w - dt / 3);
       if (!it.done && it.w >= 1) {

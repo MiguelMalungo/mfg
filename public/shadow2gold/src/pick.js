@@ -12,8 +12,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  * Model frame: wrist at the origin, fingers along +Y, palm facing +Z, thumb toward +X.
  */
 
-const LEVEL = 1.45; // how brightly the hand is lit, whatever its distance from the flask (tuned by eye against i24a)
-const SKIN = new THREE.Color(0.52, 0.47, 0.42); // multiplies the baked colour map: dark, a little warm
+const LEVEL = 0.8; // how brightly the hand is lit, whatever its distance from the flask (2026-11-23: halved; it read as pale plaster against the dark, sooty hand of i24a)
+const SKIN = new THREE.Color(0.38, 0.32, 0.27); // multiplies the baked colour map: dark, sooty, a little warm
 const NORMAL_SCALE = 1.7;
 const ROUGH = 0.95; // multiplies the baked roughness: a little greasy sheen on the pads
 const FLASK_SHARE = 0.3; // of the flask's direct light on the hand

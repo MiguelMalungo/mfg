@@ -17,7 +17,12 @@ import * as THREE from 'three';
  */
 
 
-export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = [], planeY = 0, key = 'floor' } = {}) => {
+/*
+ * streak (the water): lights do not mirror as points on moving water but as long broken columns down
+ * toward you (iflood, i16). The blur is stretched far along the screen's vertical and kept narrow across,
+ * and the ripples bend it in bands, so each column breaks into pieces.
+ */
+export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = [], planeY = 0, key = 'floor', streak = 0 } = {}) => {
   // only what is above the mirror is drawn into it
   const MIRROR = new THREE.Plane(new THREE.Vector3(0, 1, 0), -(planeY + 0.002));
   const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, depthBuffer: true });
@@ -57,7 +62,8 @@ export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = 
           // where this point of the floor lands in the mirrored image, rippled by the boards
           vec4 rc = reflMatrix * vec4(vReflW, 1.0);
           vec2 ruv = rc.xy / rc.w;
-          ruv += (normal - nonPerturbedNormal).xy * 0.06;
+          ruv += (normal - nonPerturbedNormal).xy * ${(0.06 + 0.5 * streak).toFixed(3)};
+          ${streak ? 'ruv.x += sin(vReflW.z * 9.0 + vReflW.x * 2.0) * 0.004 * ' + streak.toFixed(2) + ';' : ''}
           // how far this point is from the eye: far floor reflects more, and blurs more along the view
           vec3 toEye = cameraPosition - vReflW;
           float dist = length(toEye);
@@ -66,14 +72,14 @@ export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = 
           // polish: smooth planks mirror, rough patches and the gaps barely do
           float polish = pow(clamp(1.0 - roughnessFactor, 0.0, 1.0), 2.4);
           // a blur stretched along the screen's vertical, wider for rougher wood
-          float spread = (2.0 + 26.0 * roughnessFactor) ;
+          float spread = (2.0 + 26.0 * roughnessFactor) + ${(90 * streak).toFixed(1)};
           vec3 refl = vec3(0.0);
           float wsum = 0.0;
           for (int i = 0; i < 12; i++) {
             float fi = float(i);
             float a = fi * 2.39996;
             float r = sqrt((fi + 0.5) / 12.0);
-            vec2 o = vec2(cos(a) * 0.35, sin(a) * 1.0) * r * spread * reflTexel;
+            vec2 o = vec2(cos(a) * ${streak ? '0.05' : '0.35'}, sin(a) * 1.0) * r * spread * reflTexel;
             float w = 1.0 - r * 0.6;
             refl += texture2D(tRefl, ruv + o).rgb * w;
             wsum += w;
@@ -87,7 +93,7 @@ export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = 
           vec3 nW = normalize((vec4(normal, 0.0) * viewMatrix).xyz);
           vec3 Rd = reflect(-normalize(toEye), nW);
           vec3 glow = vec3(0.0);
-          float wide = 0.003 + 0.09 * roughnessFactor * roughnessFactor;
+          float wide = 0.003 + 0.09 * roughnessFactor * roughnessFactor + ${(0.02 * streak).toFixed(3)};
           for (int i = 0; i < 8; i++) {
             if (i >= glowN) break;
             vec3 q = glowPos[i] - vReflW;
@@ -100,7 +106,7 @@ export const makeFloorReflection = (renderer, scene, camera, floorMat, { hide = 
         #include <opaque_fragment>`,
       );
   };
-  floorMat.customProgramCacheKey = () => 'st2g-refl-v2-' + key;
+  floorMat.customProgramCacheKey = () => 'st2g-refl-v3-' + key + streak;
   floorMat.needsUpdate = true;
 
   const _p = new THREE.Vector3(), _t = new THREE.Vector3(), _up = new THREE.Vector3(), _d = new THREE.Vector3();
