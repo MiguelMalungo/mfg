@@ -301,7 +301,8 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
     const towardYou = Math.atan2(dx, dz);
     let want = 0; // how fast it walks this frame
     if (h.state === 'wait') {
-      if (player.pos.z < Z_STAIR_END + 1) {
+      // from the last few steps down (where it holds you back, a hand's width from the old edge of this test)
+      if (player.pos.z < Z_STAIR_END + 3) {
         // it watches you, and steps across into your way if you try to pass
         h.yaw = turnToward(h.yaw, towardYou, 1.2, dt);
         const block = Math.max(-1.4, Math.min(1.4, player.pos.x * 0.8));
@@ -406,6 +407,8 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
     return { id: def.id, def, mesh: m, state: 'water', home: p.clone(), seed: i * 1.7, k: 0, door: d };
   });
   const nextLetter = () => list.find((L) => L.state === 'water');
+  /** The horse has come to you and led you in (or did, on an earlier visit): the letters can be read. */
+  const ledIn = () => horse.state === 'lead' || horse.state === 'rest';
   const _t = new THREE.Vector3(), _f = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
 
   // the next letter to find: a soft warm light pooled on the water round it, so it can be found in the dark
@@ -1649,18 +1652,18 @@ orbHalo.material.opacity = 0.22;
       }
       return null;
     }
-    // in the cellar: the next sealed letter, whenever it is in reach (the first floats within reach of where
-    // the horse first stops you: it can be read before the horse comes; the others lie beyond it)
+    // in the cellar: the next sealed letter, once the horse has come and led you in (until then they lie dark
+    // on the water and cannot be taken up: the horse is met first). It floats low, so the reach is generous.
     const L = nextLetter();
-    if (!L) return null;
-    return inView(camera, L.mesh.position, wide ? 3.6 : 3.0, 0.12 * W * 1.4) < Infinity ? { mesh: L.mesh, def: L.def, onPick: () => readLetter(L) } : null;
+    if (!L || !ledIn()) return null;
+    return inView(camera, L.mesh.position, wide ? 4.0 : 3.4, 0.12 * W * 1.4) < Infinity ? { mesh: L.mesh, def: L.def, onPick: () => readLetter(L) } : null;
   };
 
   /** How far the next letter is from the eye, once the horse has led you in (else Infinity): for the tip. */
   const letterNear = (camera) => {
     if (st.room) return Infinity;
     const L = nextLetter();
-    return L ? L.mesh.position.distanceTo(camera.position) : Infinity;
+    return L && ledIn() ? L.mesh.position.distanceTo(camera.position) : Infinity;
   };
 
   /* ═════════════ each frame ═════════════ */
@@ -1709,9 +1712,9 @@ orbHalo.material.opacity = 0.22;
       const m = L.mesh;
       if (L.state === 'water') {
         m.position.y = WATER + 0.006 + 0.005 * Math.sin(t * 0.9 + L.seed);
-        // the next one glows, and a soft light stands over it (the first only once the horse has come: it is
-        // read in the horse's stillness, not drawn to)
-        const lit = L === nxt && (st.read.length > 0 || horse.state === 'lead' || horse.state === 'rest');
+        // the next one glows, and a soft light stands over it, once the horse has come and led you in (the
+        // same test as for picking it: a lit letter can always be read)
+        const lit = L === nxt && ledIn();
         m.material.emissiveIntensity += ((lit ? 0.12 + 0.05 * Math.sin(t * 1.6) : 0) - m.material.emissiveIntensity) * (1 - Math.exp(-dt * 2));
         if (L === nxt) {
           beacon.position.set(m.position.x, WATER + 0.004, m.position.z);

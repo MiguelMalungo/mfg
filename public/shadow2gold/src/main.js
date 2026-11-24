@@ -303,8 +303,14 @@ const begin = () => {
     .catch((err) => console.error('The hand did not load:', err));
   // level II waits under the house: its statue is the one the choice sets (Venus for a man, Apollo for a woman)
   if (ALBEDO_ON) {
-    albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
-    albedo.restore(save.data);
+    // ?at=albedo (or the level II card on the intro page) plays level II from its beginning, the horse first:
+    // its earlier progress is not restored, and this visit's is not saved (the real path keeps both)
+    const fresh = startAt === 'albedo';
+    const lvlSave = fresh ? { data: save.data, add() {}, set() {} } : save;
+    albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save: lvlSave, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
+    if (!fresh) albedo.restore(save.data);
+    state.albedoSave = lvlSave;
+    state.goldSaid = albedo.st.gold;
     // the horse's legs and the letters afloat break the water too
     water.track(() => (albedo.horse.pos.z < house.cellar.waterZ0 ? albedo.horse.pos : null), 0.0038, 0.45);
     for (const L of albedo.list) water.bob(() => (L.state === 'water' ? L.mesh.position : null), 0.0014, 4.5);
@@ -1509,8 +1515,9 @@ const tick = (forceDt) => {
       state.albedo = true;
       words.word(ALBEDO.title, ALBEDO.enter, 4.5);
     }
-    if (albedo.st.gold && !save.data.gold) {
-      save.set({ gold: true });
+    if (albedo.st.gold && !state.goldSaid) {
+      state.goldSaid = true;
+      state.albedoSave.set({ gold: true });
       // what the gold was: the anima or the animus, named once it is back (then the line about the statue)
       const it = albedo.gallery.items[0], P = ALBEDO.projection[it.who];
       if (P) later(1.2, () => words.say({ title: P.title, lines: P.lines, anchor: () => it.head.getWorldPosition(tmp2) }));
