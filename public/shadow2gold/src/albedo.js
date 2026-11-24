@@ -1218,7 +1218,8 @@ orbHalo.material.opacity = 0.22;
     }
     // candles on the floor round the column's foot
     // candles on the lowest step of the column's base
-    for (const [a0, h] of [[0.5, 0.12], [0.75, 0.07], [2.4, 0.15], [2.7, 0.08], [-0.3, 0.1]]) house.candle(group, Math.sin(a0) * 0.92, HALL_Y + 0.2, COLUMN_Z + Math.cos(a0) * 0.92, h, 0.24);
+    // (on the band of it left clear by the second step: 0.8 to 0.95 m out from the middle)
+    for (const [x, z, h] of [[0.42, 0.88, 0.12], [0.62, 0.87, 0.07], [-0.55, 0.88, 0.1], [0.88, -0.35, 0.15], [-0.87, -0.6, 0.08]]) house.candle(group, x, HALL_Y + 0.2, COLUMN_Z + z, h, 0.24);
   }
 
   // the statue on its column under the oculus (gallery.js: the gold, and the withdrawing of it)

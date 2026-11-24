@@ -614,7 +614,7 @@ loadPeople()
 
 /* ── frame ── */
 let lastT = performance.now();
-const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), tmp = new THREE.Vector3(), toSh = new THREE.Vector3();
+const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), toSh = new THREE.Vector3();
 const rigQ = new THREE.Quaternion();
 const accel = new THREE.Vector3(), prevVel = new THREE.Vector3();
 let prevYaw = 0;
@@ -1501,6 +1501,9 @@ const tick = (forceDt) => {
     }
     if (albedo.st.gold && !save.data.gold) {
       save.set({ gold: true });
+      // what the gold was: the anima or the animus, named once it is back (then the line about the statue)
+      const it = albedo.gallery.items[0], P = ALBEDO.projection[it.who];
+      if (P) later(1.2, () => words.say({ title: P.title, lines: P.lines, anchor: () => it.head.getWorldPosition(tmp2) }));
       words.tip(ALBEDO.goldBack, { id: 'goldBack' });
       later(6, () => words.tip(ALBEDO.otherWaits, { id: 'otherWaits' }));
       vessel.react({ bloom: 0.4 });

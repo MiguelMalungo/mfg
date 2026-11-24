@@ -58,6 +58,8 @@
       .tip { left: 50%; bottom: calc(66px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: min(84vw, 640px); text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-size: clamp(18px, 2.5vh, 23px); line-height: 1.35; color: #ffe2b0; text-shadow: 0 0 12px #000, 0 0 3px #000, 0 1px 2px #000; }
       .say { width: min(380px, 84vw); padding: 18px 22px; margin: -18px -22px; border-radius: 10px; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.32) 70%, rgba(0, 0, 0, 0)); box-sizing: content-box; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(19px, 2.5vh, 26px); line-height: 1.36; text-shadow: 0 0 14px #000, 0 0 3px #000, 0 1px 2px #000; }
       .say p { margin: 0 0 5px; }
+      /* a phone held sideways: little height, so a wider, slightly smaller text that fits on the screen */
+      @media (orientation: landscape) and (max-height: 500px) { .say { width: min(500px, 58vw); font-size: 18px; line-height: 1.3; } .say-title { margin-bottom: 8px; } }
       .say-title { font-size: 0.6em; letter-spacing: 0.34em; text-transform: uppercase; color: #ffd89a; margin-bottom: 12px; font-family: Inter, sans-serif; }
       .say-q { margin-top: 14px !important; color: #ffd89a; font-weight: 600; }
       .say-choice { display: flex; gap: 12px; margin-top: 16px; }

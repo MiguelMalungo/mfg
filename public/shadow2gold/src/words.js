@@ -165,8 +165,11 @@ export const makeWords = (camera, mode) => {
         box.style.top = Math.min(innerHeight * 0.62, y + innerHeight * 0.2) + 'px';
         box.style.transform = 'translate(-50%, 0)';
       } else {
-        box.style.left = Math.min(innerWidth - 420, x + innerHeight * 0.2) + 'px';
-        box.style.top = Math.max(40, Math.min(innerHeight - 260, y)) + 'px';
+        // beside it, kept whole on the screen (a phone held sideways is short: a long text is centred on it)
+        const bw = box.offsetWidth, bh = box.offsetHeight, pad = 14;
+        box.style.left = Math.max(pad + 22, Math.min(innerWidth - bw - pad - 22, x + innerHeight * 0.2)) + 'px';
+        const half = bh / 2 + pad;
+        box.style.top = (half * 2 >= innerHeight ? innerHeight / 2 : Math.max(half, Math.min(innerHeight - half, y))) + 'px';
         box.style.transform = 'translate(0, -50%)';
       }
     }

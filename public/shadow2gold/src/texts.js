@@ -312,6 +312,26 @@ export const ALBEDO = {
   otherFar: 'Someone far off holds up a light of their own.',
   otherRecedes: 'The nearer you come, the further they go.',
   goldBack: 'A statue, not a god. The gold is in your own flask.',
+  // shown as the gold comes back (Jung: the contrasexual soul-image, met first as a projection on someone else;
+  // withdrawn, it becomes the way into one's own depths). The name is cut into the column's pedestal (gallery.js).
+  projection: {
+    goddess: {
+      title: 'The Anima',
+      lines: [
+        'Jung called her the anima: the woman in a man, the image of his own soul.',
+        'He does not find her in himself. He finds her in a woman, and she shines gold: he cannot look away, and she can do no wrong.',
+        'Taken back, she is stone, and the one across the hall is a person again. The anima turns inward, and leads him down into himself.',
+      ],
+    },
+    god: {
+      title: 'The Animus',
+      lines: [
+        'Jung called him the animus: the man in a woman, her own spirit and her own word.',
+        'She does not find him in herself. She finds him in a man, and he shines gold: he seems to know, and she follows.',
+        'Taken back, he is stone, and the one across the hall is a person again. The animus turns inward, and becomes her own voice.',
+      ],
+    },
+  },
   otherWaits: 'The one with the other light has stopped. They are waiting.',
   goToOther: 'Go to them.',
   bird: 'White.',

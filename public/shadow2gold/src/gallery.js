@@ -49,6 +49,61 @@ const loadStatue = async (who) => {
   return g;
 };
 
+/*
+ * The column and the pedestals: weathered pale stone (Poly Haven "Grey Plaster 02", CC0, assets/albedo/CREDITS.md),
+ * mapped in metres so it keeps its scale on every part, stained dark where the water has stood against it.
+ */
+const STONE = './assets/albedo/grey_plaster_02_';
+/** UVs in metres / tile from the geometry's own positions (+ off, where the part sits in its column), each face
+ * mapped from the axis it faces; a cylinder keeps its own way round (no seam), in metres. */
+const metricUV = (geo, tile, off = 0) => {
+  const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv;
+  const round = geo.type === 'CylinderGeometry' && geo.parameters;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i) + off, z = p.getZ(i);
+    if (round && Math.abs(n.getY(i)) < 0.5) {
+      uv.setXY(i, (uv.getX(i) * 2 * Math.PI * round.radiusTop) / tile, y / tile);
+      continue;
+    }
+    const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+    if (ay >= ax && ay >= az) uv.setXY(i, x / tile, z / tile);
+    else if (ax >= az) uv.setXY(i, z / tile, y / tile);
+    else uv.setXY(i, x / tile, y / tile);
+  }
+  uv.needsUpdate = true;
+  return geo;
+};
+/** The name cut into the pedestal's face: Roman capitals, the cut in shadow at the top, its lower edge catching the light. */
+const inscription = (word) => {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 384;
+  const x = c.getContext('2d');
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  const font = `600 200px "Cormorant Garamond", "Trajan Pro", Georgia, serif`;
+  x.font = font;
+  const sp = word.split('').join(String.fromCharCode(8202)); // hair spaces: wide-set, as cut in stone
+  // the cut: a dark groove, a shadow under its upper lip, a lit lower edge, worn soft
+  x.filter = 'blur(1.2px)';
+  x.fillStyle = 'rgba(255,240,215,0.35)';
+  x.fillText(sp, 512, 200);
+  x.fillStyle = 'rgba(28,22,16,0.92)';
+  x.fillText(sp, 512, 192);
+  x.fillStyle = 'rgba(8,6,4,0.55)';
+  x.fillText(sp, 512, 186);
+  // a rule under it
+  x.fillStyle = 'rgba(28,22,16,0.6)';
+  x.fillRect(300, 318, 424, 6);
+  x.fillStyle = 'rgba(255,240,215,0.25)';
+  x.fillRect(300, 324, 424, 3);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+};
+export const NAMES = { goddess: 'ANIMA', god: 'ANIMUS' };
+
 /** A warm, candlelit surround for the gold to reflect: dark panelling, pale ceiling, a few flames. */
 const goldEnvironment = (renderer) => {
   const w = 256, h = 128, c = document.createElement('canvas');
@@ -86,8 +141,43 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
   const env = renderer ? goldEnvironment(renderer) : null;
   const group = new THREE.Group();
   scene.add(group);
-  const plinthMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.05, 0.045, 0.04), roughness: 0.7 });
-  const capMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.13, 0.12, 0.11), roughness: 0.5 });
+  const tl = new THREE.TextureLoader();
+  const stoneTex = (k, srgb) => {
+    const t = tl.load(STONE + k + '_1k.jpg');
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const sMaps = { map: stoneTex('diff', true), normalMap: stoneTex('nor_gl'), roughnessMap: stoneTex('rough') };
+  /** Stone, stained toward the water: darker from `low` up to about 1.3 m above it, a tide line just over it. */
+  const stoneMat = (color, low) => {
+    const m = new THREE.MeshStandardMaterial({ ...sMaps, color, roughness: 1, normalScale: new THREE.Vector2(0.9, 0.9) });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.stLow = { value: low };
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying float vStY;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvStY = (modelMatrix * vec4(transformed, 1.0)).y;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vStY; uniform float stLow;')
+        .replace(
+          '#include <map_fragment>',
+          `#include <map_fragment>
+          {
+            float h = vStY - stLow;
+            float damp = mix(0.5, 1.0, smoothstep(0.0, 1.3, h));
+            float tide = 1.0 - 0.35 * exp(-pow((h - 0.34) / 0.05, 2.0));
+            diffuseColor.rgb *= damp * tide;
+          }`,
+        );
+    };
+    m.customProgramCacheKey = () => 'stone-damp';
+    return m;
+  };
+  const low = places[0]?.column?.from ?? -100;
+  // pale, a little warm (i13a: the column is the palest thing in the hall after the statue)
+  const capMat = stoneMat(new THREE.Color(0.78, 0.74, 0.67), low);
+  const plinthMat = stoneMat(new THREE.Color(0.55, 0.51, 0.46), low);
   const items = [];
   const marble = new THREE.Color(0.5, 0.48, 0.43), goldC = new THREE.Color(0.86, 0.54, 0.15);
 
@@ -102,8 +192,9 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
       // a fluted shaft (twenty flutes cut into it), a moulded base on a square plinth, a ring under the top (i13a)
       const tall = !!pl.column.tall;
       // tall: a slender shaft on a three-stepped base, under a carved capital (i13a); otherwise a short drum
-      const base = tall ? 0.6 : 0.38, capH = tall ? 0.55 : 0.16, rad = tall ? 0.3 : 0.4;
-      const shaftG = new THREE.CylinderGeometry(rad, rad * 1.12, h - base - capH, 80, 6, true);
+      // tall: two steps, a pedestal (a die between a base moulding and a cornice, the name cut in its face), a plinth
+      const base = tall ? 1.59 : 0.38, capH = tall ? 0.55 : 0.16, rad = tall ? 0.3 : 0.4;
+      const shaftG = new THREE.CylinderGeometry(rad, rad * 1.12, h - base - capH, 80, 12, true);
       {
         const p = shaftG.attributes.position;
         for (let i = 0; i < p.count; i++) {
@@ -113,16 +204,29 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
           p.setZ(i, (z / r) * r * k);
         }
         shaftG.computeVertexNormals();
+        metricUV(shaftG, 0.9);
+        shaftG.userData.metric = true;
       }
       const parts = [];
       const shaft = new THREE.Mesh(shaftG, capMat);
       shaft.position.y = -h + base + (h - base - capH) / 2;
       parts.push(shaft);
       if (tall) {
-        for (const [w, hh, y] of [[1.9, 0.2, 0.1], [1.5, 0.18, 0.29], [1.1, 0.14, 0.45]]) {
-          const st = new THREE.Mesh(new THREE.BoxGeometry(w, hh, w), capMat);
+        for (const [w, hh, y, mat] of [[1.9, 0.2, 0.1, plinthMat], [1.6, 0.16, 0.28, plinthMat], [1.2, 0.08, 0.4, capMat], [1.04, 0.95, 0.915, capMat], [1.2, 0.06, 1.42, capMat], [1.26, 0.04, 1.47, capMat], [0.82, 0.1, 1.54, capMat]]) {
+          const st = new THREE.Mesh(new THREE.BoxGeometry(w, hh, w), mat);
           st.position.y = -h + y;
           parts.push(st);
+        }
+        // the name, cut into the die's face (and its back): ANIMA under the goddess, ANIMUS under the god
+        if (NAMES[pl.who]) {
+          const im = new THREE.MeshStandardMaterial({ map: inscription(NAMES[pl.who]), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
+          for (const back of [false, true]) {
+            const cut = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.35), im);
+            cut.position.set(0, -h + 0.98, back ? -0.521 : 0.521);
+            if (back) cut.rotation.y = Math.PI;
+            cut.renderOrder = 1;
+            parts.push(cut);
+          }
         }
         // the capital: a bell, two rings of curling leaves round it, volutes at the corners, the abacus on top
         const bell = new THREE.Mesh(new THREE.LatheGeometry([0.3, 0.31, 0.34, 0.4, 0.48].map((r, i) => new THREE.Vector2(r, i * 0.1)), 32), capMat);
@@ -164,14 +268,20 @@ export const buildGallery = (scene, people, house, glowTex, W, renderer, places 
         neck.position.y = -0.07;
         parts.push(neck);
       }
-      for (const m of parts) ((m.castShadow = m.receiveShadow = true), holder.add(m));
+      for (const m of parts) {
+        // every stone part in metres (the leaves, the bell, the rings too), the cut name excepted
+        if (!m.material.transparent && !m.geometry.userData.metric) ((m.geometry.userData.metric = true), metricUV(m.geometry, 0.9, m.position.y));
+        m.castShadow = !m.material.transparent;
+        m.receiveShadow = true;
+        holder.add(m);
+      }
     }
     holder.rotation.y = Math.atan2(face.x, face.z);
     group.add(holder);
     // a stepped pedestal
     const P = 0.5;
     for (const [w, h, y] of [[0.86, 0.08, 0.04], [0.74, P - 0.14, 0.08 + (P - 0.14) / 2], [0.84, 0.06, P - 0.03]]) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), h > 0.1 ? plinthMat : capMat);
+      const m = new THREE.Mesh(metricUV(new THREE.BoxGeometry(w, h, w), 0.9, y), h > 0.1 ? plinthMat : capMat);
       m.position.y = y;
       m.castShadow = m.receiveShadow = true;
       holder.add(m);
