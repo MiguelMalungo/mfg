@@ -1484,6 +1484,8 @@ const tick = (forceDt) => {
   adaptExposure(dt);
   // phones are looked at close, in the dark, on a bright screen: 15% less there (the owner found it blinding)
   post.finish.uniforms.exposure.value = EXPOSURE * adapt.value * (1 - 0.94 * (sh.dip || 0)) * (albedo?.st.exposure ?? 1) * (LITE ? 0.85 : 1);
+  // an opened letter is held at the eye and shown as at the house's own exposure, however dark the place is graded
+  if (albedo) albedo.st.paperGain = Math.min(3, EXPOSURE / Math.max(1e-3, post.finish.uniforms.exposure.value));
   refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
   waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5);

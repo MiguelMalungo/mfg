@@ -408,6 +408,191 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
   const nextLetter = () => list.find((L) => L.state === 'water');
   const _t = new THREE.Vector3(), _f = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
 
+  // the next letter to find: a soft warm light pooled on the water round it, so it can be found in the dark
+  const beacon = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(1.0, 0.72, 0.42), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  beacon.rotation.x = -Math.PI / 2;
+  beacon.renderOrder = 2;
+  group.add(beacon);
+  api.noWaterMirror?.([beacon]);
+
+  /*
+   * The letter opened (i16): what is inside an envelope is a sheet folded in three. Read, it rises to your
+   * eye, the seal breaks, the sheet comes out and unfolds in front of you, and the text is written on it in
+   * ink: there is no text box. It is held at the eye, sized to the screen (a portrait sheet on a phone held
+   * upright, a wider one on a screen held sideways), and drawn unlit, at the house's own exposure
+   * (st.paperGain, from main.js), so it reads in the darkest place. A click or tap folds it away.
+   */
+  const paperCanvas = (def, aspect, ink) => {
+    const H = 1400, Wd = Math.round(H * aspect);
+    const c = document.createElement('canvas');
+    c.width = Wd;
+    c.height = H;
+    const x = c.getContext('2d');
+    let seed = 991 + (ink ? 0 : 7);
+    const R = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const base = x.createRadialGradient(Wd / 2, H * 0.45, H * 0.15, Wd / 2, H / 2, Math.hypot(Wd, H) * 0.62);
+    base.addColorStop(0, '#e8d8b4');
+    base.addColorStop(0.6, '#d6c094');
+    base.addColorStop(1, '#8c7046');
+    x.fillStyle = base;
+    x.fillRect(0, 0, Wd, H);
+    for (let i = 0; i < 2600; i++) {
+      x.fillStyle = `rgba(${90 + R() * 40},${66 + R() * 30},${36 + R() * 20},${R() * 0.05})`;
+      x.fillRect(R() * Wd, R() * H, 1 + R() * 9, 1 + R() * 3);
+    }
+    for (let i = 0; i < 40; i++) {
+      x.fillStyle = `rgba(120,80,35,${0.04 + R() * 0.1})`;
+      x.beginPath();
+      x.arc(R() * Wd, R() * H, 1 + R() * 6, 0, Math.PI * 2);
+      x.fill();
+    }
+    // old damp: broad soft blotches, the odd faint tide line, heavier toward the bottom edge
+    for (let i = 0; i < 4; i++) {
+      const cx = R() * Wd, cy = H * (0.45 + 0.55 * R()), r = 160 + R() * 320;
+      const g = x.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
+      g.addColorStop(0, 'rgba(120,85,40,0.07)');
+      g.addColorStop(0.8, 'rgba(110,75,35,0.09)');
+      g.addColorStop(0.93, 'rgba(95,62,28,0.06)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g;
+      x.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+    }
+    // the two folds: a shadow and a lit edge across the sheet
+    for (const fy of [H / 3, (2 * H) / 3]) {
+      const g = x.createLinearGradient(0, fy - 14, 0, fy + 14);
+      g.addColorStop(0, 'rgba(80,55,25,0)');
+      g.addColorStop(0.45, 'rgba(80,55,25,0.22)');
+      g.addColorStop(0.55, 'rgba(255,245,220,0.18)');
+      g.addColorStop(1, 'rgba(255,245,220,0)');
+      x.fillStyle = g;
+      x.fillRect(0, fy - 14, Wd, 28);
+    }
+    if (!ink) return c;
+    // the text in ink: the title, a rule, then the lines, as large as the sheet allows
+    const m = Wd * 0.1, top = H * 0.11, bottom = H * 0.9, width = Wd - 2 * m;
+    const wrap = (text, font) => {
+      x.font = font;
+      const out = [];
+      let cur = '';
+      for (const w of text.split(/\s+/)) {
+        const tryL = cur ? cur + ' ' + w : w;
+        if (x.measureText(tryL).width > width && cur) (out.push(cur), (cur = w));
+        else cur = tryL;
+      }
+      if (cur) out.push(cur);
+      return out;
+    };
+    let size = H * 0.082, layout;
+    for (; size > 18; size *= 0.94) {
+      const tFont = `600 ${size * 1.25}px "Cormorant Garamond", Georgia, serif`;
+      const bFont = `500 ${size}px "Cormorant Garamond", Georgia, serif`;
+      const tl = wrap(def.title, tFont);
+      const paras = def.lines.map((l) => wrap(l, bFont));
+      const hgt = tl.length * size * 1.45 + size * 1.3 + paras.reduce((a, p) => a + p.length * size * 1.42 + size * 0.55, 0);
+      layout = { tFont, bFont, tl, paras, hgt };
+      if (hgt <= bottom - top) break;
+    }
+    let y = top + Math.max(0, (bottom - top - layout.hgt) * 0.35);
+    x.textBaseline = 'top';
+    x.fillStyle = 'rgba(38,24,14,0.92)';
+    x.textAlign = 'center';
+    x.font = layout.tFont;
+    for (const l of layout.tl) (x.fillText(l, Wd / 2, y), (y += size * 1.45));
+    x.strokeStyle = 'rgba(60,38,20,0.5)';
+    x.lineWidth = 2;
+    x.beginPath();
+    x.moveTo(Wd / 2 - Wd * 0.12, y + size * 0.35);
+    x.lineTo(Wd / 2 + Wd * 0.12, y + size * 0.35);
+    x.stroke();
+    y += size * 1.3;
+    x.textAlign = 'left';
+    x.font = layout.bFont;
+    x.fillStyle = 'rgba(42,27,16,0.9)';
+    for (const p of layout.paras) {
+      for (const l of p) (x.fillText(l, m, y), (y += size * 1.42));
+      y += size * 0.55;
+    }
+    return c;
+  };
+  // the letter's hand is the title page's serif: ask for both weights now, so it is ready when a letter opens
+  for (const w of [500, 600]) document.fonts?.load(`${w} 40px "Cormorant Garamond"`).catch(() => {});
+  const sheet = { group: new THREE.Group(), k: 0, state: null, folds: [] };
+  sheet.group.visible = false;
+  scene.add(sheet.group);
+  api.noWaterMirror?.([sheet.group]);
+  const sheetMats = [0, 1].map(() => new THREE.MeshBasicMaterial({ fog: false, toneMapped: false }));
+  /** Builds the sheet for a letter: three panels (the middle, and the top and bottom thirds on their folds),
+   * each a front with the writing and a plain back. */
+  const makeSheet = (def, camera) => {
+    const aspect = camera.aspect > 1.15 ? 1.2 : 0.74;
+    for (const [i, ink] of [[0, true], [1, false]]) {
+      sheetMats[i].map?.dispose();
+      const t = new THREE.CanvasTexture(paperCanvas(def, aspect, ink));
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      sheetMats[i].map = t;
+      sheetMats[i].needsUpdate = true;
+    }
+    sheet.group.traverse((o) => o.isMesh && o.geometry.dispose());
+    sheet.group.clear();
+    sheet.folds = [];
+    const panel = (third) => {
+      const g = new THREE.Group();
+      for (const back of [false, true]) {
+        const geo = new THREE.PlaneGeometry(aspect, 1 / 3);
+        const uv = geo.attributes.uv;
+        for (let i = 0; i < uv.count; i++) {
+          const u = back ? 1 - uv.getX(i) : uv.getX(i);
+          uv.setXY(i, u, (2 - third + uv.getY(i)) / 3);
+        }
+        const mesh = new THREE.Mesh(geo, sheetMats[back ? 1 : 0]);
+        if (back) mesh.rotation.y = Math.PI;
+        mesh.renderOrder = 10;
+        g.add(mesh);
+      }
+      return g;
+    };
+    sheet.group.add(panel(1));
+    for (const s of [1, -1]) {
+      const pivot = new THREE.Group();
+      pivot.position.y = s / 6;
+      const p = panel(s > 0 ? 0 : 2);
+      p.position.y = s / 6;
+      pivot.add(p);
+      sheet.group.add(pivot);
+      sheet.folds.push({ pivot, s });
+    }
+    sheet.aspect = aspect;
+  };
+  /** Each frame while a letter is open: held at the eye, sized to the view; it unfolds, then folds away. */
+  const updateSheet = (dt, camera) => {
+    if (!sheet.state) return;
+    sheet.k = Math.min(1, sheet.k + dt / (sheet.state === 'open' ? 1.5 : 0.7));
+    const open = sheet.state === 'open' ? sheet.k : 1 - sheet.k;
+    const D = 0.34;
+    const vh = 2 * D * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), vw = vh * camera.aspect;
+    const h = Math.min(vh * 0.84, (vw * 0.9) / sheet.aspect);
+    // it comes up out of the envelope, folded, then the bottom third opens and then the top
+    const rise = ss(0, 0.35, open);
+    sheet.group.scale.setScalar(h * (0.45 + 0.55 * rise));
+    camera.getWorldDirection(_f);
+    sheet.group.position.copy(camera.position).addScaledVector(_f, D);
+    sheet.group.quaternion.copy(camera.quaternion);
+    // (on a screen held upright, a little above the middle: clear of the thumb's stick in the corner)
+    sheet.group.translateY(-vh * 0.55 * (1 - rise) + (camera.aspect < 1 ? vh * 0.05 : 0));
+    sheet.group.rotateX(-0.5 * (1 - rise));
+    for (const f of sheet.folds) {
+      const k = f.s < 0 ? ss(0.3, 0.68, open) : ss(0.55, 0.95, open);
+      f.pivot.rotation.x = f.s * (Math.PI * (f.s < 0 ? 0.975 : 0.985)) * (1 - k);
+    }
+    // the frame is exposed ×4.3 and filmed after (fx.js): 0.18 puts the paper at a candlelit cream, under the
+    // bloom's threshold, as at the house's own exposure
+    const g = Math.min(3, st.paperGain ?? 1) * 0.18;
+    for (const m of sheetMats) m.color.setScalar(g);
+    sheet.group.visible = true;
+    if (sheet.state === 'close' && sheet.k >= 1) ((sheet.state = null), (sheet.group.visible = false));
+  };
+
   const readLetter = (L) => {
     st.busy = true;
     L.state = 'rising';
@@ -415,24 +600,33 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
     L.from = L.mesh.position.clone();
     L.fromQ = L.mesh.quaternion.clone();
     api.sound.glass(659.3, 0.04, 2);
-    api.later(1.2, () =>
+    api.later(1.15, () => {
+      // the seal breaks; the envelope drops away below the view and the sheet comes out of it
+      api.sound.glass(523.3, 0.05, 3);
+      L.state = 'opened';
+      L.k = 0;
+      L.from = L.mesh.position.clone();
+      makeSheet(L.def, sheet.cam);
+      sheet.state = 'open';
+      sheet.k = 0;
       api.words.say({
         title: L.def.title,
         lines: L.def.lines,
-        anchor: () => L.mesh.position,
+        box: false,
         onDone: () => {
-          // the seal breaks; the letter goes down; its door under the water swings open
+          // folded away; the letter goes down; its door under the water swings open
+          sheet.state = 'close';
+          sheet.k = 0;
           L.state = 'sinking';
           L.k = 0;
           L.from = L.mesh.position.clone();
-          api.sound.glass(523.3, 0.05, 3);
           L.door.want = 1;
           st.openDoor = L.door;
           st.busy = false;
           api.words.tip(ALBEDO.door, { id: 'door' + L.id, times: 1 });
         },
-      }),
-    );
+      });
+    });
   };
 
   /* ═════════════ the dream rooms ═════════════ */
@@ -575,9 +769,13 @@ orbHalo.material.opacity = 0.22;
     const R = st.room, d = R.L.door;
     fadeThrough(
       () => {
-        // back in front of the door you went through, facing the water; the door shuts
+        // back in front of the door you went through; the door shuts. You face the next letter (the doors face
+        // the stair, so facing out from the door would put the next letter behind you), or, the letters read,
+        // the far end of the water where the hall door opens
         const p = new THREE.Vector3(d.x, 0, d.z).addScaledVector(d.front, 1.5);
-        api.teleport(p.x, p.z, Math.atan2(-d.front.x, -d.front.z) + Math.PI);
+        const nl = list.find((x) => x.state === 'water' && x !== R.L);
+        const aim = nl ? nl.mesh.position : _f.set(0, 0, Z_ROOM_END);
+        api.teleport(p.x, p.z, Math.atan2(-(aim.x - p.x), -(aim.z - p.z)), -0.32);
         d.want = 0;
         st.openDoor = null;
         dreamFig.obj.visible = false;
@@ -1510,8 +1708,15 @@ orbHalo.material.opacity = 0.22;
       const m = L.mesh;
       if (L.state === 'water') {
         m.position.y = WATER + 0.006 + 0.005 * Math.sin(t * 0.9 + L.seed);
-        const lit = L === nxt && (horse.state === 'lead' || horse.state === 'rest');
-        m.material.emissiveIntensity += ((lit ? 0.07 + 0.04 * Math.sin(t * 1.6) : 0) - m.material.emissiveIntensity) * (1 - Math.exp(-dt * 2));
+        // the next one glows, and a soft light stands over it (the first only once the horse has come: it is
+        // read in the horse's stillness, not drawn to)
+        const lit = L === nxt && (st.read.length > 0 || horse.state === 'lead' || horse.state === 'rest');
+        m.material.emissiveIntensity += ((lit ? 0.12 + 0.05 * Math.sin(t * 1.6) : 0) - m.material.emissiveIntensity) * (1 - Math.exp(-dt * 2));
+        if (L === nxt) {
+          beacon.position.set(m.position.x, WATER + 0.004, m.position.z);
+          const want = lit && !st.busy ? 0.32 + 0.06 * Math.sin(t * 1.6) : 0;
+          beacon.material.opacity += (want - beacon.material.opacity) * (1 - Math.exp(-dt * 2));
+        }
       } else if (L.state === 'rising') {
         L.k = Math.min(1, L.k + dt / 1.1);
         const k = L.k * L.k * (3 - 2 * L.k);
@@ -1520,6 +1725,13 @@ orbHalo.material.opacity = 0.22;
         m.position.lerpVectors(L.from, _t, k);
         _q.setFromRotationMatrix(_m.lookAt(_t, camera.position, camera.up));
         m.quaternion.slerpQuaternions(L.fromQ, _q, k);
+      } else if (L.state === 'opened') {
+        // its seal broken, the envelope drops away below the view while the sheet comes up out of it
+        L.k = Math.min(1, L.k + dt / 0.6);
+        m.position.copy(L.from);
+        m.position.y -= 0.5 * L.k * L.k;
+        m.material.transparent = true;
+        m.material.opacity = 1 - L.k;
       } else if (L.state === 'sinking') {
         L.k = Math.min(1, L.k + dt / 2.5);
         m.position.lerpVectors(L.from, L.home.clone().setY(WATER - 0.4), L.k * L.k);
@@ -1529,6 +1741,9 @@ orbHalo.material.opacity = 0.22;
         if (L.k >= 1) ((L.state = 'gone'), (m.visible = false));
       }
     }
+    if (!nxt || st.room) beacon.material.opacity = 0;
+    sheet.cam = camera;
+    updateSheet(dt, camera);
     // the doors under the water: swing open with light behind; walk in and the dream takes you
     for (const d of doors) {
       d.open += (d.want - d.open) * (1 - Math.exp(-dt * 1.2));

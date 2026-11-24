@@ -46,11 +46,15 @@ export const makeWords = (camera, mode) => {
     if (question) el('p', 'say-q', box).textContent = question;
   };
 
-  /** anchor: () => THREE.Vector3 in world space (the text sits beside it). onDone('time' | 'click'). */
-  const say = ({ title, lines, anchor, onDone }) => {
+  /** anchor: () => THREE.Vector3 in world space (the text sits beside it). onDone('time' | 'click').
+   * box: false when the text is shown in the world itself (an opened letter): it is timed and closed by a
+   * click the same way, a little longer, with no box on screen. */
+  const say = ({ title, lines, anchor, onDone, box: inBox = true }) => {
     close('replaced');
+    const read = readingTime([title, ...lines].join(' '));
+    cur = { anchor: inBox ? anchor : null, until: now + (inBox ? read : read * 1.3 + 2), onDone, shown: now, guard: inBox ? 0.35 : 1.6 };
+    if (!inBox) return;
     fill(title, lines);
-    cur = { anchor, until: now + readingTime([title, ...lines].join(' ')), onDone, shown: now };
     box.classList.remove('hidden');
   };
 
@@ -87,7 +91,7 @@ export const makeWords = (camera, mode) => {
   const click = () => {
     if (!cur) return false;
     if (cur.choice) return answer('take');
-    if (now - cur.shown < 0.35) return true;
+    if (now - cur.shown < (cur.guard ?? 0.35)) return true; // (an opened letter: not before it has unfolded)
     close('click');
     return true;
   };

@@ -386,10 +386,15 @@ export const buildHouse = (scene, glowTex) => {
     const lf = new THREE.Mesh(sunkLeafGeo, joinMat);
     lf.castShadow = lf.receiveShadow = true;
     g2.add(lf);
-    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.35, 0.1), woodMat);
-    fr.position.set(0, 1.12, -0.04);
-    fr.scale.set(1, 1, 0.6);
-    g2.add(fr);
+    // its frame, moulded on both faces like the house's own doors (a plain box here read as a dark slab
+    // standing out above and beside the leaf)
+    for (const back of [false, true]) {
+      const fr = new THREE.Mesh(sideCaseGeo, joinMat);
+      fr.receiveShadow = true;
+      if (back) fr.rotation.y = Math.PI;
+      fr.position.z = back ? -0.035 : 0.015;
+      g2.add(fr);
+    }
     group.add(g2);
     sunk.push({ group: g2, leaf: lf, x, z, ry });
   }
