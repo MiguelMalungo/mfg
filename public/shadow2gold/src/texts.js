@@ -369,6 +369,13 @@ export const INTRO = {
     { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: null },
   ],
   begin: 'Begin',
+  // the title card after a level card is picked (level I's is in index.html as it stands)
+  start: {
+    albedo: {
+      level: 'II · ALBEDO',
+      howto: '<p>Below the house the water is black and still. Your light floats beside you.<br /><b>A horse waits in the water, and three sealed letters float on it.</b></p><p class="soft">Go slowly, and lower your eyes when you are asked to.<br />Nothing is lost here. Only time.</p>',
+    },
+  },
   test: 'Prototype: try any level',
   testHint: 'for testing · your saved progress is not touched',
 };

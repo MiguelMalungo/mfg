@@ -228,8 +228,18 @@ let startAt = params.get('at');
   $('intro-begin').textContent = INTRO.begin;
   $('intro-hint').textContent = INTRO.testHint;
   const intro = $('intro');
+  // the title card names the level you are about to play (it is written for level I in index.html)
+  const card = { level: document.querySelector('#start .level'), howto: document.querySelector('#start .howto') };
+  const own = { level: card.level.textContent, howto: card.howto.innerHTML };
+  const setCard = (at) => {
+    const c = INTRO.start[at] ?? own;
+    card.level.textContent = c.level;
+    card.howto.innerHTML = c.howto;
+  };
+  setCard(startAt);
   const leave = (at) => {
     startAt = at;
+    setCard(at);
     intro.classList.add('hidden');
     setTimeout(() => (intro.style.display = 'none'), 1000);
   };
