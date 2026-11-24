@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildGallery } from './gallery.js';
-import { WATER, ROOM_Y, ROOM_W, Z_STAIR_END, Z_ROOM_END, WAINSCOT } from './house.js';
+import { WATER, ROOM_Y, ROOM_W, Z_STAIR_END, Z_ROOM_END, WAINSCOT, Z_END } from './house.js';
 import { doorLeaf, doorCase, board, moulding, wainscotBay } from './joinery.js';
 import { LETTERS, ALBEDO } from './texts.js';
 
@@ -105,6 +105,68 @@ const dreamMaterial = (rim) => {
   };
   m.customProgramCacheKey = () => 'st2g-dream-figure';
   return m;
+};
+
+/** UVs in world metres / tile for a box-like mesh: tops by x and z, the faces by x or z and y. */
+const worldUV = (mesh, tile) => {
+  mesh.updateMatrixWorld(true);
+  const g = mesh.geometry, p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+  const v = new THREE.Vector3(), nn = new THREE.Vector3(), nm = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld);
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).applyMatrix4(mesh.matrixWorld);
+    nn.fromBufferAttribute(n, i).applyMatrix3(nm);
+    const ax = Math.abs(nn.x), ay = Math.abs(nn.y), az = Math.abs(nn.z);
+    if (ay >= ax && ay >= az) uv.setXY(i, v.x / tile, v.z / tile);
+    else if (az >= ax) uv.setXY(i, v.x / tile, v.y / tile);
+    else uv.setXY(i, v.z / tile, v.y / tile);
+  }
+  uv.needsUpdate = true;
+};
+
+/**
+ * A soft fill of candle light for a place with no light of its own (the flooded corridor): up to 12 points
+ * (the chandelier, the clusters of candles), added as indirect light with a falloff and a little of the
+ * surface's facing, and darker toward the water and the ceiling. Not real lights: each of those costs on
+ * every pixel of the frame.
+ */
+const FILL_N = 12;
+const candleFill = (mat, fill, { lowY, highY, key }) => {
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => {
+    prev?.call(mat, sh, r);
+    sh.uniforms.cfP = fill.P;
+    sh.uniforms.cfN = fill.N;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCfW;').replace(
+      '#include <project_vertex>',
+      `#include <project_vertex>
+      vec4 cfp = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        cfp = instanceMatrix * cfp;
+      #endif
+      vCfW = (modelMatrix * cfp).xyz;`,
+    );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>\nuniform vec4 cfP[${FILL_N}]; uniform int cfN; varying vec3 vCfW;`)
+      .replace(
+        '#include <lights_fragment_end>',
+        `#include <lights_fragment_end>
+        {
+          vec3 nW = inverseTransformDirection(normal, viewMatrix);
+          vec3 e = vec3(0.0);
+          for (int i = 0; i < ${FILL_N}; i++) {
+            if (i >= cfN) break;
+            vec3 l = cfP[i].xyz - vCfW;
+            float d2 = dot(l, l);
+            e += cfP[i].w * (0.35 + 0.65 * max(dot(nW, l * inversesqrt(d2)), 0.0)) / (d2 + 0.8);
+          }
+          float cs = 1.0 - 0.6 * (1.0 - smoothstep(${lowY.toFixed(2)}, ${(lowY + 0.6).toFixed(2)}, vCfW.y)) - 0.5 * smoothstep(${(highY - 0.7).toFixed(2)}, ${highY.toFixed(2)}, vCfW.y);
+          reflectedLight.indirectDiffuse += material.diffuseColor * vec3(1.0, 0.62, 0.32) * e * clamp(cs, 0.0, 1.0);
+        }`,
+      );
+  };
+  mat.customProgramCacheKey = () => 'st2g-fill-' + key;
+  mat.needsUpdate = true;
+  return mat;
 };
 
 export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, api }) => {
@@ -593,6 +655,8 @@ orbHalo.material.opacity = 0.22;
   };
 
   /* ═════════════ 1. the stair (i14) ═════════════ */
+  // the candles' light on the stair: the 12 clusters nearest you, gathered again as you go (see update)
+  const stairFill = { P: { value: Array.from({ length: FILL_N }, () => new THREE.Vector4()) }, N: { value: 0 }, age: 99, K: 4 };
   // Rough damp brick close on both sides, worn treads with rounded nosings that catch the candles, candles in
   // clusters, and their light painted onto the treads and the walls (no light of their own: lights are costly).
   {
@@ -608,6 +672,7 @@ orbHalo.material.opacity = 0.22;
     };
     const brick = new THREE.MeshStandardMaterial({ map: bt('diff_1k.jpg', true), normalMap: bt('nor_gl_1k.jpg'), roughnessMap: bt('rough_1k.jpg'), roughness: 1, color: new THREE.Color(0.16, 0.14, 0.12), normalScale: new THREE.Vector2(1.4, 1.4) });
     for (const w of S.walls) w.material = brick;
+    candleFill(brick, stairFill, { lowY: -100, highY: 100, key: 'stair-brick' });
     // the treads: a worn, smoother top on each step and a rounded edge, one merged mesh
     const parts = [];
     for (let i = 0; i < S.steps.length; i++) {
@@ -625,9 +690,31 @@ orbHalo.material.opacity = 0.22;
       nose.translate(0, y - 0.024, z + run / 2 - 0.012);
       parts.push(nose);
     }
-    const treadMat = new THREE.MeshStandardMaterial({ map: house.stoneMat.map, normalMap: house.stoneMat.normalMap, color: new THREE.Color(0.22, 0.2, 0.17), roughness: 0.42 });
+    // worn flagstone (Poly Haven "Monastery Stone Floor", CC0, assets/albedo), mapped by world metres so
+    // each step shows the stone at its true size; the treads a little smoother where feet have gone
+    const stepMaps = (() => {
+      const L = new THREE.TextureLoader(), T = './assets/albedo/monastery_stone_floor_';
+      const t = (f, srgb) => {
+        const x = L.load(T + f);
+        x.wrapS = x.wrapT = THREE.RepeatWrapping;
+        x.anisotropy = 4;
+        if (srgb) x.colorSpace = THREE.SRGBColorSpace;
+        return x;
+      };
+      return { map: t('diff_1k.jpg', true), normalMap: t('nor_gl_1k.jpg'), roughnessMap: t('rough_1k.jpg') };
+    })();
+    const stepMat = new THREE.MeshStandardMaterial({ ...stepMaps, color: new THREE.Color(0.42, 0.38, 0.33), roughness: 1, normalScale: new THREE.Vector2(1.2, 1.2) });
+    for (const m of S.steps) {
+      m.material = stepMat;
+      worldUV(m, 1.6);
+    }
+    const treadMat = new THREE.MeshStandardMaterial({ ...stepMaps, color: new THREE.Color(0.48, 0.44, 0.38), roughness: 0.75, normalScale: new THREE.Vector2(0.7, 0.7) });
     const treads = add(new THREE.Mesh(mergeGeometries(parts.map((gq) => gq.toNonIndexed())), treadMat));
+    worldUV(treads, 1.6);
     treads.castShadow = false;
+    // the candles on the steps light the stone round them (a fill: they are not lights)
+    candleFill(stepMat, stairFill, { lowY: -100, highY: 100, key: 'stair-step' });
+    candleFill(treadMat, stairFill, { lowY: -100, highY: 100, key: 'stair-tread' });
     // more candles round each one already burning on the steps: clusters, as in i14 (halo on the first only)
     const R = (k) => Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1;
     const glowMat = new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(0.5, 0.25, 0.09), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
@@ -654,6 +741,30 @@ orbHalo.material.opacity = 0.22;
   }
 
   /* ═════════════ the flooded corridor (i15, iflood) ═════════════ */
+  const cellarFill = { P: { value: Array.from({ length: FILL_N }, () => new THREE.Vector4()) }, N: { value: 0 }, age: 99, pairs: [], K: 11 };
+  /** Gathers the flames in the flooded corridor (its chandelier is hung later, by the dressing) into clusters. */
+  const gatherFill = () => gather(cellarFill, Z_STAIR_END + 1.5, Z_ROOM_END - 0.5, WATER - 0.3, CROOF, null);
+  /** Flames between z0 (high) and z1 (low), y0..y1, clustered; the biggest clusters, or the nearest to `near`. */
+  const gather = (fill, z0, z1, y0, y1, near) => {
+    const pts = [];
+    const f = new THREE.Vector3();
+    const take = (root) =>
+      root.traverse((o) => {
+        if (o.material !== house.flameMat) return;
+        o.getWorldPosition(f);
+        if (f.z > z0 || f.z < z1 || f.y < y0 || f.y > y1) return;
+        const c = pts.find((q) => q.p.distanceTo(f) < 0.7);
+        if (c) (c.p.multiplyScalar(c.n).add(f).divideScalar(c.n + 1), (c.n += 1));
+        else pts.push({ p: f.clone(), n: 1 });
+      });
+    take(group);
+    take(house.group);
+    if (near) pts.sort((a, b) => a.p.distanceToSquared(near) - b.p.distanceToSquared(near));
+    else pts.sort((a, b) => b.n - a.n);
+    const n = Math.min(FILL_N, pts.length);
+    for (let i = 0; i < n; i++) fill.P.value[i].set(pts[i].p.x, pts[i].p.y, pts[i].p.z, fill.K * 0.05 * Math.min(pts[i].n, 8));
+    fill.N.value = n;
+  };
   // The cellar is dressed as a corridor of the house gone under: papered walls, panelling down into the
   // water, doors in the walls, a flat ceiling with a chandelier. The stone vault above is hidden.
   const CROOF = WATER + 3.5;
@@ -665,6 +776,12 @@ orbHalo.material.opacity = 0.22;
     const ceilP = house.ceilMat.clone();
     ceilP.color = new THREE.Color(0.18, 0.16, 0.13);
     const wood = house.panelMat.clone();
+    const doorWood = house.joinMat.clone();
+    // no light of its own here: the chandelier's and the candles' light is laid on as a fill (candleFill)
+    for (const [m, key] of [[paper, 'paper'], [ceilP, 'ceil'], [wood, 'panel'], [doorWood, 'door']]) candleFill(m, cellarFill, { lowY: WATER, highY: CROOF, key });
+    // the clones were taken before the dressing may have put the photographed surfaces on the house's
+    // materials: they follow them when it does (see update)
+    cellarFill.pairs = [[paper, house.wallMat], [ceilP, house.ceilMat], [wood, house.panelMat], [doorWood, house.joinMat]];
     const topW = ROOM_Y + WAINSCOT;
     for (const s of [-1, 1]) {
       const rot = s < 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -689,10 +806,10 @@ orbHalo.material.opacity = 0.22;
       }
       // closed doors in the walls, the water up to their middle rail
       for (const z of s < 0 ? [Z_STAIR_END - 5.0, Z_STAIR_END - 11.4] : [Z_STAIR_END - 2.4, Z_STAIR_END - 9.0, Z_STAIR_END - 12.6]) {
-        const leaf = add(new THREE.Mesh(doorLeaf(0.95, 2.2, 0.045), house.joinMat));
+        const leaf = add(new THREE.Mesh(doorLeaf(0.95, 2.2, 0.045), doorWood));
         leaf.rotation.y = rot;
         leaf.position.set(s * (hw - 0.03), ROOM_Y + 0.15, z);
-        const cs = add(new THREE.Mesh(doorCase(0.95, 2.2), house.joinMat));
+        const cs = add(new THREE.Mesh(doorCase(0.95, 2.2), doorWood));
         cs.rotation.y = rot;
         cs.position.set(s * hw, ROOM_Y + 0.15, z);
       }
@@ -710,7 +827,7 @@ orbHalo.material.opacity = 0.22;
     }
     const over = add(new THREE.Mesh(mplane(ARCH_W, CROOF - (ROOM_Y + ARCH_H), 1.7), paper));
     over.position.set(0, (ROOM_Y + ARCH_H + CROOF) / 2, Z_ROOM_END + 0.012);
-    const arc = add(new THREE.Mesh(doorCase(ARCH_W, ARCH_H), house.joinMat));
+    const arc = add(new THREE.Mesh(doorCase(ARCH_W, ARCH_H), doorWood));
     arc.position.set(0, ROOM_Y, Z_ROOM_END + 0.01);
     const ceil = add(new THREE.Mesh(mplane(ROOM_W, len, 2.2), ceilP));
     ceil.rotation.x = Math.PI / 2;
@@ -1333,8 +1450,8 @@ orbHalo.material.opacity = 0.22;
       }
       return null;
     }
-    // in the cellar: the next sealed letter, once the horse has led you in
-    if (horse.state !== 'lead' && horse.state !== 'rest') return null;
+    // in the cellar: the next sealed letter, whenever it is in reach (the first floats within reach of where
+    // the horse first stops you: it can be read before the horse comes; the others lie beyond it)
     const L = nextLetter();
     if (!L) return null;
     return inView(camera, L.mesh.position, wide ? 3.6 : 3.0, 0.12 * W * 1.4) < Infinity ? { mesh: L.mesh, def: L.def, onPick: () => readLetter(L) } : null;
@@ -1342,7 +1459,7 @@ orbHalo.material.opacity = 0.22;
 
   /** How far the next letter is from the eye, once the horse has led you in (else Infinity): for the tip. */
   const letterNear = (camera) => {
-    if (st.room || (horse.state !== 'lead' && horse.state !== 'rest')) return Infinity;
+    if (st.room) return Infinity;
     const L = nextLetter();
     return L ? L.mesh.position.distanceTo(camera.position) : Infinity;
   };
@@ -1350,6 +1467,22 @@ orbHalo.material.opacity = 0.22;
   /* ═════════════ each frame ═════════════ */
   const update = (dt, t, camera, flaskPos, sound, player) => {
     camPos.copy(camera.position);
+    // the flooded corridor's fill: gathered again every few seconds while you are near it (the chandelier
+    // is hung once the dressing has loaded), and its cloned surfaces follow the house's photographed ones
+    if (player.pos.z < Z_END + 1 && player.pos.z > Z_STAIR_END - 4 && (stairFill.age += dt) > 0.4) {
+      stairFill.age = 0;
+      gather(stairFill, Z_END + 0.5, Z_STAIR_END - 1, WATER - 0.4, 2, camera.position);
+    }
+    if (player.pos.z < Z_END - 2 && player.pos.z > -1000 && (cellarFill.age += dt) > 3) {
+      cellarFill.age = 0;
+      gatherFill();
+      for (const [c, src] of cellarFill.pairs)
+        if (c.map !== src.map) {
+          for (const k of ['map', 'normalMap', 'roughnessMap']) c[k] = src[k];
+          c.normalScale.copy(src.normalScale);
+          c.needsUpdate = true;
+        }
+    }
     // the exposure of each place, graded against its trailer frame (mean luma: i14 0.08, iflood 0.10, i15 0.14,
     // i13a 0.09): the flask lights the near walls strongly, so the picture is brought down where it is close
     {
@@ -1437,8 +1570,9 @@ orbHalo.material.opacity = 0.22;
       if (R.kind === 'feeling') return R.chosen ? '' : ALBEDO.rooms.feeling.line;
       return R.step === 'turned' ? ALBEDO.rooms.other.give : R.step === 'look' ? ALBEDO.horseFollow : '';
     }
+    // the horse stops you on the last steps, before the stair ends: say what it asks from there
+    if (horse.state === 'wait' && player.pos.z < Z_END - 3) return ALBEDO.horseLine;
     if (player.pos.z > Z_STAIR_END) return '';
-    if (horse.state === 'wait') return ALBEDO.horseLine;
     if (horse.state === 'come' || horse.state === 'greet') return '';
     if (st.openDoor && st.openDoor.open > 0.3) return ALBEDO.door;
     if (st.read.length < LETTERS.length) return ALBEDO.letterLine(LETTERS.length - st.read.length);
@@ -1474,5 +1608,5 @@ orbHalo.material.opacity = 0.22;
     }
   };
 
-  return { group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, letterNear, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
+  return { group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, letterNear, cellarFill, stairFill, gatherFill, gather, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
 };

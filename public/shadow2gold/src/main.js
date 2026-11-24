@@ -1401,6 +1401,8 @@ const tick = (forceDt) => {
     $('pickbtn').classList.toggle('hidden', !(candidate && !hand?.busy && !stand.on));
     $('stick').classList.toggle('away', !state.started || stand.on);
   }
+  // the hand keeps most of its brightness where the picture is graded down (pick.js, st.comp)
+  if (hand) hand.st.comp = Math.min(2.2, Math.pow(1 / Math.max(0.3, (albedo?.st.exposure ?? 1) * (LITE ? 0.85 : 1)), 0.75)) * (player.pos.z < Z_END - 0.5 ? 1.25 : 1);
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
   // the first time a letter is within reach: how to pick it up, said for the screen you play on
   if (albedo && state.started && !words.open && albedo.letterNear(camera) < 4.2) words.tip(TIPS.letter[touch.on ? 'touch' : 'desk'], { id: 'letter' });

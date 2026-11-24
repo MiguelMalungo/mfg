@@ -18,7 +18,7 @@ const NORMAL_SCALE = 2.3; // the crackle and the creases deep enough to catch th
 const ROUGH = 0.95; // multiplies the baked roughness: a little greasy sheen on the pads
 const FLASK_SHARE = 0.3; // of the flask's direct light on the hand
 const KEY = 1.9; // the warm light from the flask below, grazing up the fingers, relative to the flask's light at the palm
-const RIM = 0.7; // the edge light, same units
+const RIM = 1.15; // the edge light, same units (raised 2026-11-23: below the house the hand read as a shadow)
 const KEY_DIR = new THREE.Vector3(0.42, -0.62, 0.66).normalize(); // view space: from below and to the right, where the flask hangs (i24a, i24b)
 const WARM = new THREE.Color(1.0, 0.62, 0.32);
 const WRIST_CREASE = { man: 0.022, woman: 0.024 }; // m above the 'hand' bone's head where the forearm starts to go dark
@@ -155,7 +155,7 @@ export const makeHand = async (camera, who) => {
   pivot.visible = false;
   camera.add(pivot);
 
-  const st = { k: 0, grip: 0, phase: 'down', gt: 0, aim: new THREE.Vector2(), has: false };
+  const st = { k: 0, grip: 0, phase: 'down', gt: 0, aim: new THREE.Vector2(), has: false, comp: 1 };
   const _t = new THREE.Vector3(), F = new THREE.Vector3(), N = new THREE.Vector3(), X = new THREE.Vector3(), tip = new THREE.Vector3(), basis = new THREE.Matrix4();
   const tanHalf = () => Math.tan((camera.fov * Math.PI) / 360);
 
@@ -220,7 +220,9 @@ export const makeHand = async (camera, who) => {
       pivot.updateMatrixWorld(true);
       const d = Math.max(0.06, light.getWorldPosition(_l).distanceTo(palmBone.getWorldPosition(_p)));
       const E = light.intensity / Math.pow(d, light.decay);
-      u.uGain.value = Math.min(1, LEVEL / Math.max(E, 1e-3));
+      // st.comp (set by main.js each frame) undoes most of the picture's grading for each place and the eye's
+      // adapting, so the hand stays a hand where the picture is brought down (the stair, the flooded corridor)
+      u.uGain.value = Math.min(2.5, (LEVEL * st.comp) / Math.max(E, 1e-3));
       // the key and the rim are in the same units as the flask's light at the palm, so uGain treats them alike
       u.uKeyCol.value.copy(WARM).multiply(light.color).multiplyScalar(E * KEY);
       u.uRimCol.value.copy(WARM).multiply(light.color).multiplyScalar(E * RIM);
