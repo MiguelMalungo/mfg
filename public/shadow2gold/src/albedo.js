@@ -407,8 +407,10 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
     return { id: def.id, def, mesh: m, state: 'water', home: p.clone(), seed: i * 1.7, k: 0, door: d };
   });
   const nextLetter = () => list.find((L) => L.state === 'water');
-  /** The horse has come to you and led you in (or did, on an earlier visit): the letters can be read. */
-  const ledIn = () => horse.state === 'lead' || horse.state === 'rest';
+  /** The horse has come to you and led you in (or did, on an earlier visit), and no door stands open waiting
+   * for you: the next letter can be read. One letter, its door, its room, then the next (a second letter read
+   * before going through the first door left that door lit and leading nowhere). */
+  const ledIn = () => (horse.state === 'lead' || horse.state === 'rest') && !st.openDoor;
   const _t = new THREE.Vector3(), _f = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
 
   // the next letter to find: a soft warm light pooled on the water round it, so it can be found in the dark
@@ -1763,7 +1765,8 @@ orbHalo.material.opacity = 0.22;
     } else if (!od && !st.room && roamLight.userData.base > 0 && player.pos.z < Z_STAIR_END - 1.5) roamLight.userData.base = 0;
     if (od) {
       setRoam(new THREE.Vector3(od.x, WATER + 1.0, od.z).addScaledVector(od.front, 0.6), new THREE.Color(1.0, 0.86, 0.66), 0.9 * od.open, 5);
-      if (!st.busy && !st.room && od.open > 0.7 && Math.hypot(player.pos.x - od.x, player.pos.z - od.z) < 1.25) {
+      // walk into it, from in front or beside (on a phone the stick steers loosely: the reach is generous)
+      if (!st.busy && !st.room && od.open > 0.7 && Math.hypot(player.pos.x - od.x, player.pos.z - od.z) < 1.5) {
         const L = list.find((x) => x.door === od);
         enterRoom(L);
       }
