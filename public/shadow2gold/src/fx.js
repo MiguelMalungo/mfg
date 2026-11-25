@@ -357,18 +357,18 @@ export class Sound {
     o.stop(t + dur + 0.05);
   }
 
-  /** A footfall on old boards: a dull knock and a short creak of grit. */
-  step(strength = 1) {
+  /** A footfall on old boards: a dull knock and a short creak of grit. stone: on rock, a tighter knock and grit. */
+  step(strength = 1, stone = false) {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
-    o.frequency.setValueAtTime(95 + Math.random() * 20, t);
-    o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+    o.frequency.setValueAtTime((stone ? 140 : 95) + Math.random() * 20, t);
+    o.frequency.exponentialRampToValueAtTime(stone ? 70 : 48, t + 0.12);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.16 * strength, t + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    g.gain.linearRampToValueAtTime((stone ? 0.09 : 0.16) * strength, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (stone ? 0.14 : 0.2));
     o.connect(g);
     g.connect(this.bus);
     o.start(t);
@@ -377,17 +377,63 @@ export class Sound {
     src.buffer = this.noiseBuf;
     const f = ctx.createBiquadFilter();
     f.type = 'bandpass';
-    f.frequency.value = 1400 + Math.random() * 900;
+    f.frequency.value = (stone ? 2600 : 1400) + Math.random() * 900;
     f.Q.value = 2;
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0, t);
-    ng.gain.linearRampToValueAtTime(0.03 * strength, t + 0.01);
+    ng.gain.linearRampToValueAtTime((stone ? 0.05 : 0.03) * strength, t + 0.01);
     ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
     src.connect(f);
     f.connect(ng);
     ng.connect(this.bus);
     src.start(t, Math.random());
     src.stop(t + 0.12);
+    if (stone) (g.connect(this.wet), ng.connect(this.wet)); // rock gives it back
+  }
+
+  /** A child's footfall: small, light, quick. amp 0..1 (how near). */
+  childStep(amp = 0.5) {
+    if (!this.ctx || amp < 0.02) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 900 + Math.random() * 500;
+    f.Q.value = 1.4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.09 * amp, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    src.connect(f);
+    f.connect(g);
+    g.connect(this.bus);
+    g.connect(this.wet);
+    src.start(t, Math.random());
+    src.stop(t + 0.12);
+  }
+
+  /** The stone hum of the cave, deep and slow: set every frame, 0 is silent. */
+  cave(amount) {
+    if (!this.ctx || (!this.caveGain && amount <= 0)) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    if (!this.caveGain) {
+      this.caveGain = ctx.createGain();
+      this.caveGain.gain.value = 0;
+      this.caveGain.connect(this.bus);
+      // two low tones a hair apart, so it swells and falls; and the air moving in the rock
+      for (const f of [41.2, 41.55]) {
+        const o = ctx.createOscillator();
+        o.frequency.value = f;
+        o.connect(this.caveGain);
+        o.start();
+      }
+      const air = this._band(110, 1.6);
+      air.gain.value = 1.4;
+      air.disconnect();
+      air.connect(this.caveGain);
+    }
+    this.caveGain.gain.setTargetAtTime(amount * 0.045, t, 1.2);
   }
 
   /**
@@ -486,6 +532,71 @@ export class Sound {
     src.start(t, Math.random());
     src.stop(t + 0.2);
     setTimeout(() => this._click(2400, 0.02 * amp, 0.05), 120); // the latch
+  }
+
+  /** The fire in the furnace: a low roar and the crackle of it. Set every frame, 0 is silent. */
+  fire(amount, dt = 1 / 60) {
+    if (!this.ctx) return;
+    if (!this.fireGain) ((this.fireGain = this._band(150, 0.35)), (this.fireHiss = this._band(1900, 0.6)));
+    const t = this.ctx.currentTime;
+    this.fireGain.gain.setTargetAtTime(amount * 0.3, t, 0.2);
+    this.fireHiss.gain.setTargetAtTime(amount * amount * 0.02, t, 0.2);
+    if (Math.random() < amount * dt * 9) this._click(500 + Math.random() * 2600, 0.004 + 0.02 * Math.random() * amount, 0.02 + 0.03 * Math.random());
+  }
+
+  /** The glass ringing under the heat, higher as it rises: k 0..1, amp 0 is silent. It goes past the room (hush). */
+  ring(k, amp) {
+    if (!this.ctx || (!this.ringGain && amp <= 0)) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    if (!this.ringGain) {
+      this.ringGain = ctx.createGain();
+      this.ringGain.gain.value = 0;
+      this.ringGain.connect(this.master);
+      this.ringGain.connect(this.wet);
+      this.ringOsc = [1, 2.004, 2.76].map((m, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.userMul = m;
+        g.gain.value = [1, 0.35, 0.12][i];
+        o.connect(g);
+        g.connect(this.ringGain);
+        o.start();
+        return o;
+      });
+    }
+    const f = 174.6 * Math.pow(2, 1.6 * k);
+    for (const o of this.ringOsc) o.frequency.setTargetAtTime(f * o.userMul, t, 0.25);
+    this.ringGain.gain.setTargetAtTime(amp * 0.05, t, 0.3);
+  }
+
+  /** Everything but the ringing glass goes quiet: k 0..1. */
+  hush(k) {
+    if (this.ctx) this.bus.gain.setTargetAtTime(1 - 0.94 * k, this.ctx.currentTime, 0.4);
+  }
+
+  /** A voice without a voice: breath shaped like speech, for as long as a whispered line takes. */
+  hiss(amp = 0.5, seconds = 2) {
+    if (!this.ctx || amp < 0.01) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.Q.value = 3.5;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    f.frequency.setValueAtTime(900, t);
+    for (let k = 0.05; k < seconds; k += 0.13 + Math.random() * 0.1) {
+      f.frequency.linearRampToValueAtTime(600 + Math.random() * 2200, t + k);
+      g.gain.linearRampToValueAtTime(amp * 0.07 * (Math.random() < 0.2 ? 0.05 : 0.4 + 0.6 * Math.random()), t + k);
+    }
+    g.gain.linearRampToValueAtTime(0, t + seconds + 0.3);
+    src.connect(f);
+    f.connect(g);
+    g.connect(this.bus);
+    g.connect(this.wet);
+    src.start(t, Math.random());
+    src.stop(t + seconds + 0.4);
   }
 
   /** A heartbeat: two low thumps. */

@@ -64,7 +64,7 @@ const mplane = (w, h, tile) => {
 };
 
 /** A word floating in the air, drawn on a canvas (the three feelings). */
-const wordSprite = (text) => {
+export const wordSprite = (text) => {
   const c = document.createElement('canvas');
   c.width = 512;
   c.height = 160;
@@ -1208,10 +1208,12 @@ orbHalo.material.opacity = 0.22;
     }
     const lt = add(new THREE.Mesh(mplane(DW, HALL_H - DH, 1.6), stone));
     lt.position.set(0, HALL_Y + DH + (HALL_H - DH) / 2, HALL_Z1);
-    for (let i = 0; i < 10; i++) box(DW, 0.2, 0.3, stone, 0, HALL_Y - 0.1 - i * 0.2, HALL_Z1 - 0.15 - i * 0.3);
-    for (const s of [-1, 1]) box(0.3, DH + 3, 3.2, stone, s * (DW / 2 + 0.15), HALL_Y + DH / 2 - 1.5, HALL_Z1 - 1.6);
-    box(DW + 0.6, 0.3, 3.2, stone, 0, HALL_Y + DH + 0.15, HALL_Z1 - 1.6);
-    const dark = new THREE.Mesh(new THREE.PlaneGeometry(DW, DH + 3), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    // (plain blocks, taken away when the cave's own rock stair is there: rubedo.js)
+    st.stairParts = [];
+    for (let i = 0; i < 10; i++) st.stairParts.push(box(DW, 0.2, 0.3, stone, 0, HALL_Y - 0.1 - i * 0.2, HALL_Z1 - 0.15 - i * 0.3));
+    for (const s of [-1, 1]) st.stairParts.push(box(0.3, DH + 3, 3.2, stone, s * (DW / 2 + 0.15), HALL_Y + DH / 2 - 1.5, HALL_Z1 - 1.6));
+    st.stairParts.push(box(DW + 0.6, 0.3, 3.2, stone, 0, HALL_Y + DH + 0.15, HALL_Z1 - 1.6));
+    const dark = (st.stairDark = new THREE.Mesh(new THREE.PlaneGeometry(DW, DH + 3), new THREE.MeshBasicMaterial({ color: 0x000000 })));
     dark.position.set(0, HALL_Y + DH / 2 - 1.5, HALL_Z1 - 3.1);
     group.add(dark);
     // the vault, with the round opening over the column
@@ -1346,7 +1348,20 @@ orbHalo.material.opacity = 0.22;
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     return t;
   };
-  const other = people.makeFigure(new THREE.MeshStandardMaterial({ map: scanTex('dif.jpg', true), normalMap: scanTex('norm.jpg'), roughness: 0.9, color: new THREE.Color(0.045, 0.04, 0.036) }), otherWho, { neutral: true }); // dark: seen by their own small light
+  // dim, seen by their own small light. The lamp is a hand's breadth from them: what it lights is held back before it
+  // burns out (a burnt scan loses its hair and skin and looks like clay), and the edges fall off into the dark
+  const otherMat = new THREE.MeshStandardMaterial({ map: scanTex('dif.jpg', true), normalMap: scanTex('norm.jpg'), roughness: 0.88, color: new THREE.Color(0.1, 0.093, 0.086) });
+  otherMat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n{ float l = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(l) * vec3(1.0, 0.95, 0.88), 0.5); }').replace(
+      '#include <opaque_fragment>',
+      `{ float L = max(outgoingLight.r, max(outgoingLight.g, outgoingLight.b));
+         float edge = saturate(dot(normal, normalize(vViewPosition)));
+         outgoingLight *= (0.55 + 0.45 * edge) / (1.0 + 2.6 * L); }
+       #include <opaque_fragment>`,
+    );
+  };
+  otherMat.customProgramCacheKey = () => 'st2g-other';
+  const other = people.makeFigure(otherMat, otherWho, { neutral: true });
   other.mesh.castShadow = false;
   group.add(other.obj);
   const oth = { pos: new THREE.Vector3(0.2, HALL_Y, OTHER_Z), yaw: 0, speed: 0, state: 'far', t: 0, told: false };
@@ -1357,7 +1372,7 @@ orbHalo.material.opacity = 0.22;
   const lower = () => {
     if (raised.up) (other.bones.upperarm_r.quaternion.copy(raised.up), other.bones.lowerarm_r.quaternion.copy(raised.lo));
   };
-  const raise = () => {
+  const raise = (k = 1) => {
     // the right arm held up and forward, as one holds up a lamp to see by (after the walk or stand has set the pose)
     const b = other.bones;
     const up = b.upperarm_r, lo = b.lowerarm_r;
@@ -1366,10 +1381,10 @@ orbHalo.material.opacity = 0.22;
     raised.lo = lo.quaternion.clone();
     const right = new THREE.Vector3(Math.cos(oth.yaw), 0, -Math.sin(oth.yaw)); // the figure's right, in the world
     up.parent.updateMatrixWorld(true);
-    const q = new THREE.Quaternion().setFromAxisAngle(right, -1.25);
+    const q = new THREE.Quaternion().setFromAxisAngle(right, -1.25 * k);
     const pw = up.parent.getWorldQuaternion(new THREE.Quaternion());
     up.quaternion.premultiply(pw.clone().invert().multiply(q).multiply(pw));
-    lo.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.5));
+    lo.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.5 * k));
   };
   const updateOther = (dt, t, player) => {
     const O = oth;
@@ -1396,25 +1411,41 @@ orbHalo.material.opacity = 0.22;
       if (O.pos.z > gz) {
         O.yaw = turnToward(O.yaw, Math.atan2(0 - O.pos.x, gz - O.pos.z), 1.5, dt);
         want = dist < 4.5 ? 0.7 : 0.15;
-      } else O.state = 'gone';
+      } else O.state = st.below ? 'guided' : 'gone';
+    } else if (O.state === 'guided') {
+      // level III leads them on (rubedo.js): O.guide is where to, how fast, and which way to face on arriving
+      const g = O.guide, gx = (g?.x ?? O.pos.x) - O.pos.x, gz = (g?.z ?? O.pos.z) - O.pos.z, gd = Math.hypot(gx, gz);
+      if (g && g.speed > 0 && gd > 0.3) {
+        O.yaw = turnToward(O.yaw, Math.atan2(gx, gz), 2.2, dt);
+        want = Math.min(g.speed, gd * 1.2);
+      } else O.yaw = turnToward(O.yaw, g?.yaw ?? toYou, 1.2, dt);
     }
     O.speed += (want - O.speed) * (1 - Math.exp(-dt * 2.5));
     O.pos.x += Math.sin(O.yaw) * O.speed * dt;
     O.pos.z += Math.cos(O.yaw) * O.speed * dt;
     // down the steps beyond the far wall
-    O.pos.y = O.pos.z < HALL_Z1 ? HALL_Y - Math.min(2.0, ((HALL_Z1 - O.pos.z) / 0.3) * 0.2) : HALL_Y;
+    if (O.state === 'guided') O.pos.y += (house.floorAt(O.pos.x, O.pos.z) - O.pos.y) * (1 - Math.exp(-dt * 9));
+    else O.pos.y = O.pos.z < HALL_Z1 ? HALL_Y - Math.min(2.0, ((HALL_Z1 - O.pos.z) / 0.3) * 0.2) : HALL_Y;
     other.obj.position.copy(O.pos);
     other.obj.rotation.y = O.yaw;
     other.setGait(Math.min(1, O.speed / 0.6));
     other.walk.timeScale = Math.max(0.4, O.speed / 1.26);
     lower();
     other.mixer.update(dt);
-    raise();
+    // (the arm comes down as their light leaves the hand)
+    {
+      const held = O.state === 'guided' ? Math.min(1, (otherLight.userData.dim ?? 1) / 0.35) * (O.guide?.lightAt ? 1 - (O.guide.lightK ?? 1) : 1) : 1;
+      O.held = (O.held ?? 1) + (held - (O.held ?? 1)) * (1 - Math.exp(-dt * 1.6));
+      raise(O.held);
+    }
     // the light in the raised hand
     const hand = other.bones.hand_r;
     if (hand) hand.getWorldPosition(otherLight.position);
     else otherLight.position.set(O.pos.x, O.pos.y + 1.9, O.pos.z);
-    otherLight.userData.dim = O.state === 'gone' ? Math.max(0, (otherLight.userData.dim ?? 1) - dt * 0.5) : 0.8;
+    if (O.state === 'guided') {
+      otherLight.userData.dim = O.guide?.dim ?? 0.8;
+      if (O.guide?.lightAt) otherLight.position.lerp(O.guide.lightAt, O.guide.lightK ?? 1);
+    } else otherLight.userData.dim = O.state === 'gone' ? Math.max(0, (otherLight.userData.dim ?? 1) - dt * 0.5) : 0.8;
   };
 
   /* ═════════════ 6. the white bird ═════════════ */
@@ -1581,7 +1612,7 @@ orbHalo.material.opacity = 0.22;
       else {
         p.x = Math.max(-HALL_HW + 0.45 + r, Math.min(HALL_HW - 0.45 - r, p.x));
         // the stair down at the end opens only when the Other has gone down it
-        const deepest = oth.state === 'lead' || oth.state === 'gone' ? HALL_Z1 - 2.6 : HALL_Z1 + r + 0.2;
+        const deepest = oth.state === 'lead' || oth.state === 'gone' || oth.state === 'guided' ? HALL_Z1 - 2.6 : HALL_Z1 + r + 0.2;
         if (p.z < HALL_Z1 + 0.2) p.x = Math.max(-0.55, Math.min(0.55, p.x));
         p.z = Math.max(deepest, p.z);
         // until the gold is withdrawn the Other keeps their distance: you cannot come within six metres
@@ -1707,19 +1738,19 @@ orbHalo.material.opacity = 0.22;
     // i13a 0.09): the flask lights the near walls strongly, so the picture is brought down where it is close
     {
       const z = player.pos.z;
-      const want = z > 100 ? 0.9 : z > -46.2 ? 1 : z > Z_STAIR_END ? 0.42 : z > Z_ROOM_END ? 0.8 : 0.6;
+      const want = st.expo ?? (z > 100 ? 0.9 : z > -46.2 ? 1 : z > Z_STAIR_END ? 0.42 : z > Z_ROOM_END ? 0.8 : 0.6); // (expo: level III's own)
       st.exposure += (want - st.exposure) * (1 - Math.exp(-dt * 1.5));
     }
     // draw each place only when you can see it: the hall once its door is open and you are near it; each
     // dream room only while you are in it; the cellar not while you are in a dream room
     const inDream = player.pos.z > 100;
-    const hallOn = !inDream && st.archOpen && player.pos.z < Z_ROOM_END + 9;
+    const hallOn = !inDream && st.archOpen && player.pos.z < Z_ROOM_END + 9 && !st.hallOff; // (hallOff: in the cave, rubedo.js)
     hallG.visible = hallOn;
     if (gallery.group.userData.on !== hallOn) {
       gallery.group.userData.on = hallOn;
       gallery.group.traverse((o) => (o.isMesh || o.isSprite) && (o.visible = hallOn));
     }
-    other.obj.visible = hallOn;
+    other.obj.visible = (hallOn || oth.state === 'guided') && !oth.hidden;
     room1.visible = st.room?.kind === 'room';
     room2.visible = !!st.room && st.room.kind !== 'room';
     shaftMat.uniforms.time.value = t;
@@ -1846,5 +1877,13 @@ orbHalo.material.opacity = 0.22;
     }
   };
 
-  return { group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, letterNear, cellarFill, stairFill, gatherFill, gather, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
+  /** Straight to the dark stair at the hall's end, the Other going down it (level III opened by itself, or "wake by the fire"). */
+  const toStair = () => {
+    st.phase = 'down';
+    oth.pos.set(0, HALL_Y, HALL_Z1 - 0.6);
+    oth.yaw = Math.PI;
+    oth.state = 'lead';
+  };
+
+  return { toStair, setRoam, fadeThrough, roamLight, otherLight, group, list, gallery, st, horse, oth, bird, dreamFig, other, lookedAt, letterNear, cellarFill, stairFill, gatherFill, gather, update, line, restore, colliders: [...colliders, ...gallery.colliders], places: { HALL_Y, HALL_Z0, HALL_Z1, COLUMN_Z, OTHER_Z, ROOM1, ROOM2 } };
 };

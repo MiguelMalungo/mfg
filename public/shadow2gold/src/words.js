@@ -70,13 +70,14 @@ export const makeWords = (camera, mode) => {
   };
 
   /** A text that ends in the question. onDone('take' | 'leave'). */
-  const ask = ({ title, lines, anchor, onDone }) => {
+  /** `question` and `choice` ({ take, leave, takeKey, leaveKey }) replace the masks' own; `plain` false: a click or tap beside the buttons answers nothing. */
+  const ask = ({ title, lines, anchor, onDone, question = QUESTION, choice = CHOICE, plain = true, aside = false }) => {
     close('replaced');
-    fill(title, lines, QUESTION);
+    fill(title, lines, question);
     const row = el('div', 'say-choice', box);
     for (const k of ['take', 'leave']) {
       const b = el('button', 'say-btn ' + k, row);
-      b.innerHTML = `<span>${CHOICE[k]}</span><small>${CHOICE[k + 'Key'][mode()]}</small>`;
+      b.innerHTML = `<span>${choice[k]}</span><small>${choice[k + 'Key'][mode()]}</small>`;
       const go = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -85,7 +86,7 @@ export const makeWords = (camera, mode) => {
       b.addEventListener('click', go);
       b.addEventListener('touchend', go);
     }
-    cur = { anchor, until: Infinity, onDone, choice: true, shown: now };
+    cur = { anchor, aside, until: Infinity, onDone, choice: true, plain, shown: now };
     box.classList.remove('hidden');
   };
 
@@ -99,9 +100,9 @@ export const makeWords = (camera, mode) => {
   };
 
   /** A click or tap: dismisses a plain text. Returns true if it was used. */
-  const click = () => {
+  const click = (byKey = false) => {
     if (!cur) return false;
-    if (cur.choice) return answer('take');
+    if (cur.choice) return cur.plain || byKey ? answer('take') : true;
     if (now - cur.shown < (cur.guard ?? 0.35)) return true; // (an opened letter: not before it has unfolded)
     close('click');
     return true;
@@ -120,8 +121,10 @@ export const makeWords = (camera, mode) => {
     wordEl.classList.remove('hidden');
     wordUntil = now + seconds;
   };
-  const whisper = (text, seconds = 3) => {
+  /** low: under the middle (at the furnace the middle is the bright flask, and the words would not be seen on it) */
+  const whisper = (text, seconds = 3, { low = false } = {}) => {
     whisperEl.textContent = text;
+    whisperEl.classList.toggle('low', low);
     whisperEl.classList.remove('hidden');
     whisperUntil = now + seconds;
   };

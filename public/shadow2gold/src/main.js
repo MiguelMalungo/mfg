@@ -8,10 +8,11 @@ import { buildChild } from './child.js';
 import { buildMaskHall } from './masks.js';
 import { dressHouse } from './dressing.js';
 import { buildAlbedo } from './albedo.js';
+import { buildRubedo } from './rubedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, RUBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
@@ -31,6 +32,8 @@ const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
 /* Level II (albedo, src/albedo.js) is under the house. On since 2026-11-23 (the owner: "build albedo now"); ?noalbedo shows the old threshold card instead. */
 const ALBEDO_ON = !params.has('noalbedo');
+/* Level III (rubedo, src/rubedo.js) is being built (PLAN.md 10.6.9): only with ?rubedo (or ?at=rubedo). Without it Albedo ends with its card, as before. */
+const RUBEDO_ON = ALBEDO_ON && (params.has('rubedo') || params.get('at') === 'rubedo');
 const TOUCH = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 /*
  * The lighter setting for phones: on a touch device, or with ?lite (?full forces the whole look on a phone).
@@ -107,7 +110,7 @@ waterRefl.u.glowStrength.value = 0.004;
 const water = makeWater(house.waterMat, { shallowZ: house.cellar.waterZ0, lite: LITE });
 {
   const wz = house.cellar.waterZ0;
-  water.track(() => (player.y < WATER - 0.05 && player.pos.z < wz && player.pos.z > -1000 ? player.pos : null), 0.0032, 0.5);
+  water.track(() => (player.y < WATER - 0.05 && player.pos.z < wz && player.pos.z > -1000 && !rubedo?.here(player) ? player.pos : null), 0.0032, 0.5);
   // the candles standing at the waterline on the stair send out a slow ring now and then
   scene.updateMatrixWorld(true);
   const _f = new THREE.Vector3();
@@ -168,22 +171,24 @@ const dust = (() => {
   }
   g.setAttribute('position', new THREE.BufferAttribute(p, 3));
   g.setAttribute('seed', new THREE.BufferAttribute(s, 1));
-  const u = { time: { value: 0 }, eye: { value: new THREE.Vector3() }, lightPos: { value: new THREE.Vector3() }, lightPow: { value: 1 }, px: { value: renderer.getPixelRatio() * innerHeight } };
+  const u = { time: { value: 0 }, eye: { value: new THREE.Vector3() }, lightPos: { value: new THREE.Vector3() }, lightPow: { value: 1 }, floorY: { value: 0 }, px: { value: renderer.getPixelRatio() * innerHeight } };
   const m = new THREE.ShaderMaterial({
     uniforms: u,
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
-      attribute float seed; uniform float time; uniform vec3 eye; uniform vec3 lightPos; uniform float lightPow; uniform float px;
+      attribute float seed; uniform float time; uniform vec3 eye; uniform vec3 lightPos; uniform float lightPow; uniform float px; uniform float floorY;
       varying float vB;
       void main() {
         // the motes drift, and the box of them wraps around the eye along the corridor
-        vec3 p = position + vec3(sin(time * 0.11 + seed * 40.0), sin(time * 0.07 + seed * 17.0) * 0.6, cos(time * 0.09 + seed * 29.0)) * 0.25;
+        // (in the air of whatever floor you stand on: the cellar, the cave)
+        vec3 p = position + vec3(0.0, floorY, 0.0) + vec3(sin(time * 0.11 + seed * 40.0), sin(time * 0.07 + seed * 17.0) * 0.6, cos(time * 0.09 + seed * 29.0)) * 0.25;
         p.z = eye.z + mod(p.z - eye.z + ${(BOX / 2).toFixed(1)}, ${BOX.toFixed(1)}) - ${(BOX / 2).toFixed(1)};
         p.x = clamp(p.x, -${(W / 2 - 0.05).toFixed(2)}, ${(W / 2 - 0.05).toFixed(2)});
         float d = distance(p, lightPos);
-        vB = lightPow * 0.012 / (0.02 + d * d) * (0.4 + 0.6 * seed);
+        // (held back near a strong light: a mote is a fleck, never a lamp)
+        vB = min(0.5, lightPow * 0.012 / (0.02 + d * d)) * (0.4 + 0.6 * seed);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = clamp(px * 0.0032 / max(-mv.z, 0.05), 1.0, 5.0);
@@ -246,7 +251,8 @@ let startAt = params.get('at');
     setTimeout(() => (intro.style.display = 'none'), 1000);
   };
   const cards = $('intro-cards');
-  INTRO.cards.forEach((c) => {
+  INTRO.cards.forEach((c0) => {
+    const c = c0.at === 'rubedo' && RUBEDO_ON ? { ...c0, playable: true, text: c0.textOn } : c0;
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'lcard' + (c.playable ? '' : ' off');
@@ -273,12 +279,16 @@ let startAt = params.get('at');
 /* Man or woman (PLAN.md 10.3): chosen on the title card, saved, changeable only there. */
 let gender = params.get('g') || save.data.gender || (DEBUG ? 'man' : null);
 const whoButtons = [...document.querySelectorAll('#who button')];
+/** The cave was reached in this round and not finished: you may go on from the dark stair (PLAN.md 10.6.6). */
+const canWakeByFire = () => RUBEDO_ON && !startAt && save.data.level === 3 && !save.data.rubedo.done && save.facedNow >= 3 && save.data.gold;
 const showChoice = () => {
   whoButtons.forEach((b) => b.classList.toggle('on', b.dataset.g === gender));
   if (!ready) return;
   $('go').style.display = gender ? '' : 'none';
   $('choose').style.display = gender ? 'none' : '';
   $('restart').style.display = save.hasProgress ? '' : 'none';
+  $('wakefire').style.display = canWakeByFire() && gender ? '' : 'none';
+  $('start').classList.toggle('fire', canWakeByFire() && !!gender);
 };
 whoButtons.forEach((b) =>
   onTap(b, (e) => {
@@ -287,6 +297,14 @@ whoButtons.forEach((b) =>
     showChoice();
   }),
 );
+$('wakefire').textContent = RUBEDO.wakeByFire;
+onTap($('wakefire'), (e) => {
+  e.stopPropagation();
+  if (!ready || !gender) return;
+  startAt = 'fire';
+  if (!touch.on) lock();
+  begin();
+});
 onTap($('restart'), (e) => {
   e.stopPropagation();
   save.reset();
@@ -298,6 +316,7 @@ const begin = () => {
   state.started = true;
   save.set({ gender });
   // your own unseen body and the shadows you will face have your shape; the hand is yours too
+  child.child.wear(gender === 'woman' ? 'girl' : 'boy');
   body = people.makeBodyCaster(gender);
   scene.add(body.obj);
   shadow = people.makeShadowFigure(scene, glowTex, gender);
@@ -314,10 +333,12 @@ const begin = () => {
   if (ALBEDO_ON) {
     // ?at=albedo (or the level II card on the intro page) plays level II from its beginning, the horse first:
     // its earlier progress is not restored, and this visit's is not saved (the real path keeps both)
-    const fresh = startAt === 'albedo';
-    const lvlSave = fresh ? { data: save.data, add() {}, set() {} } : save;
+    const fresh = startAt === 'albedo' || startAt === 'rubedo';
+    const lvlSave = fresh ? { data: save.data, add() {}, set() {}, setRubedo() {} } : save;
     albedo = buildAlbedo({ scene, house, people, glowTex, renderer, gender, api: { teleport, words, vessel, sound, later, save: lvlSave, noWaterMirror: (list) => waterRefl.hideAlso(list) } });
     if (!fresh) albedo.restore(save.data);
+    // level III opened by itself: level II counted as done, for this visit only
+    if (startAt === 'rubedo') albedo.restore({ letters: LETTERS.map((l) => l.id), gold: true });
     state.albedoSave = lvlSave;
     state.goldSaid = albedo.st.gold;
     // the horse's legs and the letters afloat break the water too
@@ -329,8 +350,27 @@ const begin = () => {
       state.doorAt = -10;
       teleport(0, Z_END - 0.9, 0, -0.25);
     }
+    if (RUBEDO_ON) {
+      // the strengths taken back in this round (the last three); a level opened by itself lends three
+      const lent = ['Force', 'Staying', 'Voice'];
+      const strengths = () => {
+        const own = fresh ? [] : save.data.faced.slice(save.data.faced0).map((id) => BLACK.find((b) => b.id === id)?.strength).filter(Boolean);
+        return own.length >= 3 ? own : [...own, ...lent.filter((w) => !own.includes(w))].slice(0, 3);
+      };
+      rubedo = buildRubedo({ keys, scene, house, glowTex, albedo, sack, child, round: ROUND, lite: LITE, api: { teleport, words, vessel, sound, later, save: lvlSave, setRubedo: (p) => lvlSave.setRubedo(p), strengths, renderer, gender, rig, shadow: () => shadow, body: () => body, seen: () => !fresh && save.data.rubedoSeen, masksLeft: () => (fresh ? BLACK.slice(3) : BLACK.filter((b) => !save.data.faced.includes(b.id))).map((b) => b.id), turned: () => !fresh && save.data.turned, skullSaid: () => (fresh ? null : save.data.rubedo.skull), busyHand: () => !!hand?.busy, mode: () => (touch.on ? 'touch' : 'desk') } });
+      if (!fresh) rubedo.restore(save.data);
+      warmUp(rubedo);
+      // ?at=rubedo, the level III card, or "wake by the fire": the end of Albedo's hall, the Other going down
+      if (startAt === 'rubedo' || startAt === 'fire') {
+        state.faced = Math.max(3, state.faced);
+        state.doorAt = -10;
+        state.albedo = state.albedoDream = true;
+        albedo.toStair();
+        teleport(0, albedo.places.HALL_Z1 + 1.6, 0, -0.1);
+      }
+    }
   }
-  Object.assign(window.__g, { body, shadow, albedo });
+  Object.assign(window.__g, { body, shadow, albedo, rubedo });
   $('start').classList.add('hidden');
   if (!DEBUG) sound.start();
   // how to play, said once when you first wake
@@ -342,9 +382,10 @@ const pause = () => {
   state.paused = true;
   Object.keys(keys).forEach((k) => (keys[k] = false));
   window.__releaseTouches?.();
-  $('pausehow').textContent = albedo && (player.pos.z < Z_END - 0.4 || player.pos.z > 100) ? ALBEDO.pauseHow : PAUSE_HOW;
+  rubedo?.hold.drop();
+  $('pausehow').textContent = rubedo?.here(player) ? RUBEDO.pauseHow : albedo && (player.pos.z < Z_END - 0.4 || player.pos.z > 100) ? ALBEDO.pauseHow : PAUSE_HOW;
   $('restartgame').textContent = 'Start again';
-  $('distilpause').style.display = state.albedoDone ? '' : 'none';
+  $('distilpause').style.display = (rubedo ? state.rubedoDone || save.data.rubedo.done : state.albedoDone) ? '' : 'none';
   $('pause').classList.remove('hidden');
   sound.ctx?.suspend?.();
   if (document.pointerLockElement) document.exitPointerLock?.();
@@ -397,8 +438,11 @@ renderer.domElement.addEventListener('click', () => {
 /** The end card: what was done, and the next distillation (the real path only: a level tried by itself counts nothing). */
 const endCard = () => {
   const counted = state.albedoSave === save;
-  $('end2text').innerHTML = ALBEDO.endCard + DISTIL.end;
-  $('end2small').textContent = ALBEDO.next;
+  // the end of the round: after Rubedo, or after Albedo while Rubedo is not there to go on to
+  $('end2text').innerHTML = (rubedo ? RUBEDO : ALBEDO).endCard + DISTIL.end;
+  if (rubedo) $('end2level').textContent = RUBEDO.level;
+  words.clearTips();
+  $('end2small').textContent = rubedo ? '' : ALBEDO.next;
   $('end2note').textContent = counted ? (ROUND > 1 ? DISTIL.name(ROUND) : '') : DISTIL.notCounted;
   $('distil').style.display = '';
   $('end2').classList.remove('hidden');
@@ -425,11 +469,16 @@ $('again2').addEventListener('click', () => {
   lock();
 });
 addEventListener('keydown', (e) => {
-  if (!e.repeat && e.code === 'KeyE') act();
+  // at the furnace Space and E are the hold (hold.js)
+  if (!e.repeat && (e.code === 'Space' || e.code === 'KeyE') && rubedo?.hold.on && state.started && !state.ended && !state.paused) {
+    e.preventDefault();
+    return void rubedo.hold.press(performance.now() / 1000);
+  }
+  if (!e.repeat && e.code === 'KeyE') act(true);
   if (!e.repeat && e.code === 'KeyQ') words.answer('leave');
   if (!e.repeat && (e.code === 'KeyP' || e.code === 'Escape') && state.started && !state.ended) state.paused ? resume() : pause();
   // Space turns you round (a trackpad makes a half turn a long swipe)
-  if (!e.repeat && e.code === 'Space' && state.started && !state.ended && !stand.on) turn.left += Math.PI;
+  if (!e.repeat && e.code === 'Space' && state.started && !state.ended && !stand.on && !rubedo?.st.standing) turn.left += Math.PI;
   keys[e.code] = true;
   if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
 });
@@ -438,20 +487,26 @@ addEventListener('mousedown', (e) => {
   if (!state.started || e.target.closest?.('.overlay, .say-btn, .tbtn')) return;
   if (e.button === 2) return void words.answer('leave');
   // the click that takes the mouse is not also a pick
-  if (e.button === 0 && (DEBUG || document.pointerLockElement === renderer.domElement)) act();
+  if (e.button === 0 && (DEBUG || document.pointerLockElement === renderer.domElement)) rubedo?.hold.on && !state.paused && !state.ended ? rubedo.hold.press(performance.now() / 1000) : act();
 });
+addEventListener('mouseup', (e) => e.button === 0 && rubedo?.hold.release(performance.now() / 1000));
 addEventListener('contextmenu', (e) => state.started && e.preventDefault());
-addEventListener('keyup', (e) => (keys[e.code] = false));
+addEventListener('keyup', (e) => {
+  keys[e.code] = false;
+  if (e.code === 'Space' || e.code === 'KeyE') rubedo?.hold.release(performance.now() / 1000);
+});
 addEventListener('keydown', (e) => {
   if (!DEBUG && !params.has('demo')) return;
   const m = /^Digit([0-4])$/.exec(e.code);
   if (m) demo.stage = m[1] === '0' ? null : Number(m[1]) - 1;
 });
-addEventListener('blur', () => Object.keys(keys).forEach((k) => (keys[k] = false)));
+addEventListener('blur', () => (Object.keys(keys).forEach((k) => (keys[k] = false)), rubedo?.hold.drop()));
 
 /* Looking: mouse (locked or not), two-finger swipe, or the arrow keys. */
 const look = (dx, dy) => {
-  if (!state.started || state.ended || stand.on || window.__g.noLook) return; // held while a mask is out; __g.noLook: tests hold the view still
+  if (!state.started || state.ended || stand.on || window.__g.noLook) return;
+  // at the furnace what turns the view leans against the pull instead; choosing a strength, you may look about a little
+  if (rubedo?.st.standing && !rubedo.choosing()) return void (rubedo.hold.down && rubedo.hold.move(dx * 1.15)); // held while a mask is out; __g.noLook: tests hold the view still
   player.yaw -= dx;
   player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch - dy));
 };
@@ -528,6 +583,8 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
     const down = new Set([...e.touches].map((t) => t.identifier));
     if (stickId !== null && !down.has(stickId)) release('stick');
     if (lookId !== null && !down.has(lookId)) release('look');
+    const hf = rubedo?.hold.finger ?? null;
+    if (hf !== null && !down.has(hf)) rubedo.hold.fingerUp(hf, performance.now() / 1000);
   };
   window.__releaseTouches = () => (release('stick'), release('look'));
   addEventListener(
@@ -538,6 +595,20 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
       if (!inPlay()) return;
       for (const t of e.changedTouches) {
         if (t.target.closest?.('button, .say-btn, .tbtn')) continue;
+        // at the furnace a finger anywhere is the hold
+        if (rubedo?.hold.on && !state.paused) {
+          rubedo.hold.fingerDown(t.identifier, t.clientX, performance.now() / 1000);
+          continue;
+        }
+        if (rubedo?.st.standing && t.clientX < innerWidth * 0.45) {
+          // no thumb circle while you stand there: the left side taps too
+          lookId = t.identifier;
+          lx = t.clientX;
+          ly = t.clientY;
+          edge.x = null;
+          tap = { x: lx, y: ly, at: performance.now(), button: false };
+          continue;
+        }
         if (t.clientX < innerWidth * 0.45 && stickId === null) {
           stickId = t.identifier;
           sx = t.clientX;
@@ -562,6 +633,7 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
     (e) => {
       heal(e);
       for (const t of e.changedTouches) {
+        rubedo?.hold.fingerMove(t.identifier, t.clientX, innerWidth);
         if (t.identifier === stickId) {
           let dx = t.clientX - sx, dy = t.clientY - sy;
           const l = Math.hypot(dx, dy);
@@ -584,12 +656,13 @@ for (const [id, fn] of [['pickbtn', () => act()]]) {
   );
   const end = (e) => {
     for (const t of e.changedTouches) {
+      rubedo?.hold.fingerUp(t.identifier, performance.now() / 1000);
       if (t.identifier === stickId) release('stick');
       if (t.identifier === lookId) {
         // a short touch that did not move is a tap: pick, or dismiss
         const wasTap = tap && performance.now() - tap.at < 320 && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) < 14;
         release('look');
-        if (wasTap) act();
+        if (wasTap && !(rubedo?.st.standing && rubedo.tapAt(t.clientX, t.clientY, camera))) act();
       }
     }
     heal(e);
@@ -627,7 +700,7 @@ addEventListener('resize', () => {
 
 /* ── the people: loaded after the first frame is up ── */
 let ready = false;
-let body = null, shadow = null, masks = null, child = null, hand = null, people = null, dressing = null, albedo = null;
+let body = null, shadow = null, masks = null, child = null, hand = null, people = null, dressing = null, albedo = null, rubedo = null;
 // the look pass: real surfaces and objects, loaded alongside the people (the house keeps its coded look until they arrive)
 // ?nodress leaves the coded look (to compare, or on a slow machine)
 (params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house, { lite: LITE }))
@@ -757,11 +830,15 @@ const movePlayer = (dt) => {
     player.pitch = stand.pitch0 * (1 - e);
     f = r = 0;
   } else {
-    if (keys.ArrowLeft) player.yaw += dt * 2.4;
-    if (keys.ArrowRight) player.yaw -= dt * 2.4;
+    if (rubedo?.st.standing) f = r = 0; // stood before the furnace
+    if (!rubedo?.st.standing || rubedo.choosing()) {
+      const k = rubedo?.st.standing ? 0.7 : 2.4;
+      if (keys.ArrowLeft) player.yaw += dt * k;
+      if (keys.ArrowRight) player.yaw -= dt * k;
+    }
   }
   // the looking finger held near a side of the screen keeps turning that way, so a half turn needs no second swipe
-  if (edge.x != null && !stand.on) {
+  if (edge.x != null && !stand.on && !rubedo?.st.standing) {
     const m = Math.min(70, innerWidth * 0.2);
     if (edge.x < m) player.yaw += dt * 2.6 * (1 - edge.x / m);
     else if (edge.x > innerWidth - m) player.yaw -= dt * 2.6 * (1 - (innerWidth - edge.x) / m);
@@ -776,9 +853,13 @@ const movePlayer = (dt) => {
   wish.set(0, 0, 0);
   if (active) wish.addScaledVector(fwd, f).addScaledVector(right, r);
   if (wish.lengthSq() > 1) wish.normalize();
+  // the horned mask is heavy (skull.js)
+  if (rubedo?.skull.worn) wish.multiplyScalar(rubedo.skull.pace());
   // dread roots you: the closer it comes while you hold, the heavier your feet
   // wading is slow; on the stair you go carefully
-  const wet = smoothstep(WATER + 0.2, WATER - 0.4, player.y);
+  // (the cave lies lower than the water, but it is dry)
+  const inCave = !!rubedo?.here(player);
+  const wet = inCave ? 0 : smoothstep(WATER + 0.2, WATER - 0.4, player.y);
   const onStair = player.pos.z < Z_END - 1 && player.pos.z > Z_STAIR_END ? 0.25 : 0;
   wish.multiplyScalar((hurry ? 2.7 : 1.4) * (1 - 0.6 * sh.dread) * (1 - 0.5 * wet) * (1 - onStair));
   // the puppet master's pull: only while you walk
@@ -809,7 +890,8 @@ const movePlayer = (dt) => {
   player.stride += player.speed * dt;
   if (player.stride - player.lastStep > (hurry ? 0.95 : 0.74)) {
     player.lastStep = player.stride;
-    sound.step((hurry ? 1.3 : 0.8) * (player.y < WATER + 0.3 ? 0.45 : 1));
+    if (rubedo?.skull.worn) rubedo.skull.step();
+    sound.step((hurry ? 1.3 : 0.8) * (player.y < WATER + 0.3 && !inCave ? 0.45 : 1), inCave);
   }
   // hold or discharge: hurrying leaks the vessel, stillness mends it
   if (hurry) {
@@ -827,9 +909,9 @@ let facing = null; // while a black mask's shadow is loose: { mask, def, kind, p
 let candidate = null; // the mask the eye is on, within reach
 
 /** Click, E or tap: dismisses a text (or answers "take"), or picks what the hand is reaching for. */
-const act = () => {
+const act = (byKey = false) => {
   if (!state.started || state.ended) return;
-  if (words.open) return void words.click();
+  if (words.open) return void words.click(byKey);
   if (candidate && !hand?.busy) {
     // level II's things to pick (letters, the box, the feelings, the figure) say what picking them does
     if (candidate.onPick) {
@@ -1360,6 +1442,7 @@ const adaptExposure = (dt) => {
     take(house.group);
     take(sack.bag);
     take(albedo?.group);
+    take(rubedo?.group);
   }
   const list = adapt.list || [];
   let sum = 0, nearest = 6;
@@ -1386,8 +1469,9 @@ const lineNow = () => {
   if (!state.started || state.ended || words.open || vessel.rx.on) return '';
   if (player.pos.z < Z_END - 0.4 || player.pos.z > 100) {
     if (!albedo) return player.pos.z < Z_STAIR_END ? 'Wade out into the water.' : '';
-    return albedo.line(player);
+    return rubedo?.line(player) ?? albedo.line(player);
   }
+  if (rubedo?.home()) return rubedo.line(player) ?? ''; // back in the house, the work done
   if (facing) return facing.phase === 'loose' || facing.phase === 'meet' ? (facing.def.hint ?? HINTS[facing.kind]) : '';
   if (state.faced >= 3) return state.t - state.doorAt < 40 ? LINES.door : LINES.doorAgain;
   if (state.faced > 0) return LINES.another(3 - state.faced);
@@ -1442,6 +1526,7 @@ const tick = (forceDt) => {
   vessel.group.scale.setScalar(layout.scale * (1 + 2 * rk));
   vessel.group.position.y += Math.sin(player.stride * 4.2 + 0.6) * 0.003 * walk;
   vessel.group.position.x += Math.cos(player.stride * 2.1) * 0.0025 * walk;
+  rubedo?.placeVessel(rig, vessel);
   post.dof.uniforms.veil.value = rk;
 
   /* the masks, the hand, the words */
@@ -1451,19 +1536,19 @@ const tick = (forceDt) => {
     const below = player.pos.z < Z_END - 1;
     const reading = albedo?.list.some((L) => L.state === 'rising' || L.state === 'held');
     const dream = player.pos.z > 100; // albedo's dream rooms are built far behind the house
-    candidate = free && !below && !dream ? masks.lookedAt(camera) : free && (below || dream) && albedo && !reading ? albedo.lookedAt(camera, touch.on) : null;
+    candidate = free && !below && !dream ? masks.lookedAt(camera) : free && (below || dream) && albedo && !reading ? (rubedo?.here(player) ? rubedo.lookedAt(camera, touch.on) : albedo.lookedAt(camera, touch.on)) : null;
   }
   // the touch buttons and the circle follow what can be done: nothing to walk or turn while a mask is out
   if (touch.on) {
     $('pickbtn').classList.toggle('hidden', !(candidate && !hand?.busy && !stand.on));
-    $('stick').classList.toggle('away', !state.started || stand.on);
+    $('stick').classList.toggle('away', !state.started || stand.on || !!rubedo?.st.standing);
   }
   // the hand keeps most of its brightness where the picture is graded down (pick.js, st.comp)
   if (hand) hand.st.comp = Math.min(2.2, Math.pow(1 / Math.max(0.3, (albedo?.st.exposure ?? 1) * (LITE ? 0.85 : 1)), 0.75)) * (player.pos.z < Z_END - 0.5 ? 1.25 : 1);
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
   // the first time a letter is within reach: how to pick it up, said for the screen you play on
   if (albedo && state.started && !words.open && albedo.letterNear(camera) < 4.2) words.tip(TIPS.letter[touch.on ? 'touch' : 'desk'], { id: 'letter' });
-  if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) TIPS.wall.forEach((text, i) => words.tip(text, { id: 'wall' + i })); // at the wall of masks only, not below the house
+  if (state.started && !save.hasProgress && !rubedo?.home() && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) TIPS.wall.forEach((text, i) => words.tip(text, { id: 'wall' + i })); // at the wall of masks only, not below the house
   words.update(t);
   words.line(lineNow());
 
@@ -1475,7 +1560,7 @@ const tick = (forceDt) => {
   if (child && child.st.phase !== 'wait' && child.st.phase !== 'drag') sack.update(t, smoothstep(2.4, 1.3, dSack), 0);
   // after the third shadow the sack's tie slips and something warm shows at its neck
   state.loose = (state.loose ?? 0) + ((state.doorAt != null ? 1 : 0) - (state.loose ?? 0)) * (1 - Math.exp(-dt * 0.5));
-  sack.loosen(state.loose, t);
+  sack.loosen(Math.max(state.loose, rubedo?.st.openK ?? 0), t);
   const breathLoud = Math.max(0, sack.u.breath.value) * smoothstep(11, 2.5, dSack) * (1 - smoothstep(2.4, 1.3, dSack));
 
   /* the vessel: what is in the glass answers what you do */
@@ -1484,24 +1569,26 @@ const tick = (forceDt) => {
   const V = vessel.state;
   const ease = (cur, target, rate) => cur + (target - cur) * (1 - Math.exp(-dt * rate));
   // its light is your charge; it shrinks while a shadow is near, and burns a little higher for each one faced
-  V.heat = state.charge * (1 - 0.35 * sh.dread) * (1 + 0.12 * Math.min(n, 4)) * (1 + 0.05 * Math.min(ROUND - 1, 4)); // a little clearer with each distillation
+  const G = rubedo?.st.glass; // what the hold at the furnace shows in the glass
+  V.heat = (1 + (G?.heat ?? 0)) * state.charge * (1 - 0.35 * sh.dread) * (1 + 0.12 * Math.min(n, 4)) * (1 + 0.05 * Math.min(ROUND - 1, 4)); // a little clearer with each distillation
   // hurrying makes it boil; going through a shadow sets it seething, then it settles
-  V.boil = ease(V.boil, Math.min(1, (hurry ? 1 : player.speed > 0.2 ? 0.1 : 0.02) + Math.exp(-since / 3.5)), 1.6);
+  V.boil = ease(V.boil, Math.min(1, (G?.boil ?? 0) + (hurry ? 1 : player.speed > 0.2 ? 0.1 : 0.02) + Math.exp(-since / 3.5)), 1.6);
   // dread fills the bulb with black vapour; so does a shadow loose in the house
-  V.fume = ease(V.fume, 1 + 0.9 * sh.dread + (facing && facing.phase !== 'after' ? 0.35 : 0), 2);
+  V.fume = ease(V.fume, 1 + 0.9 * sh.dread + (facing && facing.phase !== 'after' ? 0.35 : 0) + (G?.fume ?? 0), 2);
   // by the wall of masks pale grains rise in it; one stays for each shadow faced
   const dMasks = Math.max(0, Math.max(player.pos.z - MASK_WALL.z0, MASK_WALL.z1 - player.pos.z));
-  V.flecks = ease(V.flecks, Math.max(0.6 * smoothstep(5, 0.5, dMasks), Math.min(1, 0.2 * n + 0.12 * (ROUND - 1))), 1.2); // (and a few from every round before)
+  V.flecks = ease(V.flecks, Math.max(G?.flecks ?? 0, 0.6 * smoothstep(5, 0.5, dMasks), Math.min(1, 0.2 * n + 0.12 * (ROUND - 1))), 1.2); // (and a few from every round before)
   // the liquid rises and falls with the sack's breath
   V.heave = 0.07 * sack.u.breath.value * smoothstep(10, 2.5, dSack);
   // the work: black; a little less black for each one faced; after the third, the first white
   const lettersRead = albedo?.st.read.length ?? 0, goldBack = albedo?.st.gold ? 1 : 0;
   const wantStage = demo.stage ?? Math.min(1, [0, 0.1, 0.2, 0.55][Math.min(n, 3)] + 0.03 * Math.max(0, n - 3) + 0.1 * lettersRead + 0.15 * goldBack);
-  V.stage = ease(V.stage, wantStage, 0.5);
+  // in the cave the work goes on: red, then gold (rubedo.js)
+  V.stage = ease(V.stage, demo.stage ?? (rubedo?.skull.black ? 0 : rubedo?.st.entered ? Math.max(wantStage, rubedo.st.stage) : wantStage), rubedo?.skull.black ? 1.4 : 0.5);
   water.update(t, dt, player.pos.z < Z_END);
   if (LITE && player.pos.z < Z_END) waterFlames();
   vessel.update(t);
-  vessel.light.intensity *= adapt.dim ?? 1; // held lower close to a surface (adaptExposure)
+  vessel.light.intensity *= (adapt.dim ?? 1) * (rubedo?.lightK() ?? 1); // held lower close to a surface (adaptExposure)
   house.update(t);
 
   /* your own unseen body, for the shadow the vessel throws behind you */
@@ -1518,6 +1605,7 @@ const tick = (forceDt) => {
     sound.heart(0.05 + 0.3 * sh.dread);
   }
   sound.update(breathLoud, sh.dread);
+  sound.cave(rubedo?.here(player) ? 1 : 0);
 
   /* haze: the vessel and the nearest candles */
   vessel.light.getWorldPosition(tmp);
@@ -1525,6 +1613,7 @@ const tick = (forceDt) => {
   dust.u.eye.value.copy(camera.position);
   dust.u.lightPos.value.copy(tmp);
   dust.u.lightPow.value = vessel.light.intensity;
+  dust.u.floorY.value = player.y;
   const near = house.lights
     .filter((l) => (player.pos.z < Z_END ? true : l !== house.stairLight && l !== house.spill))
     // below ground the air is closer and the candles are near the eye: less glow in it
@@ -1535,8 +1624,9 @@ const tick = (forceDt) => {
   refl.setGlow(near);
   post.haze.uniforms.time.value = t;
   post.finish.uniforms.time.value = t;
+  post.finish.uniforms.grade.value = 0.85 * (1 - 0.55 * (rubedo?.st.goldK ?? 0));
   post.finish.uniforms.close.value = sh.dread * (1 - sh.fade);
-  post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)] * (1 - 0.3 * goldBack), 0.4);
+  post.finish.uniforms.pale.value = ease(post.finish.uniforms.pale.value, [0, 0.25, 0.5, 1][Math.min(n, 3)] * (1 - 0.3 * goldBack) * (1 - (rubedo?.st.warm ?? 0)), 0.4);
   // ?norefl turns the floor's reflection off (to compare, or on a slow machine)
   adaptExposure(dt);
   // phones are looked at close, in the dark, on a bright screen: 15% less there (the owner found it blinding)
@@ -1545,13 +1635,14 @@ const tick = (forceDt) => {
   if (albedo) albedo.st.paperGain = Math.min(3, EXPOSURE / Math.max(1e-3, post.finish.uniforms.exposure.value));
   refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
-  waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5);
+  waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5 || !!rubedo?.here(player));
   // the door swings open once three shadows have been faced
   if (state.doorAt != null) house.openDoor(smoothstep(0, 3.5, t - state.doorAt));
   // below the house: level II, albedo (albedo.js)
   if (albedo) {
     vessel.light.getWorldPosition(tmp);
     albedo.update(dt, t, camera, tmp, sound, player);
+    rubedo?.update(dt, t, camera, player);
     // on the stair down
     if (!state.albedoDream && player.pos.z < Z_END - 1.5 && player.pos.z > Z_STAIR_END - 0.5 && !words.open) {
       state.albedoDream = true;
@@ -1571,7 +1662,16 @@ const tick = (forceDt) => {
       // once the flask is back in its corner; then the one across the hall
       vessel.react({ bloom: 0.4, onDone: () => words.tell(P ?? [], { anchor: () => it.head.getWorldPosition(tmp2), onDone: () => words.tip(ALBEDO.otherWaits, { id: 'otherWaits' }) }) });
     }
-    if (albedo.st.done && !state.albedoDone && !words.open && !vessel.rx.on) {
+    // the end of the round: the corridor again, after Rubedo
+    if (rubedo && rubedo.st.phase === 'done' && !state.rubedoDone && !words.open && !vessel.rx.on) {
+      state.rubedoDone = true;
+      later(2.5, () => {
+        state.ended = true;
+        endCard();
+        document.exitPointerLock?.();
+      });
+    }
+    if (!rubedo && albedo.st.done && !state.albedoDone && !words.open && !vessel.rx.on) {
       state.albedoDone = true;
       later(4, () => {
         state.ended = true;
@@ -1587,6 +1687,53 @@ const tick = (forceDt) => {
     document.exitPointerLock?.();
   }
   post.composer.render(dt);
+};
+/**
+ * Level III's surfaces are made ready for the graphics card while the player is still far from it: without this each
+ * new place stops the picture for a moment when it is first seen (about 60 programs and the big pictures). The compile
+ * runs in the driver's own threads where it can; the pictures go up one at a time.
+ */
+const warmUp = async (level) => {
+  await level.loaded;
+  await new Promise((ok) => setTimeout(ok, 2500));
+  const rt = renderer.getRenderTarget();
+  renderer.setRenderTarget(post.composer.readBuffer); // (the programs depend on what is drawn into)
+  renderer.compile(scene, camera);
+  renderer.setRenderTarget(rt);
+  const pics = new Set(), meshes = [];
+  level.group.traverse((o) => {
+    if (o.isMesh || o.isPoints || o.isSprite) meshes.push(o);
+    for (const t of o.userData.pics ?? []) pics.add(t);
+    for (const m of o.material ? [o.material].flat() : [])
+      for (const t of [...Object.values(m), ...Object.values(m.uniforms ?? {}).map((u) => u.value)]) if (t?.isTexture && t.image && !t.isRenderTargetTexture) pics.add(t);
+  });
+  for (const t of pics) {
+    await new Promise((ok) => setTimeout(ok, 120));
+    renderer.initTexture(t);
+  }
+  // and each thing is drawn once by itself, unseen, under the real lights (the card only finishes a program when it is
+  // drawn with): a layer of its own, into a few pixels
+  const LAYER = 11, eye = camera.clone(false), dot = post.composer.readBuffer.clone();
+  dot.setSize(8, 8);
+  eye.layers.set(LAYER);
+  for (const o of meshes) {
+    await new Promise((ok) => setTimeout(ok, 50));
+    const back = [];
+    const set = (x, k, v) => (back.push([x, k, x[k]]), (x[k] = v));
+    for (let p = o; p; p = p.parent) if (!p.visible) set(p, 'visible', true);
+    set(o, 'frustumCulled', false);
+    set(renderer.shadowMap, 'autoUpdate', false);
+    set(scene, 'background', null);
+    o.layers.enable(LAYER);
+    scene.traverse((l) => l.isLight && l.layers.enable(LAYER));
+    const was = renderer.getRenderTarget();
+    renderer.setRenderTarget(dot);
+    renderer.render(scene, eye);
+    renderer.setRenderTarget(was);
+    o.layers.disable(LAYER);
+    for (const [x, k, v] of back.reverse()) x[k] = v;
+  }
+  dot.dispose();
 };
 const frame = () => {
   // paused: the picture stays, nothing moves (dt 0: no walking, no clock, no timers)

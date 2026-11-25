@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { rng } from './textures.js';
+import { loadChildBodies, makeChildBody } from './childbody.js';
 
 /*
  * Everything made from the two scanned people (Renderpeople "Nathan" and "Sophia", see
@@ -120,7 +121,7 @@ const boneMap = (obj) => {
 };
 
 export const loadPeople = async () => {
-  const [nathanFBX, sophiaFBX] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx')]);
+  const [nathanFBX, sophiaFBX, childBodies] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx'), loadChildBodies().catch((e) => (console.error('The children did not load (the scan made small stays):', e), null))]);
   const WOMAN_HIP = 84.2 / 94.6;
   const walkNathan = withoutTPose(inPlace(nathanFBX.animations[0], 1));
   /* The player is a man or a woman (PLAN.md 10.3): Nathan's scan or Sophia's. Both share one
@@ -165,7 +166,7 @@ export const loadPeople = async () => {
    * its forearms are drawn a little too long.
    */
   const makeShadowFigure = (scene, glowTex, who = 'man') => {
-    const u = { time: { value: 0 }, fade: { value: 0 }, smoke: { value: 1 }, ash: { value: 0 }, rim: { value: new THREE.Color(0.075, 0.022, 0.006) } };
+    const u = { time: { value: 0 }, fade: { value: 0 }, smoke: { value: 1 }, ash: { value: 0 }, soft: { value: 0 }, rim: { value: new THREE.Color(0.075, 0.022, 0.006) } };
     const core = new THREE.MeshBasicMaterial({ color: 0x000000 });
     core.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, u);
@@ -215,6 +216,10 @@ export const loadPeople = async () => {
     const idle = b.mixer.clipAction(IDLE[who]);
     idle.play();
     idle.weight = 1;
+    // at the furnace (rubedo.js) it stands upright, its arms hanging
+    const stand = b.mixer.clipAction(STAND[who]);
+    stand.play();
+    stand.weight = 0;
     walk.weight = 0;
 
     // the smoke shells: same mesh, same skeleton, pushed out along the normals
@@ -240,7 +245,7 @@ export const loadPeople = async () => {
           );
         sh.fragmentShader = sh.fragmentShader
           .replace('#include <common>', `#include <common>
-            uniform float time; uniform float fade; uniform float smoke; uniform float ash; varying vec3 vObj; varying vec3 vN; varying vec3 vV;
+            uniform float time; uniform float fade; uniform float smoke; uniform float ash; uniform float soft; varying vec3 vObj; varying vec3 vN; varying vec3 vV;
             float n3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
               float h000 = fract(sin(dot(i, vec3(127.1, 311.7, 74.7))) * 43758.5453);
               float h100 = fract(sin(dot(i + vec3(1,0,0), vec3(127.1, 311.7, 74.7))) * 43758.5453);
@@ -263,6 +268,8 @@ export const loadPeople = async () => {
             float up = smoothstep(60.0, 170.0, vObj.y);
             // patchy: curls of smoke with clear gaps between them, never a second outline
             float a = smoothstep(0.1, 0.85, fres) * smoothstep(0.46 - 0.08 * up, 0.7, n) * ${alpha.toFixed(2)} * smoke * (0.75 + 0.5 * up);
+            // (against a light, as in the cave, the shell's own edge would show as a second outline: soft takes it away)
+            a *= mix(1.0, 1.0 - smoothstep(0.35, 0.85, fres), soft);
             a *= 1.0 - smoothstep(0.0, 0.7, fade);
             diffuseColor = vec4(vec3(0.0), a);`,
           );
@@ -271,8 +278,8 @@ export const loadPeople = async () => {
       return m;
     };
     const shells = [
-      [4.0, 0.95, 'st2g-shadow-shell-a2'],
-      [9.0, 0.6, 'st2g-shadow-shell-b2'],
+      [4.0, 0.95, 'st2g-shadow-shell-a3'],
+      [9.0, 0.6, 'st2g-shadow-shell-b3'],
     ].map(([push, alpha, key]) => {
       const sm = b.mesh.clone(); // a skinned clone shares the skeleton
       sm.material = shellMat(push, alpha, key);
@@ -448,8 +455,13 @@ export const loadPeople = async () => {
     const setGait = (move) => {
       walk.weight = move;
       idle.weight = 1 - move;
+      stand.weight = 0;
     };
-    return { ...b, u, posture, arms, unbend, setGait, idle, shells, wisps };
+    const standStill = () => {
+      walk.weight = idle.weight = 0;
+      stand.weight = 1;
+    };
+    return { ...b, u, posture, arms, unbend, setGait, standStill, idle, shells, wisps };
   };
 
   /**
@@ -540,8 +552,16 @@ export const loadPeople = async () => {
       for (const [bone, q] of saved) bone.quaternion.copy(q);
       saved.clear();
     };
+    /** The child's own body, a boy's or a girl's (childbody.js); without it the scan made small is what is seen. */
+    let own = null;
+    const wear = (who) => {
+      if (!childBodies || own) return;
+      for (const n in bones) bones[n].scale.set(1, 1, 1);
+      own = makeChildBody(childBodies[who], who, { root, driver: { obj, mesh, bones }, u });
+      mesh.visible = false;
+    };
     const pose = (lean, hold) => {
-      shape();
+      if (!own) shape();
       obj.updateMatrixWorld(true);
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(root.quaternion);
       const side = new THREE.Vector3(1, 0, 0).applyQuaternion(root.quaternion);
@@ -549,6 +569,11 @@ export const loadPeople = async () => {
       bend(bones.spine_03, side, 0.22 * lean);
       bend(bones.neck, side, 0.12 + 0.1 * lean);
       bend(bones.head, side, 0.08);
+      if (hold < 0) {
+        // the arm held out to you, the rope in the hand (rubedo.js)
+        bend(bones.upperarm_r, side, 1.15 * hold);
+        bend(bones.lowerarm_r, side, 0.35 * hold);
+      }
       if (hold > 0) {
         // the right arm drawn back and down by the rope (it pointed forward until 2026-11-25, away from the sack)
         bend(bones.upperarm_r, side, 0.62 * hold);
@@ -561,9 +586,10 @@ export const loadPeople = async () => {
       lift += (want - lift) * 0.5;
       obj.position.y = lift / root.scale.y;
       obj.updateMatrixWorld(true);
+      own?.follow();
     };
-    const hand = () => bones.hand_r.getWorldPosition(new THREE.Vector3());
-    return { root, obj, mesh, mixer, walk, idle, bones, u, pose, unbend, hand, SHAPE };
+    const hand = () => (own ? own.hand() : bones.hand_r.getWorldPosition(new THREE.Vector3()));
+    return { root, obj, mesh, mixer, walk, idle, bones, u, pose, unbend, hand, SHAPE, wear, get own() { return own; } };
   };
 
   /**

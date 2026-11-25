@@ -173,8 +173,10 @@ export const buildSack = (scene, at) => {
   const ropeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.11, 0.08, 0.045), roughness: 0.95, normalMap: maps.normalMap, normalScale: new THREE.Vector2(1.5, 1.5) });
   const neckY = body.position.y + (0.5 + 0.22 * 0.75) * RY;
   const coils = [];
+  const coilMat = ropeMat.clone(); // the coils lie right beside the glow in the neck: darker, or they burn out
+  coilMat.color.multiplyScalar(0.3);
   for (const dy of [0, 0.028, -0.026]) {
-    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.15 * RX + 0.012, 0.014, 8, 28), ropeMat);
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.15 * RX + 0.012, 0.014, 8, 28), coilMat);
     coil.rotation.x = Math.PI / 2 + (dy ? 0.08 : -0.05);
     coil.position.y = neckY + dy;
     coil.castShadow = true;
@@ -203,17 +205,17 @@ export const buildSack = (scene, at) => {
     if (end.distanceToSquared(lastEnd) < 1e-6 && !held) return;
     lastEnd.copy(end);
     const pts = [neck.clone()];
-    const N = 10;
+    const N = 10, floor = bag.position.y + 0.016;
     const span = neck.distanceTo(end);
     for (let i = 1; i < N; i++) {
       const f = i / N;
       const p = neck.clone().lerp(end, f);
       if (held) {
         // nearly taut: a slight sag, and lying on the floor for the first stretch
-        p.y = Math.max(0.016, p.y - Math.sin(f * Math.PI) * 0.06 * span);
+        p.y = Math.max(floor, p.y - Math.sin(f * Math.PI) * 0.06 * span);
       } else {
         // dropped: down to the floor near the sack, then wandering
-        p.y = f < 0.12 ? neck.y * (1 - f / 0.12) + 0.016 * (f / 0.12) : 0.016;
+        p.y = f < 0.12 ? neck.y * (1 - f / 0.12) + floor * (f / 0.12) : floor;
         p.x += Math.sin(f * 9.0 + span) * 0.18 * Math.sin(f * Math.PI);
       }
       pts.push(p);
@@ -271,6 +273,7 @@ export const buildSack = (scene, at) => {
    * After the third shadow (PLAN.md 10.4 step 8): the tie slips, the neck falls open, the sack slumps,
    * and a little warm light comes out of it. k 0..1.
    */
+  const size = { k: 1, gold: 0 }; // (rubedo.js: a little smaller each round; gold 0..1 as it is opened)
   const loosen = (k, t = 0) => {
     u.open.value = k;
     for (const c of coils) {
@@ -280,8 +283,10 @@ export const buildSack = (scene, at) => {
       c.rotation.x = c.userData.rx + 0.25 * k * (c.userData.dy >= 0 ? 1 : -1);
       c.scale.setScalar(1 + 0.75 * k);
     }
-    bag.scale.set(1 + 0.05 * k, 1 - 0.1 * k, 1 + 0.05 * k);
-    glow.intensity = 0.9 * k * (1 + 0.15 * Math.sin(t * 2.3) * Math.sin(t * 1.1));
+    bag.scale.set(1 + 0.05 * k, 1 - 0.1 * k, 1 + 0.05 * k).multiplyScalar(size.k);
+    glow.intensity = (0.9 - 0.45 * size.gold) * k * (1 + 0.15 * Math.sin(t * 2.3) * Math.sin(t * 1.1));
   };
-  return { group: bag, bag, body, drum, update, setRope, loosen, u, radius: RX * 1.12, neck, glow };
+  /** The same hessian, for the opened sack (sackopen.js): plain, no breath in it. */
+  const clothMat = () => new THREE.MeshStandardMaterial({ map: mat.map, normalMap: mat.normalMap, normalScale: mat.normalScale.clone(), color: mat.color.clone(), roughness: 1, side: THREE.DoubleSide, shadowSide: THREE.DoubleSide });
+  return { clothMat, coils, rope, group: bag, bag, body, drum, update, setRope, loosen, size, u, radius: RX * 1.12, neck, glow };
 };

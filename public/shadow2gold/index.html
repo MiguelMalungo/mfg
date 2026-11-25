@@ -25,6 +25,10 @@
       .prompt { font-size: 13px; letter-spacing: 0.45em; margin-left: 0.45em; text-transform: uppercase; opacity: 0.85; animation: breathe 3.2s ease-in-out infinite; }
       @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.95; } }
       #start { cursor: pointer; }
+      /* with "Wake by the fire" there is one row more: closer together, and the mark goes rather than shrink to a dot */
+      #start.fire { gap: 16px; }
+      @media (max-height: 500px) { #start.fire .small, #start.fire .howto { display: none; } #start.fire .keys { display: none !important; } }
+      @media (max-height: 820px) { #start.fire { gap: 12px; } #start.fire #mark { display: none; } }
       #loading { font-size: 11px; letter-spacing: 0.4em; margin-left: 0.4em; text-transform: uppercase; opacity: 0.5; }
       .howto { max-width: 560px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; line-height: 1.45; }
       .howto p { margin: 0 0 14px; }
@@ -39,6 +43,8 @@
       #distil, #distilpause { border-color: #ffd89a; color: #ffd89a; opacity: 1; }
       @media (max-height: 500px), (max-width: 640px) { #end2 { gap: 14px; padding: 16px; } #end2 .howto { font-size: 17px; line-height: 1.36; } #end2 .howto p { margin-bottom: 9px; } #end2 .who button { font-size: 15px; letter-spacing: 0.14em; padding: 10px 16px; white-space: nowrap; } }
       #end { background: rgba(0, 0, 0, 0.9); }
+      /* (on a narrow phone the pause card's buttons broke in two) */
+      @media (max-width: 460px) { #pause .who { flex-wrap: wrap; justify-content: center; gap: 10px; } #pause .who button { white-space: nowrap; font-size: 16px; letter-spacing: 0.16em; padding: 10px 18px; } }
       .again { font: inherit; font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; opacity: 0.8; }
       .again:hover { opacity: 1; border-color: rgba(242, 230, 204, 0.9); }
       /* touch: a thumbstick on the left, drag on the right to look, one hold button to hurry */
@@ -77,7 +83,12 @@
       .word { left: 50%; top: 44%; transform: translate(-50%, -50%); text-align: center; transition: opacity 1.4s ease; }
       .word-main { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(44px, 8vh, 92px); letter-spacing: 0.2em; margin-left: 0.2em; color: #ffd89a; text-shadow: 0 0 40px rgba(255, 200, 110, 0.45), 0 0 6px #000; }
       .word-sub { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(17px, 2.3vh, 22px); margin-top: 10px; opacity: 0.85; text-shadow: 0 0 10px #000; }
+      /* the horned skull (src/skull.js): what it says, and the dark round its eye holes when it is worn */
+      .skullsay { position: fixed; z-index: 4; left: 50%; top: 66%; transform: translate(-50%, -50%); width: min(520px, 82vw); text-align: center; pointer-events: none; opacity: 0; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-size: clamp(19px, 2.6vh, 26px); line-height: 1.35; letter-spacing: 0.03em; color: #d9735c; text-shadow: 0 0 14px rgba(160, 20, 0, 0.7), 0 0 4px #000; }
+      .skullin { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; }
+      .skullin svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
       .whisper { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 84vw); text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(20px, 2.8vh, 28px); line-height: 1.4; transition: opacity 1.2s ease; }
+      .whisper.low { top: 69%; }
 
       /* the introduction page, before the title card (words: src/texts.js, INTRO) */
       #intro { z-index: 6; background: #000; overflow-y: auto; justify-content: safe center; gap: 22px; transition: opacity 0.9s ease; }
@@ -143,6 +154,7 @@
       <div id="loading">Lighting the candles…</div>
       <div id="choose" class="prompt" style="display: none">Choose, then wake</div>
       <div id="go" class="prompt" style="display: none"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
+      <button id="wakefire" class="again" type="button" style="display: none"></button>
       <button id="restart" class="restart" type="button" style="display: none">Start again</button>
     </div>
 
@@ -171,7 +183,7 @@
     </div>
 
     <div id="end2" class="overlay hidden">
-      <div class="level">II · ALBEDO</div>
+      <div class="level" id="end2level">II · ALBEDO</div>
       <div class="howto" id="end2text">
         <p>Below the house the water is black and still.</p>
         <p class="soft">Letters float on it, sealed. Across it, someone holds up a light of their own.</p>

@@ -424,6 +424,170 @@ export const ALBEDO = {
   pauseHow: 'Below the house: let the horse come to you, read the three letters and go through the doors they open, then take back the gold from the statue.',
 };
 
+/**
+ * Level III, rubedo (PLAN.md 10.6, src/rubedo.js; only with ?rubedo until it is finished). The words of stage F1:
+ * the way down, the cave and the way back. All proposals; what is Jung's and how far each claim is checked: PLAN.md 10.6.7.
+ */
+export const RUBEDO = {
+  title: 'III · Rubedo',
+  enter: 'Under the water, the rock is warm.',
+  // on the stair, in place of Albedo's end card
+  down: 'What you looked for in others is awake in you. Someone with a light of their own walks ahead.',
+  // in the cave (Memories, Dreams, Reflections, ch. 5: thick dust, scattered bones, broken pottery)
+  dream: 'The last stair of Jung\u2019s dream led to a cave: thick dust, old bones, broken pottery. He came to see it as the oldest part of the mind, the part all people share.',
+  lines: {
+    follow: 'Follow their light down.',
+    toFire: 'Go to the furnace.',
+    place: 'Set the flask on the furnace.',
+    choose: { desk: 'Choose a strength for the fire. Look at it, and click or press E.', touch: 'Choose a strength for the fire. Tap it.' },
+    hold: { desk: 'Hold the mouse button, or Space. Keep the flask in the middle.', touch: 'Keep your finger on the glass. Slide it to keep the flask in the middle.' },
+    holding: 'Keep the flask in the middle.',
+    dark: 'The dark pulls. Lean back.',
+    white: 'The white pulls. Lean back.',
+    again: 'Hold again, when you are ready.',
+    latch: { desk: 'Press to hold. Press again to let go.', touch: 'Tap to hold. Tap again to let go.' },
+    still: 'Hold.',
+    child: 'Someone is waiting by the sack.',
+    rope: 'It is holding out the rope. Take it.',
+    untie: 'Untie it.',
+    up: 'Go up. It is ahead of you.',
+    home: 'Walk back to where you woke.',
+  },
+  // as a strength sinks into the coals, before a heating (by the strength's word, BLACK above)
+  fire: {
+    Force: 'Your no keeps the lid on.',
+    Staying: 'You stay by the heat.',
+    Voice: 'You can say that it burns.',
+    Discernment: 'You see what is dark and what is light, and sentence neither.',
+    Desire: 'Wanting burns well.',
+    Seen: 'Nothing here has to hide.',
+    Receiving: 'You do not have to carry the heat alone.',
+    Trust: 'The fire knows its work.',
+    Instinct: 'Your body knows how to stand in heat.',
+    Rest: 'Hold it without straining.',
+    Worth: 'What is in the glass is worth the fire.',
+    Tenderness: 'What softens here does not break.',
+    Choice: 'You could break it. You hold it.',
+    Truth: 'No part of it is left out.',
+    Mine: 'This fire is yours to keep.',
+    Tears: 'Tears do not put it out.',
+    Courage: 'You are afraid, and you stay.',
+    Authorship: 'No one else can hold this for you.',
+    Play: 'Look how it moves.',
+    Feeling: 'You feel the heat, all of it.',
+  },
+  // the horned skull (skull.js). In nigredo the answer to the same question was yes
+  skull: {
+    tip: 'Something by the path is speaking. You do not have to answer.',
+    offer: 'You have worked long enough. Put me on, and it is done.',
+    question: 'Is this one yours?',
+    choice: { take: 'Put it on', leave: 'This is not mine', takeKey: { desk: 'E', touch: 'tap' }, leaveKey: { desk: 'Q · right click', touch: 'tap' } },
+    pick: 'Walk on.',
+    worn: 'You can not take it off. There is one light you did not make. Go to it.',
+    power: ['Everything obeys.', 'No one is near.'],
+    none: 'You have met them all. So you must be above them.', // when no mask is left on the wall
+    // what it whispers, for each black mask not faced: each one is a temptation, none of them is advice
+    calls: {
+      anger: 'One shout from me, and they would all be silent.',
+      abandonment: 'Wear me, and you will need no one.',
+      confrontation: 'You would never have to ask. They would know.',
+      judgement: 'I have the list. Sentence them.',
+      envy: 'Everything they have could be yours.',
+      shame: 'No one dares to look at a face like mine.',
+      need: 'They would come and beg.',
+      control: 'Nothing moves unless I allow it.',
+      body: 'I only hunger. I never blush.',
+      rest: 'I do not sleep. Why should you?',
+      worth: 'You always knew you were chosen.',
+      softness: 'Nothing can touch me.',
+      cruelty: 'You know the sentence. Say it.',
+      truth: 'With me, what you say becomes true.',
+      selfishness: 'Take it all. They would have.',
+      grief: 'I have never lost anything.',
+      courage: 'Let them be afraid instead.',
+      victim: 'Now they will pay for it.',
+      play: 'Break it. It is only a toy.',
+      coldness: 'Here nothing is felt.',
+    },
+    // after "This is not mine" (Jung: the personal and the archetypal shadow, CW 9ii, 19; that it is left where it lies is the game's)
+    left: [
+      { title: 'The Horned One', lines: ['Your own shadow is your size. You can take it back.', 'Jung knew a second one, which belongs to no one: the dark that all people share. He called it archetypal.'] },
+      { title: 'The Horned One', lines: ['It is strong, and it is not yours.', 'You do not fight it, and you do not wear it. You know that it is there.'] },
+    ],
+    // after wearing it (Jung: possession, CW 9i, 220 to 222; the rest is the game's)
+    wore: [
+      { title: 'Possession', lines: ['You did not wear it. It wore you.', 'Jung called it possession: something larger than you takes your place, and feels like your own strength.'] },
+      { title: 'Possession', lines: ['It can be rage, or a cause, or being right, or being chosen. Everything obeys, and no one is near.', 'What you leave in the dark of your own house makes its voice louder.'] },
+      { title: 'Possession', lines: ['What brought you back was a light you did not make.'] },
+    ],
+    again: 'It has fewer voices now. It will never have none.', // from the second time on, in place of the pages
+  },
+  // the pages. (J) marks what is said to be Jung's; the rest is the game's own and is not put in his mouth
+  pages: {
+    // once the furnace is lit (J: the sealed vessel, CW 12)
+    vessel: [
+      { title: 'The Sealed Vessel', lines: ['The alchemists sealed the glass before they lit the fire, so that nothing could escape.', 'Jung read the whole of their work as a picture of what happens in the soul.'] },
+      { title: 'The Sealed Vessel', lines: ['What presses on you wants out: into a quarrel, an excuse, a screen. Here you keep it in.', 'This is not swallowing it. You feel all of it, and throw it at no one.'] },
+    ],
+    dark: [{ title: 'The Dark', lines: ['It wanted you to look at nothing else: what is wrong with you, and with everyone.', 'You felt its weight, and stayed.'] }],
+    // (J: Eliade's interview of 1952, in C. G. Jung Speaking)
+    white: [{ title: 'The White', lines: ['It was clean there, and nothing hurt. But no one lives in that light.', 'Jung said the white is still only an idea: it needs blood, the alchemists’ red, before it is life.'] }],
+    // (J: the transcendent function, CW 8)
+    both: [{ title: 'Both', lines: ['When two things in you contradict each other, you want to pick one and be done.', 'Jung found that if both are held, and neither is dropped, in time a third thing comes, and it is alive.'] }],
+    // (J: CW 12, 334)
+    reddening: [
+      { title: 'The Reddening', lines: ['The white was clear, but cool. The alchemists raised the fire, and it turned red, like the sun coming up.'] },
+      { title: 'The Reddening', lines: ['It is life coming back. What you understood, you now have to live: be warm, be involved, be hurt again.', 'Feeling returns to everything.'] },
+    ],
+    // (J: the union of opposites, CW 12, 14 and 16); man and woman, and then the same for both
+    lights: {
+      goddess: [
+        { title: 'The Two Lights', lines: ['The alchemists drew it as the wedding of a king and a queen.', 'Jung read it as the joining of opposites in one person.'] },
+        { title: 'The Two Lights', lines: ['She no longer goes ahead of you with a light you can not reach.', 'What she brought, feeling and imagination, burns in one fire with your will.'] },
+      ],
+      god: [
+        { title: 'The Two Lights', lines: ['The alchemists drew it as the wedding of a king and a queen.', 'Jung read it as the joining of opposites in one person.'] },
+        { title: 'The Two Lights', lines: ['He no longer goes ahead of you with a light you can not reach.', 'What he brought, courage and a clear word, burns in one fire with your feeling.'] },
+      ],
+      both: [{ title: 'The Two Lights', lines: ['So no one out there has to carry it for you.', 'You are free to see them, and they are free to be no more than they are.'] }],
+    },
+    // (J: the child archetype, CW 9i; the long bag is Robert Bly's image)
+    child: [{ title: 'The Child', lines: ['You were small when you put the first thing in, because someone did not want it. The child has dragged it for you ever since.', 'A child in dreams and myths, Jung wrote, often points ahead: to what is still becoming in you.'] }],
+    gold: [{ title: 'The Gold', lines: ['Too loud, too tender, too much: that is what went into the sack. It was heavy because it was gold.', 'The alchemists’ gold, Jung thought, was never only metal. It was something found in the soul.'] }],
+    // (J: CW 9ii, 123; the last sentence is the game's)
+    self: [
+      { title: 'The Self', lines: ['Jung called the whole of a person the Self: what you know of yourself and what you do not, the dark with the light.'] },
+      { title: 'The Self', lines: ['It is not a better you. He was careful about that: whole is not the same as perfect.', 'You do not own it. You make room for it.'] },
+    ],
+    // in the corridor, on the way back (J: CW 8, 432; CW 16, 454)
+    changes: [
+      { title: 'What it changes', lines: ['Nothing outside has changed. The same people will irritate you tomorrow.', 'But you will feel the heat a moment sooner and know it as yours, and in that moment you can choose.'] },
+      { title: 'What it changes', lines: ['Becoming yourself, Jung wrote, does not shut the world out. It gathers the world in.', 'And no one becomes whole alone: you need the others, as they are.'] },
+    ],
+  },
+  // from the second time in Rubedo, one line where a page was
+  again: {
+    vessel: 'You know this fire.',
+    dark: 'It is the same dark. You know its weight.',
+    white: 'Still beautiful. Still no one lives there.',
+    both: 'Neither. Both. Wait.',
+    reddening: 'Warm again.',
+    lights: 'One fire.',
+    child: 'It has grown.',
+    gold: 'There was more.',
+    self: 'Not perfect. A little more whole.',
+    changes: 'The same door, the same people. A little more room.',
+  },
+  red: 'Red.',
+  gold: 'Gold.',
+  up: 'What went down in the dark goes up in the light.',
+  masks: 'Faces. You can wear one when you need it, and hang it up again.',
+  endCard: '<p>Black, white, red, gold.</p><p>You went down with a small light, into a house full of shut doors. You came up with what was behind them.</p>',
+  level: 'III · RUBEDO',
+  wakeByFire: 'Wake by the fire',
+  pauseHow: 'Under the water: set the flask on the furnace and keep it in the fire. Then untie the sack, and go up.',
+};
+
 /** On the pause card: what the level asks of you, in one line. */
 export const PAUSE_HOW = 'Read the masks. Take a black one that is yours, and face what it becomes: turn to it, hold your light on it, and walk into it. The door at the end opens after three.';
 
@@ -452,7 +616,7 @@ export const INTRO = {
   cards: [
     { num: 'I', name: 'Nigredo', sub: 'the blackening', text: 'The house. The faces you wear.', playable: true, at: null },
     { num: 'II', name: 'Albedo', sub: 'the whitening', text: 'The water. The Other.', playable: true, at: 'albedo' },
-    { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: null },
+    { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: 'rubedo', textOn: 'The cave. The fire.' }, // playable with ?rubedo
   ],
   begin: 'Begin',
   // the title card after a level card is picked (level I's is in index.html as it stands)
@@ -460,6 +624,14 @@ export const INTRO = {
     albedo: {
       level: 'II · ALBEDO',
       howto: '<p>Below the house the water is black and still. Your light floats beside you.<br /><b>A horse waits in the water, and three sealed letters float on it.</b></p><p class="soft">Go slowly, and lower your eyes when you are asked to.<br />Nothing is lost here. Only time.</p>',
+    },
+    rubedo: {
+      level: 'III · RUBEDO',
+      howto: '<p>Under the water there is a cave, and in it a furnace that has been cold a long time.<br /><b>Someone with a light of their own goes down ahead of you.</b></p><p class="soft">There is one thing down there to leave alone.<br />Nothing is lost here. Only time.</p>',
+    },
+    fire: {
+      level: 'III · RUBEDO',
+      howto: '<p>The dark stair, below the hall. The rock is warm.<br /><b>They are waiting for you further down.</b></p>',
     },
   },
   test: 'Prototype: try any level',

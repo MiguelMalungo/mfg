@@ -46,7 +46,7 @@ const flaskProfile = () => {
 };
 
 const GlassShader = {
-  uniforms: { tint: { value: new THREE.Color(1.0, 0.78, 0.5) }, glow: { value: 1 } },
+  uniforms: { tint: { value: new THREE.Color(1.0, 0.78, 0.5) }, glow: { value: 1 }, thick: { value: 0 }, back: { value: new THREE.Color(0, 0, 0) } },
   vertexShader: /* glsl */ `
     varying vec3 vN; varying vec3 vV; varying vec3 vP;
     void main() {
@@ -57,7 +57,7 @@ const GlassShader = {
       gl_Position = projectionMatrix * mv;
     }`,
   fragmentShader: /* glsl */ `
-    uniform vec3 tint; uniform float glow;
+    uniform vec3 tint; uniform float glow; uniform float thick; uniform vec3 back;
     varying vec3 vN; varying vec3 vV; varying vec3 vP;
     float h31(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
     void main() {
@@ -73,6 +73,15 @@ const GlassShader = {
       float dust = h31(floor(vP * 900.0)) * 0.004;
       float a = clamp(fres * 0.5 + s1 + s2 + dust * fres, 0.0, 1.0);
       vec3 col = tint * (fres * 0.06 * glow + dust) + vec3(1.0, 0.9, 0.75) * (s1 * 0.5 + s2 * 0.12) * glow;
+      if (thick > 0.01) {
+        // large, close: old thick glass. Amber in its depth, the light behind it bent in along its sides, dirt on it
+        float neck = smoothstep(0.044, 0.052, vP.y);
+        float side = pow(1.0 - ndv, 1.3);
+        float dirt = smoothstep(0.35, 0.8, 0.5 * h31(floor(vP * 260.0)) + 0.5 * h31(floor(vP * 90.0 + 3.0)));
+        vec3 amber = vec3(0.030, 0.019, 0.006);
+        a = mix(a, clamp(a + side * 0.75 + neck * (0.16 + 0.3 * side) + dirt * 0.05, 0.0, 1.0), thick);
+        col += thick * (amber * (neck * 0.18 + 0.2 * side) * (0.4 + glow) + back * (pow(side, 2.2) * 0.5 + neck * 0.045 * (0.5 + 0.5 * sin(vP.y * 900.0 + 6.0 * h31(floor(vP * 40.0))))) + tint * pow(1.0 - ndv, 4.0) * 0.03);
+      }
       gl_FragColor = vec4(col, a);
     }`,
 };
@@ -88,6 +97,7 @@ const ReactionShader = {
     level: { value: 0 },
     frac: { value: 0 }, // how far the next stage's colour has bloomed through the liquid
     wave: { value: 0 }, // how hard the surface is moving
+    work: { value: 0 }, // on the furnace: the bulb full, dark, torn glowing pieces turning in it (i22)
     up: { value: new THREE.Vector3(0, 1, 0) }, // the liquid's "up": the world's, leaning with the slosh
     liquidA: { value: new THREE.Vector3() },
     liquidB: { value: new THREE.Vector3() },
@@ -105,7 +115,7 @@ const ReactionShader = {
     }`,
   fragmentShader: /* glsl */ `
     uniform float time; uniform float radius; uniform float heat; uniform float boil; uniform float fume; uniform float flecks;
-    uniform float level; uniform float frac; uniform float wave; uniform vec3 up;
+    uniform float level; uniform float frac; uniform float wave; uniform float work; uniform vec3 up;
     uniform vec3 liquidA; uniform vec3 liquidB; uniform vec3 darkCol; uniform vec3 paleCol; uniform vec3 glowCol; uniform vec3 fleckCol;
     varying vec3 vPos; varying vec3 vCam;
     float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
@@ -130,7 +140,9 @@ const ReactionShader = {
       float sq = sqrt(disc);
       float t0 = max(-b - sq, 0.0), t1 = -b + sq;
       const int N = 48;
-      float dt = (t1 - t0) / float(N);
+      // (large on the furnace it fills many more pixels: fewer steps there)
+      float steps = mix(48.0, 22.0, work);
+      float dt = (t1 - t0) / steps;
       float ds = dt / radius;
       // start each ray at a different depth so the steps don't show as shells
       float j = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
@@ -139,13 +151,14 @@ const ReactionShader = {
       vec3 ember = vec3(0.0, -0.7, 0.0);
       float rise = time * (0.2 + boil * 1.0);
       for (int i = 0; i < N; i++) {
+        if (float(i) >= steps) break;
         vec3 q = (ro + rd * (t0 + (float(i) + j * 0.6) * dt)) / radius; // -1..1 inside the bulb
         float rq = length(q);
         float edge = 1.0 - smoothstep(0.92, 1.0, rq);
         float de = length(q - ember);
         float h = dot(q, up); // height above the liquid's own level plane
         // the surface: a slow swell, waves when it has been shaken, a seethe when it boils
-        float surf = level
+        float surf = mix(level, 1.25, work)
                    + (0.012 + 0.05 * wave) * sin(q.x * 6.0 + time * (1.1 + 4.0 * wave)) * cos(q.z * 5.0 - time * (0.8 + 3.0 * wave))
                    + boil * 0.09 * (noise(vec3(q.xz * 5.0, time * 2.6)) - 0.5);
         float aStep; vec3 col;
@@ -161,17 +174,25 @@ const ReactionShader = {
           // bubbles: small spheres drifting up; inside one the liquid is thin, and its skin catches the light
           vec3 bc = vec3(q.x * 5.5 + sin(q.y * 5.0 + time) * 0.2, (q.y - rise) * 5.5, q.z * 5.5);
           vec3 id = floor(bc), f = fract(bc) - 0.5;
-          float present = step(1.0 - (0.16 + 0.55 * boil), hash(id + 3.7));
+          float present = step(1.0 - (0.16 + 0.55 * boil) * (1.0 - 0.75 * work), hash(id + 3.7));
           float br = 0.13 + 0.2 * hash(id);
           float bl = length(f + (vec3(hash(id + 1.3), hash(id + 5.1), hash(id + 2.9)) - 0.5) * 0.3);
           float bubble = present * smoothstep(br, br * 0.8, bl);
           float skin = present * smoothstep(br * 1.3, br, bl) * (1.0 - smoothstep(br, br * 0.8, bl));
           dens *= 1.0 - 0.9 * bubble;
           // slow convection: darker and paler bodies of liquid turning past each other
-          float conv = fbm(vec3(q.x * 2.2 + time * 0.04, q.y * 2.2 - time * 0.1, q.z * 2.2));
+          float conv = work > 0.9 ? 0.5 : fbm(vec3(q.x * 2.2 + time * 0.04, q.y * 2.2 - time * 0.1, q.z * 2.2));
           // the ember lights the liquid close to it, so black stays black further out
           vec3 lit = glowCol * (0.006 / (0.02 + de * de * de * 8.0)) * heat;
-          col = liquid * (0.4 + 1.2 * conv) + lit;
+          col = liquid * (0.4 + 1.2 * conv) * (1.0 - 0.84 * work) + lit * (1.0 - 0.6 * work);
+          if (work > 0.01) {
+            vec3 wq = q + 0.42 * (vec3(noise(q * 2.3 + time * 0.05), noise(q * 2.3 + 7.1 - time * 0.06), noise(q * 2.3 + 13.7)) - 0.5);
+            float tn = fbm(vec3(wq.x * 1.75 + time * 0.035, wq.y * 4.0 - time * 0.07, wq.z * 1.75) + 2.0);
+            float mid = smoothstep(0.62, -0.1, q.y) * smoothstep(-0.97, -0.4, q.y);
+            float hot = smoothstep(0.52, 0.68, tn) * mid;
+            float veil = smoothstep(0.06, 0.0, abs(tn - 0.47)) * mid;
+            col += (liquid * 1.6 + glowCol * 0.05) * veil * work + glowCol * pow(hot, 1.5) * (0.32 + 0.36 * heat) * work * (1.0 - 0.72 * smoothstep(0.35, 0.8, glowCol.b)) * (0.85 + 0.15 * sin(time * 1.3 + q.x * 4.0));
+          }
           // the edge of a bloom glows faintly, where the two meet
           col += glowCol * 0.012 * front * (1.0 - front) * 4.0;
           // bubble skins: lit by the ember, and a little by the room
@@ -182,7 +203,7 @@ const ReactionShader = {
           aStep = 1.0 - exp(-dens * ds * edge);
           // grains carried round in the liquid
           vec3 fc = vec3(q.x * 15.0 + sin(time * 0.3 + q.y * 3.0), (q.y - time * 0.06) * 15.0, q.z * 15.0 + cos(time * 0.25 + q.y * 2.0));
-          float grain = step(1.0 - 0.1 * flecks, hash(floor(fc) + 9.1)) * smoothstep(0.32, 0.0, length(fract(fc) - 0.5));
+          float grain = step(1.0 - 0.1 * flecks * (1.0 - 0.85 * work), hash(floor(fc) + 9.1)) * smoothstep(0.32, 0.0, length(fract(fc) - 0.5));
           acc += T * fleckCol * grain * 0.9 * ds * 10.0 * (0.4 + 0.6 * heat);
         } else {
           /* ── vapour ── */
@@ -205,7 +226,7 @@ const ReactionShader = {
         }
         acc += T * aStep * col;
         // the ember itself, under the liquid
-        acc += T * glowCol * exp(-de * de * 22.0) * 20.0 * ds * heat;
+        acc += T * glowCol * exp(-de * de * 22.0) * 20.0 * ds * heat * (1.0 - 0.9 * work);
         T *= 1.0 - aStep;
         if (T < 0.02) break;
       }
@@ -397,7 +418,31 @@ export const buildVessel = (glowTex) => {
     // it floats: a slow bob. (It does not turn: main.js keeps it upright in the world, so "up" in the shader is the world's.)
     body.position.y = 0.006 * Math.sin(t * 0.9) + 0.003 * Math.sin(t * 2.1);
   };
+  /* On the furnace its neck is longer (i22): k 0 as ever, 1 three quarters longer. Everything above the shoulder moves with it. */
+  const neckY0 = pts.find((p) => p.x < 0.0146 && p.y > 0).y, NECK = 0.75;
+  const base = glass.geometry.attributes.position.array.slice();
+  const tops = [stopper, wax, ...body.children.filter((o) => o.geometry?.type === 'CapsuleGeometry')].map((o) => ({ o, y: o.position.y }));
+  let neckK = -1;
+  /** k 0..1: standing large on the furnace; `back`: the light behind it. */
+  const setLarge = (k, back) => {
+    inMat.uniforms.work.value = k;
+    glassMat.uniforms.thick.value = k;
+    if (back) glassMat.uniforms.back.value.copy(back);
+    setNeck(k);
+  };
+  const setNeck = (k) => {
+    if (Math.abs(k - neckK) < 1e-3) return;
+    neckK = k;
+    const add = NECK * k * (neckTop - 0.012 - neckY0), p = glass.geometry.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const y = base[i * 3 + 1], f = Math.min(1, Math.max(0, (y - neckY0) / (neckTop - 0.012 - neckY0)));
+      p.setY(i, y + add * f);
+    }
+    p.needsUpdate = true;
+    glass.geometry.computeVertexNormals();
+    for (const t of tops) t.o.position.y = t.y + add;
+  };
   /** Height of the whole flask, bulb to stopper, at scale 1 (main.js sizes it against the screen). */
   const height = R + neckTop + 0.03;
-  return { group, body, light, glass, inside, state, update, slosh, sl, R, height, react, stepReaction, rx };
+  return { group, body, light, glass, inside, state, update, slosh, sl, R, height, react, stepReaction, rx, setLarge };
 };

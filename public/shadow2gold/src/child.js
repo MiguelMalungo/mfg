@@ -100,6 +100,43 @@ export const buildChild = (scene, people, sack, sound) => {
     if (st.phase === 'drag' || st.phase === 'wait') sack.update(t, 0, st.dragSpeed);
     sound.drag?.(Math.min(1, st.dragSpeed * 2.5));
 
+    // in the cave: it turns to you, and later walks ahead of you up the stair (rubedo.js)
+    if (st.turnTo != null) {
+      const d = Math.atan2(Math.sin(st.turnTo - c.root.rotation.y), Math.cos(st.turnTo - c.root.rotation.y));
+      c.root.rotation.y += Math.max(-0.8 * dt, Math.min(0.8 * dt, d));
+      st.turned = Math.abs(d) < 0.12;
+    }
+    if (st.phase === 'goto') {
+      const g = st.path[0];
+      if (!g) speed = 0;
+      else {
+        _d.set(g.x - c.root.position.x, 0, g.z - c.root.position.z);
+        const left = _d.length(), far = Math.hypot(player.x - c.root.position.x, player.z - c.root.position.z);
+        speed = far > 7.5 ? 0 : far < 2 ? 1.25 : 0.85; // it waits for you, and keeps ahead
+        if (left < 0.2) st.path.shift();
+        else {
+          const want = Math.atan2(_d.x, _d.z), d = Math.atan2(Math.sin(want - c.root.rotation.y), Math.cos(want - c.root.rotation.y));
+          c.root.rotation.y += Math.max(-3 * dt, Math.min(3 * dt, d));
+          c.root.position.addScaledVector(_d.normalize(), Math.min(left, speed * dt * Math.max(0.1, Math.cos(d))));
+        }
+        c.root.position.y += (st.floorAt(c.root.position.x, c.root.position.z) - c.root.position.y) * (1 - Math.exp(-dt * 9));
+      }
+      if (!st.path.length) {
+        st.fade = Math.min(1, st.fade + dt / 0.8);
+        if (st.fade >= 1) ((st.phase = 'gone'), (c.root.visible = false));
+      }
+    }
+
+    // its own light steps, when it walks alone (the nearer, the louder)
+    if ((st.phase === 'goto' || st.phase === 'leave') && speed > 0.1) {
+      st.stride = (st.stride ?? 0) + speed * dt;
+      if (st.stride > 0.38) {
+        st.stride = 0;
+        const d = Math.hypot(player.x - c.root.position.x, player.z - c.root.position.z);
+        sound.childStep?.(Math.max(0, 1 - d / 12) * (1 - st.fade));
+      }
+    }
+
     /* the body: walking when it moves, leaning into the pull, the arm holding the rope */
     st.walkBlend += ((speed > 0.04 ? 1 : 0) - st.walkBlend) * Math.min(1, dt * 5);
     c.walk.weight = st.walkBlend;
@@ -108,17 +145,33 @@ export const buildChild = (scene, people, sack, sound) => {
     c.walk.timeScale = Math.max(0.0001, speed / (1.26 * 0.61));
     c.unbend();
     c.mixer.update(dt);
-    const holding = st.phase === 'wait' || st.phase === 'drag';
-    st.hold += ((holding ? 1 : 0) - st.hold) * Math.min(1, dt * 4);
+    const holding = st.phase === 'wait' || st.phase === 'drag' || st.phase === 'cave';
+    st.hold += ((st.phase === 'give' ? -1 : holding ? 1 : 0) - st.hold) * Math.min(1, dt * 4);
     st.lean += ((st.phase === 'drag' ? 0.5 + 0.5 * Math.min(1, speed * 4) : st.phase === 'wait' ? 0.25 : 0) - st.lean) * Math.min(1, dt * 3);
     c.pose(st.lean, st.hold);
     c.u.fade.value = st.fade;
     c.u.time.value = t;
 
     /* the rope: in the hand while it holds on; on the floor where it fell */
-    if (st.hold > 0.5) sack.setRope(c.hand(), true);
+    if (st.phase === 'cave' || st.phase === 'give' || st.hold > 0.5) sack.setRope(c.hand(), true);
     else sack.setRope(st.ropeEnd, false);
   };
 
-  return { child: c, st, update };
+  /** In the cave (rubedo.js): it stands by the sack, the rope in its hand, its back to you. */
+  const toCave = (pos, yaw) => {
+    st.phase = 'cave';
+    st.fade = 0;
+    c.root.visible = true;
+    if (c.own) c.own.tone.value = 0.36;
+    c.root.position.copy(pos);
+    c.root.rotation.y = yaw;
+  };
+  /** It walks these points ({ x, z }), ahead of you, and is gone at the end of them. */
+  const go = (path, floorAt) => {
+    st.turnTo = null;
+    st.phase = 'goto';
+    st.path = path;
+    st.floorAt = floorAt;
+  };
+  return { child: c, st, update, toCave, go };
 };
