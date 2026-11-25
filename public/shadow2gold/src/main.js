@@ -11,7 +11,7 @@ import { buildAlbedo } from './albedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO, RETURNS } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
@@ -205,7 +205,9 @@ const dust = (() => {
 const START = new THREE.Vector3(0, 0, 2.2);
 const EYE = 1.62;
 const player = { y: 0, pos: START.clone(), vel: new THREE.Vector3(), yaw: 0, pitch: -0.05, stride: 0, lastStep: 0, speed: 0 };
-const state = { started: false, ended: false, t: 0, charge: 1, runDebt: 0, lastBeat: 0, faced: save.data.faced.length, facedAt: null, doorAt: save.data.faced.length >= 3 ? -10 : null };
+const state = { started: false, ended: false, t: 0, charge: 1, runDebt: 0, lastBeat: 0, faced: save.facedNow, facedAt: null, doorAt: save.facedNow >= 3 ? -10 : null };
+/** The distillation you are in (texts.js, DISTIL): 1 the first time through. */
+const ROUND = save.data.round;
 /** The Shadow: where it stands, how tall it has grown, how near it feels. `facing` (below) says which mask gave it a face. */
 const sh = { awake: false, pos: new THREE.Vector3(0, 0, 0), dread: 0, fade: 1, scale: 1, grow: 0, meet: false, dip: 0, gait: 0, stride: 0, prev: new THREE.Vector3(), lastStep: 0, prevDist: 0, echo: 0 };
 const EXPOSURE = post.finish.uniforms.exposure.value;
@@ -230,7 +232,7 @@ let startAt = params.get('at');
   const intro = $('intro');
   // the title card names the level you are about to play (it is written for level I in index.html)
   const card = { level: document.querySelector('#start .level'), howto: document.querySelector('#start .howto') };
-  const own = { level: card.level.textContent, howto: card.howto.innerHTML };
+  const own = ROUND > 1 ? { level: `I · NIGREDO\n${DISTIL.name(ROUND)}`, howto: DISTIL.card(ROUND, save.data.turned && save.facedNow === save.data.faced.length) } : { level: card.level.textContent, howto: card.howto.innerHTML };
   const setCard = (at) => {
     const c = INTRO.start[at] ?? own;
     card.level.textContent = c.level;
@@ -256,7 +258,14 @@ let startAt = params.get('at');
     cards.appendChild(b);
   });
   onTap($('intro-begin'), (e) => (e.stopPropagation(), leave(params.get('at'))));
-  if (DEBUG || params.has('at')) {
+  // a new round goes straight to its own title card
+  let next = false;
+  try {
+    next = sessionStorage.getItem('st2g.nextRound') === '1';
+    sessionStorage.removeItem('st2g.nextRound');
+  } catch {}
+  if (next) leave(null);
+  if (DEBUG || next || params.has('at')) {
     intro.style.display = 'none';
   }
 }
@@ -335,6 +344,7 @@ const pause = () => {
   window.__releaseTouches?.();
   $('pausehow').textContent = albedo && (player.pos.z < Z_END - 0.4 || player.pos.z > 100) ? ALBEDO.pauseHow : PAUSE_HOW;
   $('restartgame').textContent = 'Start again';
+  $('distilpause').style.display = state.albedoDone ? '' : 'none';
   $('pause').classList.remove('hidden');
   sound.ctx?.suspend?.();
   if (document.pointerLockElement) document.exitPointerLock?.();
@@ -384,6 +394,31 @@ $('start').addEventListener('click', () => {
 renderer.domElement.addEventListener('click', () => {
   if (state.started && document.pointerLockElement !== renderer.domElement) lock();
 });
+/** The end card: what was done, and the next distillation (the real path only: a level tried by itself counts nothing). */
+const endCard = () => {
+  const counted = state.albedoSave === save;
+  $('end2text').innerHTML = ALBEDO.endCard + DISTIL.end;
+  $('end2small').textContent = ALBEDO.next;
+  $('end2note').textContent = counted ? (ROUND > 1 ? DISTIL.name(ROUND) : '') : DISTIL.notCounted;
+  $('distil').style.display = '';
+  $('end2').classList.remove('hidden');
+};
+const distilAgain = (e) => {
+  e.stopPropagation();
+  if (state.albedoSave === save) save.nextRound(BLACK.length);
+  try {
+    sessionStorage.setItem('st2g.nextRound', '1');
+  } catch {}
+  // (?at=albedo opens level II alone: the next round begins in the house)
+  const u = new URL(location.href);
+  u.searchParams.delete('at');
+  location.href = u.href;
+};
+$('distil').textContent = DISTIL.again;
+$('again2').textContent = DISTIL.stay;
+onTap($('distil'), distilAgain);
+$('distilpause').textContent = DISTIL.again;
+onTap($('distilpause'), distilAgain);
 $('again2').addEventListener('click', () => {
   $('end2').classList.add('hidden');
   state.ended = false;
@@ -929,7 +964,7 @@ const integrate = (F, t) => {
     save.add('faced', F.mask.id);
     const n = state.faced;
     // what it changes, and (the first three times) what taking a shadow back is good for
-    words.tell([{ title: F.def.strength, lines: [F.def.now, RETURNS[n - 1]].filter(Boolean) }], {
+    words.tell([{ title: F.def.strength, lines: [F.def.now, (ROUND > 1 ? RETURNS_AGAIN : RETURNS)[n - 1]].filter(Boolean) }], {
       onDone: () =>
         // the flask comes forward: the black boils, a bloom opens; after the third, the first white stays
         vessel.react({
@@ -941,6 +976,7 @@ const integrate = (F, t) => {
               sound.glass(261.6, 0.1, 8);
             }
             facing = null;
+            if (n === 1 && ROUND === 1) words.tell([DISTIL.flask]); // what the glass is doing
           },
         }),
     });
@@ -1448,18 +1484,18 @@ const tick = (forceDt) => {
   const V = vessel.state;
   const ease = (cur, target, rate) => cur + (target - cur) * (1 - Math.exp(-dt * rate));
   // its light is your charge; it shrinks while a shadow is near, and burns a little higher for each one faced
-  V.heat = state.charge * (1 - 0.35 * sh.dread) * (1 + 0.12 * Math.min(n, 4));
+  V.heat = state.charge * (1 - 0.35 * sh.dread) * (1 + 0.12 * Math.min(n, 4)) * (1 + 0.05 * Math.min(ROUND - 1, 4)); // a little clearer with each distillation
   // hurrying makes it boil; going through a shadow sets it seething, then it settles
   V.boil = ease(V.boil, Math.min(1, (hurry ? 1 : player.speed > 0.2 ? 0.1 : 0.02) + Math.exp(-since / 3.5)), 1.6);
   // dread fills the bulb with black vapour; so does a shadow loose in the house
   V.fume = ease(V.fume, 1 + 0.9 * sh.dread + (facing && facing.phase !== 'after' ? 0.35 : 0), 2);
   // by the wall of masks pale grains rise in it; one stays for each shadow faced
   const dMasks = Math.max(0, Math.max(player.pos.z - MASK_WALL.z0, MASK_WALL.z1 - player.pos.z));
-  V.flecks = ease(V.flecks, Math.max(0.6 * smoothstep(5, 0.5, dMasks), Math.min(1, 0.2 * n)), 1.2);
+  V.flecks = ease(V.flecks, Math.max(0.6 * smoothstep(5, 0.5, dMasks), Math.min(1, 0.2 * n + 0.12 * (ROUND - 1))), 1.2); // (and a few from every round before)
   // the liquid rises and falls with the sack's breath
   V.heave = 0.07 * sack.u.breath.value * smoothstep(10, 2.5, dSack);
   // the work: black; a little less black for each one faced; after the third, the first white
-  const lettersRead = save.data.letters.length, goldBack = albedo?.st.gold ? 1 : 0;
+  const lettersRead = albedo?.st.read.length ?? 0, goldBack = albedo?.st.gold ? 1 : 0;
   const wantStage = demo.stage ?? Math.min(1, [0, 0.1, 0.2, 0.55][Math.min(n, 3)] + 0.03 * Math.max(0, n - 3) + 0.1 * lettersRead + 0.15 * goldBack);
   V.stage = ease(V.stage, wantStage, 0.5);
   water.update(t, dt, player.pos.z < Z_END);
@@ -1539,9 +1575,7 @@ const tick = (forceDt) => {
       state.albedoDone = true;
       later(4, () => {
         state.ended = true;
-        $('end2text').innerHTML = ALBEDO.endCard;
-        $('end2small').textContent = ALBEDO.next;
-        $('end2').classList.remove('hidden');
+        endCard();
         document.exitPointerLock?.();
       });
     }

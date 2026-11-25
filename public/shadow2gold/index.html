@@ -21,7 +21,7 @@
       .overlay.hidden { opacity: 0; pointer-events: none; }
       .title { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(40px, 6vw, 84px); letter-spacing: 0.18em; margin-left: 0.18em; text-align: center; line-height: 1.05; text-shadow: 0 0 40px rgba(242, 230, 204, 0.3); }
       .small { font-size: 12px; letter-spacing: 0.5em; margin-left: 0.5em; text-transform: uppercase; opacity: 0.75; text-align: center; }
-      .level { font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; letter-spacing: 0.3em; margin-left: 0.3em; opacity: 0.8; }
+      .level { text-align: center; white-space: pre-line; line-height: 1.5; font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; letter-spacing: 0.3em; margin-left: 0.3em; opacity: 0.8; }
       .prompt { font-size: 13px; letter-spacing: 0.45em; margin-left: 0.45em; text-transform: uppercase; opacity: 0.85; animation: breathe 3.2s ease-in-out infinite; }
       @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.95; } }
       #start { cursor: pointer; }
@@ -33,6 +33,11 @@
       .keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 24px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.8; }
       .keys div { display: flex; flex-direction: column; align-items: center; gap: 8px; }
       kbd { font-family: Inter, sans-serif; font-size: 11px; border: 1px solid rgba(242, 230, 204, 0.5); border-radius: 4px; padding: 4px 7px; letter-spacing: 0.1em; }
+      #end2 { overflow-y: auto; justify-content: safe center; background: rgba(0, 0, 0, 0.9); }
+      #end2 .note { font-size: 10px; letter-spacing: 0.22em; opacity: 0.55; }
+      #end2 .howto { max-width: 620px; }
+      #distil, #distilpause { border-color: #ffd89a; color: #ffd89a; opacity: 1; }
+      @media (max-height: 500px), (max-width: 640px) { #end2 { gap: 14px; padding: 16px; } #end2 .howto { font-size: 17px; line-height: 1.36; } #end2 .howto p { margin-bottom: 9px; } #end2 .who button { font-size: 15px; letter-spacing: 0.14em; padding: 10px 16px; white-space: nowrap; } }
       #end { background: rgba(0, 0, 0, 0.9); }
       .again { font: inherit; font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.4); border-radius: 4px; padding: 10px 16px; opacity: 0.8; }
       .again:hover { opacity: 1; border-color: rgba(242, 230, 204, 0.9); }
@@ -160,6 +165,7 @@
       <div class="howto"><p class="soft" id="pausehow"></p></div>
       <div class="who">
         <button id="resume" class="again" type="button">Go on</button>
+ <button id="distilpause" class="again" type="button" style="display: none">Distil again</button>
         <button id="restartgame" class="again" type="button">Start again</button>
       </div>
     </div>
@@ -171,7 +177,11 @@
         <p class="soft">Letters float on it, sealed. Across it, someone holds up a light of their own.</p>
       </div>
       <div class="small" id="end2small">The second work · to come</div>
-      <button id="again2" class="again">Stay a while</button>
+      <div class="who">
+        <button id="distil" class="again" type="button" style="display: none">Distil again</button>
+        <button id="again2" class="again" type="button">Stay a while</button>
+      </div>
+      <div class="small note" id="end2note"></div>
     </div>
 
     <div id="stick" class="touch-only"><div id="nub"></div></div>

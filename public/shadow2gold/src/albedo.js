@@ -1351,11 +1351,19 @@ orbHalo.material.opacity = 0.22;
   group.add(other.obj);
   const oth = { pos: new THREE.Vector3(0.2, HALL_Y, OTHER_Z), yaw: 0, speed: 0, state: 'far', t: 0, told: false };
   const otherLight = house.farLight; // their own light, held up
+  // (what it adds is undone before the next mixer.update: the mixer does not rewrite a bone whose value has not
+  // changed, so a still figure, or a paused game, would turn the arm further every frame)
+  const raised = { up: null, lo: null };
+  const lower = () => {
+    if (raised.up) (other.bones.upperarm_r.quaternion.copy(raised.up), other.bones.lowerarm_r.quaternion.copy(raised.lo));
+  };
   const raise = () => {
     // the right arm held up and forward, as one holds up a lamp to see by (after the walk or stand has set the pose)
     const b = other.bones;
     const up = b.upperarm_r, lo = b.lowerarm_r;
     if (!up || !lo) return;
+    raised.up = up.quaternion.clone();
+    raised.lo = lo.quaternion.clone();
     const right = new THREE.Vector3(Math.cos(oth.yaw), 0, -Math.sin(oth.yaw)); // the figure's right, in the world
     up.parent.updateMatrixWorld(true);
     const q = new THREE.Quaternion().setFromAxisAngle(right, -1.25);
@@ -1399,6 +1407,7 @@ orbHalo.material.opacity = 0.22;
     other.obj.rotation.y = O.yaw;
     other.setGait(Math.min(1, O.speed / 0.6));
     other.walk.timeScale = Math.max(0.4, O.speed / 1.26);
+    lower();
     other.mixer.update(dt);
     raise();
     // the light in the raised hand

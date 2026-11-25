@@ -45,6 +45,55 @@ const inPlace = (clip, hipScale = 1) => {
   return c;
 };
 
+/**
+ * The walk's first frame is the scan's T-pose: played in a loop, the arms flash straight out every 2.3 s (the
+ * owner, 2026-11-25). It is dropped, and the loop closed on the frame after it (68 frames: two steps of 34).
+ */
+const FRAME = 1 / 30;
+const withoutTPose = (clip) => {
+  const c = clip.clone();
+  for (const t of c.tracks) {
+    const n = t.getValueSize(), last = t.times.length - 1;
+    if (last < 2) continue;
+    const t0 = t.times[1];
+    t.times = Float32Array.from([...t.times.slice(1), t.times[last] + FRAME], (x) => x - t0);
+    t.values = Float32Array.from([...t.values.slice(n), ...t.values.slice(n, 2 * n)]);
+  }
+  c.resetDuration();
+  return c;
+};
+/**
+ * Standing: the body and legs of the T-pose (upright, both feet down, no one's manner), the arms as they hang
+ * in the walk when they pass each other, and a slow breath in the chest. (Two frames of the walk, looped, made
+ * the hands twitch fifteen times a second.)
+ */
+const ARM = /^(shoulder|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky|little|finger)/i;
+const ARMS_PASS = 17; // the frame of the walk where the two hands are level
+const standing = (clip) => {
+  const c = clip.clone();
+  c.name = 'stand';
+  for (const t of c.tracks) {
+    const n = t.getValueSize();
+    const at = ARM.test(t.name) ? Math.min(ARMS_PASS, t.times.length - 1) : 0;
+    const v = [...t.values.slice(at * n, (at + 1) * n)];
+    if (t.name === 'spine_03.quaternion') {
+      const K = 8, q = new THREE.Quaternion(), out = [], times = [];
+      for (let k = 0; k <= K; k++) {
+        q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.009 * Math.sin((k / K) * 2 * Math.PI)).premultiply(new THREE.Quaternion(...v));
+        times.push((k / K) * 4.4);
+        out.push(q.x, q.y, q.z, q.w);
+      }
+      t.times = Float32Array.from(times);
+      t.values = Float32Array.from(out);
+    } else {
+      t.times = Float32Array.from([0, 4.4]);
+      t.values = Float32Array.from([...v, ...v]);
+    }
+  }
+  c.resetDuration();
+  return c;
+};
+
 /** Which way a turn about the body's side axis swings an arm forward (checked against side-view screenshots, 2026-11-17). */
 const ARM_SIGN = -1;
 const ARM_SWAP = false;
@@ -72,11 +121,13 @@ const boneMap = (obj) => {
 
 export const loadPeople = async () => {
   const [nathanFBX, sophiaFBX] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx')]);
-  const walkNathan = inPlace(nathanFBX.animations[0], 1);
+  const WOMAN_HIP = 84.2 / 94.6;
+  const walkNathan = withoutTPose(inPlace(nathanFBX.animations[0], 1));
   /* The player is a man or a woman (PLAN.md 10.3): Nathan's scan or Sophia's. Both share one
      skeleton, so each walks with Nathan's walk and stands with Sophia's idle, rescaled to its own hips. */
   const SCAN = { man: nathanFBX, woman: sophiaFBX };
-  const WALK = { man: walkNathan, woman: inPlace(nathanFBX.animations[0], 84.2 / 94.6) };
+  const WALK = { man: walkNathan, woman: withoutTPose(inPlace(nathanFBX.animations[0], WOMAN_HIP)) };
+  const STAND = { man: standing(inPlace(nathanFBX.animations[0], 1)), woman: standing(inPlace(nathanFBX.animations[0], WOMAN_HIP)) };
   const IDLE = { man: inPlace(sophiaFBX.animations[0], 94.6 / 84.2), woman: inPlace(sophiaFBX.animations[0], 1) };
 
   /** A whole figure from one of the scans with its walk, at metre scale. */
@@ -402,13 +453,13 @@ export const loadPeople = async () => {
   };
 
   /**
-   * The child (refs/v06.jpg, refs/i06): Sophia's scan made small, with a child's proportions
-   * (a larger head, shorter legs and arms), in plain dark clothes, seen from behind. It walks
-   * with Nathan's walk, stands with Sophia's idle, and can lean into a pull. `u.fade` dissolves it.
+   * The child (refs/v06.jpg, refs/i06), about six years old and 1.13 m: Nathan's scan made small, in plain dark
+   * clothes, seen from behind. (It was Sophia's until 2026-11-25: her hips stayed a woman's whatever the bones
+   * were scaled to.) It walks with Nathan's walk, stands upright, and can lean into a pull. `u.fade` dissolves it.
    */
   const makeChild = () => {
-    const obj = SkeletonUtils.clone(sophiaFBX);
-    const SCALE = 0.0066; // Sophia is ~1.65 m: about 1.1 m once the proportions change
+    const obj = SkeletonUtils.clone(nathanFBX);
+    const SCALE = 0.0061; // Nathan is ~1.8 m: about 1.12 m with a child's head
     obj.scale.setScalar(SCALE);
     // the file is Z-up and the loader tips it with a rotation on its root; the root group turns it instead
     obj.rotation.set(0, 0, 0);
@@ -418,45 +469,54 @@ export const loadPeople = async () => {
     mesh.receiveShadow = true;
     const bones = boneMap(obj);
     const u = { fade: { value: 0 }, time: { value: 0 } };
-    const mat = new THREE.MeshStandardMaterial({ map: tex('./assets/people/sophia/dif.jpg', true), normalMap: tex('./assets/people/sophia/norm.jpg'), roughness: 0.95 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex('./assets/people/nathan/dif.jpg', true), normalMap: tex('./assets/people/nathan/norm.jpg'), roughness: 0.95 });
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, u);
+      // its face is never meant to be seen: a man's nose and jaw are pressed back (centimetres, before skinning) and
+      // the whole of it lies in its own shade
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vBind;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          vBind = position;
+          { float face = smoothstep(157.0, 160.0, position.y) * (1.0 - smoothstep(181.0, 184.0, position.y));
+            float over = max(0.0, transformed.z - 10.4);
+            transformed.z -= face * over * 0.8; }`);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float fade; uniform float time;\nfloat hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+        .replace('#include <common>', '#include <common>\nuniform float fade; uniform float time; varying vec3 vBind;\nfloat hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
         .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (fade > hh(floor(gl_FragCoord.xy) + floor(time * 20.0) * 3.0)) discard;')
         .replace(
           '#include <map_fragment>',
           `#include <map_fragment>
           // plain dark clothes and drained skin: the child is mostly a shape against the light
           float l = dot(diffuseColor.rgb, vec3(0.3, 0.6, 0.1));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(l) * vec3(1.0, 0.88, 0.72), 0.85) * 0.075;`,
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(l) * vec3(1.0, 0.88, 0.72), 0.97) * 0.075;
+          diffuseColor.rgb *= 1.0 - 0.88 * smoothstep(1.0, 6.0, vBind.z) * smoothstep(155.0, 159.0, vBind.y);`,
         );
     };
-    mat.customProgramCacheKey = () => 'st2g-child-v1';
+    mat.customProgramCacheKey = () => 'st2g-child-v4';
     mesh.material = mat;
-    // a child's proportions: the head larger, legs and arms shorter
-    // Bones run along their local x: scale.x is length, y and z are girth. A child is not a small woman: the
-    // hips and chest narrow and flatten, the limbs are thinner as well as shorter, and the head is large. A
-    // bone's girth passes to its children, so the head is given back what the chest took away.
+    // a child's proportions. Bones run along their local x: scale.x is length, y and z are girth, and a bone's
+    // girth passes to its children. At six the head is about a fifth and a half of the height, the legs a little under
+    // half of it, the shoulders hardly wider than the hips, the waist hardly narrower than either.
+    const SHAPE = { pelvis: 0.98, chest: 0.92, shoulder: 0.78, head: 1.52, thigh: 0.98, shin: 0.98, legGirth: 1.0, arm: 0.94 };
     const shape = () => {
       const S = (n, x, y = x, z = y) => bones[n] && bones[n].scale.set(x, y, z);
-      const TORSO = 0.8;
-      S('pelvis', 1, 0.84, 0.84);
-      S('spine_01', 1, 0.95, 0.95);
-      S('spine_02', 0.97, 0.92, 0.92);
-      S('spine_03', 0.95, TORSO / (0.84 * 0.95 * 0.92), TORSO / (0.84 * 0.95 * 0.92) * 0.93);
-      S('neck', 0.9, 1 / TORSO, 1 / TORSO);
-      S('head', 1.4, 1.4, 1.4);
+      const K = SHAPE;
+      S('spine_01', 1, K.pelvis, K.pelvis);
+      S('spine_03', 0.96, K.chest, K.chest);
+      S('neck', 0.8, 1 / (K.pelvis * K.chest), 1 / (K.pelvis * K.chest));
+      S('head', K.head);
       for (const sd of ['l', 'r']) {
-        S('upperleg_' + sd, 0.86, 0.95 / 0.84, 0.95 / 0.84); // the legs keep their girth against the narrowed hips, then thin
-        S('lowerleg_' + sd, 0.98, 0.84, 0.84);
-        S('upperarm_' + sd, 0.9, 1.0, 1.0); // thin already: the chest's girth passes to the arms
+        S('shoulder_' + sd, K.shoulder, 1, 1);
+        S('upperarm_' + sd, K.arm, 1, 1);
+        S('upperleg_' + sd, K.thigh, K.legGirth, K.legGirth);
+        S('lowerleg_' + sd, K.shin, 1, 1);
       }
     };
     shape();
     const mixer = new THREE.AnimationMixer(obj);
-    const walk = mixer.clipAction(inPlace(nathanFBX.animations[0], 84.2 / 94.6));
-    const idle = mixer.clipAction(inPlace(sophiaFBX.animations[0], 1));
+    const walk = mixer.clipAction(WALK.man);
+    const idle = mixer.clipAction(STAND.man);
     walk.play();
     idle.play();
     walk.weight = 0;
@@ -469,20 +529,31 @@ export const loadPeople = async () => {
      * After the mixer: lean (0..1) into the pull, the right arm drawn back with the rope,
      * then set the feet on the floor.
      */
+    // (the bends are undone before the next mixer.update, as the Shadow's are: a held pose would bend twice)
+    const saved = new Map();
+    const bend = (bone, axis, angle) => {
+      if (!bone || angle === 0) return;
+      if (!saved.has(bone)) saved.set(bone, bone.quaternion.clone());
+      bendBone(bone, axis, angle);
+    };
+    const unbend = () => {
+      for (const [bone, q] of saved) bone.quaternion.copy(q);
+      saved.clear();
+    };
     const pose = (lean, hold) => {
       shape();
       obj.updateMatrixWorld(true);
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(root.quaternion);
       const side = new THREE.Vector3(1, 0, 0).applyQuaternion(root.quaternion);
-      bendBone(bones.spine_01, side, 0.12 * lean);
-      bendBone(bones.spine_03, side, 0.22 * lean);
-      bendBone(bones.neck, side, 0.12 + 0.1 * lean);
-      bendBone(bones.head, side, 0.08);
+      bend(bones.spine_01, side, 0.12 * lean);
+      bend(bones.spine_03, side, 0.22 * lean);
+      bend(bones.neck, side, 0.12 + 0.1 * lean);
+      bend(bones.head, side, 0.08);
       if (hold > 0) {
-        // the right arm reaches back and down, holding the rope over the shoulder
-        bendBone(bones.upperarm_r, side, -0.75 * hold);
-        bendBone(bones.lowerarm_r, side, -0.35 * hold);
-        bendBone(bones.upperarm_r, fwd, -0.15 * hold);
+        // the right arm drawn back and down by the rope (it pointed forward until 2026-11-25, away from the sack)
+        bend(bones.upperarm_r, side, 0.62 * hold);
+        bend(bones.lowerarm_r, side, 0.12 * hold);
+        bend(bones.upperarm_r, fwd, -0.1 * hold);
       }
       // the lowest foot rests on the floor
       const fl = bones.foot_l.getWorldPosition(_v).y, fr = bones.foot_r.getWorldPosition(_v).y;
@@ -492,7 +563,7 @@ export const loadPeople = async () => {
       obj.updateMatrixWorld(true);
     };
     const hand = () => bones.hand_r.getWorldPosition(new THREE.Vector3());
-    return { root, obj, mesh, mixer, walk, idle, bones, u, pose, hand };
+    return { root, obj, mesh, mixer, walk, idle, bones, u, pose, unbend, hand, SHAPE };
   };
 
   /**
@@ -636,9 +707,9 @@ export const loadPeople = async () => {
   /** A figure that walks and stands (albedo: the Other, the figure in the dream). setGait(0..1) blends standing to walking. */
   const makeFigure = (material, who = 'man', { neutral = false } = {}) => {
     const b = makeBody(material, who);
-    // neutral: stand as the walk stands between strides (feet together, arms down), not in Sophia's
-    // hand-on-hip idle, which reads as a pose and as a woman's whoever wears it
-    const stand = neutral ? THREE.AnimationUtils.subclip(b.walk.getClip(), 'stand', 36, 38, 30) : IDLE[who];
+    // neutral: stand upright, arms down (STAND), not in Sophia's hand-on-hip idle, which reads as a pose and
+    // as a woman's whoever wears it
+    const stand = neutral ? STAND[who] : IDLE[who];
     const idle = b.mixer.clipAction(stand);
     idle.play();
     const setGait = (move) => {

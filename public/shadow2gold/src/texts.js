@@ -208,6 +208,45 @@ export const RETURNS = [
   'It is not gone, and it was never meant to go. But what you know in yourself no longer acts behind your back. You are less perfect now, and more whole.',
 ];
 
+/** The same place, from the second round on (DISTIL): what going round again is for. */
+export const RETURNS_AGAIN = [
+  'Another heating. What is heavy sinks to the bottom of the glass, and you can see a little further into it.',
+  'It is the same work, closer in. You notice the mask sooner, and it holds you less.',
+  'Once, you would have fought what you met here. Now you recognise it. That is what distilling does.',
+];
+
+/**
+ * Distillation and the rounds. The alchemists distilled the same matter over and over in a sealed glass
+ * (circular distillation, done in the vessel called the Pelican, which Jung discusses: CW 9ii, CW 14), and
+ * Jung read the alchemical work as a picture of the soul's. So playing again is the next distillation: the
+ * house is the same, the masks faced before stay sealed, three others wait, and the light is a little clearer.
+ * That each round leaves something heavy behind is the game's own image.
+ */
+export const DISTIL = {
+  // after the first shadow of the first round, when the flask has gone back to its corner
+  flask: {
+    title: 'The flask',
+    lines: [
+      'The alchemists sealed a thing in glass and heated it, until it rose as vapour and fell back as clearer drops. They called it distillation.',
+      'Jung saw in their work a picture of the soul. What you face goes into this flask: the heavy part sinks, the living part rises.',
+    ],
+  },
+  // on the end card, under its own lines
+  end: '<p><b>One distillation is done.</b> The alchemists never stopped at one. They poured the drops back and heated them again, and each time the matter was purer.</p><p>So with the soul. You go down, meet what is there, and come up with something left behind and something clear. Then you go down again.</p>',
+  again: 'Distil again',
+  stay: 'Stay a while',
+  // under the buttons, when level II was opened by itself from the introduction page
+  notCounted: 'You opened this level by itself, so this round is not counted.',
+  name: (n) => `${['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'][n - 1] ?? 'A further'} distillation`,
+  // the title card, from the second round on
+  card: (n, turned) =>
+    turned
+      ? '<p>You have met every mask on these walls. They hang there again, and you are not the one who met them.<br /><b>Begin with the one that still stings.</b></p><p class="soft">The alchemists poured it all back, and lit the fire.</p>'
+      : n === 2
+        ? '<p>The same house. Your light is a little clearer.<br /><b>What you took back is mended with gold. Three other faces are waiting.</b></p><p class="soft">Each time, something heavy is left behind, and something clear rises.</p>'
+        : '<p>The same house, the same stair. You know the way down now.<br /><b>That does not make it shorter. It makes it clearer. Three more are waiting.</b></p><p class="soft">Each time, something heavy is left behind, and something clear rises.</p>',
+};
+
 /** The bottom line while a shadow is loose, by the way it behaves. */
 export const HINTS = {
   anger: 'It is coming. Stand. Do not step back.',

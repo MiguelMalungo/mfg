@@ -105,7 +105,8 @@ export const buildChild = (scene, people, sack, sound) => {
     c.walk.weight = st.walkBlend;
     c.idle.weight = 1 - st.walkBlend;
     // a child's short stride: the walk clip covers 1.26 m/s at full size
-    c.walk.timeScale = Math.max(0.0001, speed / (1.26 * 0.6));
+    c.walk.timeScale = Math.max(0.0001, speed / (1.26 * 0.61));
+    c.unbend();
     c.mixer.update(dt);
     const holding = st.phase === 'wait' || st.phase === 'drag';
     st.hold += ((holding ? 1 : 0) - st.hold) * Math.min(1, dt * 4);
