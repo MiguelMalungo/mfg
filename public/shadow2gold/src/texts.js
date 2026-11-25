@@ -616,7 +616,7 @@ export const INTRO = {
   cards: [
     { num: 'I', name: 'Nigredo', sub: 'the blackening', text: 'The house. The faces you wear.', playable: true, at: null },
     { num: 'II', name: 'Albedo', sub: 'the whitening', text: 'The water. The Other.', playable: true, at: 'albedo' },
-    { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: 'rubedo', textOn: 'The cave. The fire.' }, // playable with ?rubedo
+    { num: 'III', name: 'Rubedo', sub: 'the reddening', text: 'To come', playable: false, at: 'rubedo', textOn: 'The cave. The fire.' }, // chosen here; not on the main path
   ],
   begin: 'Begin',
   // the title card after a level card is picked (level I's is in index.html as it stands)

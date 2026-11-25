@@ -32,8 +32,9 @@ const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
 /* Level II (albedo, src/albedo.js) is under the house. On since 2026-11-23 (the owner: "build albedo now"); ?noalbedo shows the old threshold card instead. */
 const ALBEDO_ON = !params.has('noalbedo');
-/* Level III (rubedo, src/rubedo.js) is being built (PLAN.md 10.6.9): only with ?rubedo (or ?at=rubedo). Without it Albedo ends with its card, as before. */
-const RUBEDO_ON = ALBEDO_ON && (params.has('rubedo') || params.get('at') === 'rubedo');
+/* Level III (rubedo, src/rubedo.js). Not on the main path: the player chooses it with its card on the intro page (the
+ * owner, 2026-11-25: "people can choose in this prototype"), or ?rubedo / ?at=rubedo. Without it Albedo ends with its card. */
+let RUBEDO_ON = ALBEDO_ON && (params.has('rubedo') || params.get('at') === 'rubedo');
 const TOUCH = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 /*
  * The lighter setting for phones: on a touch device, or with ?lite (?full forces the whole look on a phone).
@@ -246,13 +247,14 @@ let startAt = params.get('at');
   setCard(startAt);
   const leave = (at) => {
     startAt = at;
+    if (at === 'rubedo') RUBEDO_ON = true; // chosen on its card
     setCard(at);
     intro.classList.add('hidden');
     setTimeout(() => (intro.style.display = 'none'), 1000);
   };
   const cards = $('intro-cards');
   INTRO.cards.forEach((c0) => {
-    const c = c0.at === 'rubedo' && RUBEDO_ON ? { ...c0, playable: true, text: c0.textOn } : c0;
+    const c = c0.at === 'rubedo' && ALBEDO_ON ? { ...c0, playable: true, text: c0.textOn } : c0;
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'lcard' + (c.playable ? '' : ' off');

@@ -107,6 +107,10 @@
       .lcard.off { cursor: default; opacity: 0.35; filter: grayscale(1); pointer-events: none; border-style: dashed; }
       #intro .bigbtn { font: inherit; font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; letter-spacing: 0.35em; text-transform: uppercase; color: #ffd89a; background: rgba(255, 216, 154, 0.06); border: 1px solid #ffd89a; border-radius: 4px; padding: 12px 34px 12px 40px; cursor: pointer; }
       #intro .bigbtn:hover, #intro .bigbtn:focus-visible { background: rgba(255, 216, 154, 0.16); outline: none; }
+      #intro-credits { max-width: 640px; font-size: 12px; opacity: 0.6; text-align: center; }
+      #intro-credits summary { cursor: pointer; letter-spacing: 0.25em; text-transform: uppercase; font-size: 10px; }
+      #intro-credits ul { list-style: none; padding: 0; margin: 10px 0 0; line-height: 1.6; }
+      #intro-credits a { color: inherit; }
       #intro .hint { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; opacity: 0.5; text-align: center; }
       @media (max-width: 640px) { #intro { gap: 14px; padding: 18px; } #intro .cards { flex-direction: column; gap: 8px; } .lcard { flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 10px; gap: 4px 10px; } .lcard .try { width: 100%; padding-top: 0; } #intro .concept { font-size: 17px; } #intro svg { width: 56px; height: 56px; } }
     </style>
@@ -124,6 +128,26 @@
       <div class="cards" id="intro-cards"></div>
       <button id="intro-begin" class="bigbtn" type="button"></button>
       <div class="hint" id="intro-hint"></div>
+      <!-- credits: the CC BY models must be named where players can see them (assets/*/CREDITS.md has the rest) -->
+      <details id="intro-credits">
+        <summary>Credits</summary>
+        <ul>
+          <li>“Right Hand 3D Scan” by Laserdesign, <a href="https://sketchfab.com/3d-models/b5539ef0a3214c62bc38e18707e64a4b" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Female Hand” by yanix, <a href="https://sketchfab.com/3d-models/0144539af191427fb6b8185a17bac675" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Horse” by MAXDESIGN, <a href="https://sketchfab.com/3d-models/6d0f9c1ce82f41048a282b6c47a50684" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Dove Bird Rigged” by FourthGreen, <a href="https://sketchfab.com/3d-models/6b91be2a28fb4404a2d57d5ca98bd4dc" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Mourning Dove - in Flight” by OSU.Multimedia, <a href="https://sketchfab.com/3d-models/37f9b2cc8b174fc3a2d8ba9f5b467b1a" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Venus von Milo” by tux, <a href="https://sketchfab.com/3d-models/3d62885a168b4c9e937ec2e2650fd9d8" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Apollo Belvedere” by Rigsters, <a href="https://sketchfab.com/3d-models/9b67614ab3f9422d9f6c88fb4fdd60cc" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Impala skull - with STL File” by gilliecreations, <a href="https://sketchfab.com/3d-models/7be2bb59bfc846cb928334919049e144" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Human Skull” by Nick Broad, <a href="https://sketchfab.com/3d-models/33174ba0dbd4423b9f9d1659b84d817e" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>“Wooden toy horse” by dusan.lamos, <a href="https://sketchfab.com/3d-models/01ab92577b98406889778e4223973152" target="_blank" rel="noopener">Sketchfab</a>, CC BY 4.0</li>
+          <li>The child: Microsoft Rocketbox avatars, <a href="https://github.com/microsoft/Microsoft-Rocketbox" target="_blank" rel="noopener">GitHub</a>, MIT License, © 2020 Microsoft</li>
+          <li>Scanned people: Renderpeople</li>
+          <li>Surfaces, rock, furniture: <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a> (CC0)</li>
+          <li>Changed for the game: reduced, recoloured, cut or posed.</li>
+        </ul>
+      </details>
     </div>
 
     <div id="start" class="overlay">
