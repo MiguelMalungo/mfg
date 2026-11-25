@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { readingTime, QUESTION, CHOICE } from './texts.js';
+import { readingTime, GO_ON, QUESTION, CHOICE } from './texts.js';
 
 /*
  * The words on screen (PLAN.md 10.3). Three places, all plain HTML over the canvas:
- *   say()       a text beside an object in the world; it stays 2 s + 0.35 s a word, or until a click
+ *   say()       a text beside an object in the world; it stays 3 s + 0.45 s a word, or until a click
+ *   tell()      several such texts, one after another
  *   ask()       the same, ending in the question and the two answers; it stays until one is chosen
  *   line()      the one-line instruction low on the screen
  *   word()      one word in the middle (the strength a shadow gives back)
@@ -49,13 +50,23 @@ export const makeWords = (camera, mode) => {
   /** anchor: () => THREE.Vector3 in world space (the text sits beside it). onDone('time' | 'click').
    * box: false when the text is shown in the world itself (an opened letter): it is timed and closed by a
    * click the same way, a little longer, with no box on screen. */
-  const say = ({ title, lines, anchor, onDone, box: inBox = true }) => {
+  const say = ({ title, lines, anchor, onDone, box: inBox = true, goOn = false, aside = false }) => {
     close('replaced');
     const read = readingTime([title, ...lines].join(' '));
-    cur = { anchor: inBox ? anchor : null, until: now + (inBox ? read : read * 1.3 + 2), onDone, shown: now, guard: inBox ? 0.35 : 1.6 };
+    cur = { aside, goOn, anchor: inBox ? anchor : null, until: now + (inBox ? read : read * 1.3 + 2), onDone, shown: now, guard: goOn ? 1.2 : inBox ? 0.35 : 1.6 };
     if (!inBox) return;
     fill(title, lines);
+    if (goOn) el('div', 'say-more', box).textContent = GO_ON[mode()];
     box.classList.remove('hidden');
+  };
+
+  /** Several texts, one after another: pages [{ title, lines }]. No anchor: in the middle of the screen; `aside`: out of
+   * the middle, where the thing it speaks of stands (above it on a phone held upright, else at the left).
+   * onDone once, after the last (or when something else takes the place). */
+  const tell = (pages, { anchor = null, aside = false, onDone } = {}) => {
+    const show = (i) => say({ ...pages[i], anchor, aside, goOn: true, onDone: (how) => (how !== 'replaced' && i + 1 < pages.length ? show(i + 1) : onDone?.(how)) });
+    if (pages.length) show(0);
+    else onDone?.();
   };
 
   /** A text that ends in the question. onDone('take' | 'leave'). */
@@ -156,13 +167,24 @@ export const makeWords = (camera, mode) => {
     if (t > cur.until) return close('time');
     const p = cur.anchor?.();
     const narrow = innerWidth < 760 || innerWidth < innerHeight;
-    if (p) {
+    if (cur.aside) {
+      const short = !narrow && innerHeight < 500; // a phone held sideways: above the thumb circle
+      box.style.left = narrow ? 'calc(50% + 22px)' : short ? '110px' : 'calc(5vw + 22px)';
+      box.style.top = narrow ? '96px' : short ? '34px' : '50%';
+      box.style.transform = narrow ? 'translate(-50%, 0)' : short ? 'none' : 'translate(0, -50%)';
+    } else if (!p) {
+      box.style.left = 'calc(50% + 22px)'; // (the box's own side margin is -22px)
+      box.style.top = '46%';
+      box.style.transform = 'translate(-50%, -50%)';
+    } else {
       _v.copy(p).project(camera);
       const x = (_v.x * 0.5 + 0.5) * innerWidth, y = (-_v.y * 0.5 + 0.5) * innerHeight;
       if (narrow) {
         // no room beside it on a phone held upright: under it
-        box.style.left = '50%';
-        box.style.top = Math.min(innerHeight * 0.62, y + innerHeight * 0.2) + 'px';
+        box.style.left = 'calc(50% + 22px)'; // (the box's own side margin is -22px)
+        // (a text worth its time is long: it ends above the thumb circle)
+        const low = cur.goOn ? Math.max(80, innerHeight - box.offsetHeight - 200) : Infinity;
+        box.style.top = Math.min(innerHeight * 0.62, y + innerHeight * 0.2, low) + 'px';
         box.style.transform = 'translate(-50%, 0)';
       } else {
         // beside it, kept whole on the screen (a phone held sideways is short: a long text is centred on it)
@@ -175,5 +197,5 @@ export const makeWords = (camera, mode) => {
     }
   };
 
-  return { say, ask, answer, click, line, word, whisper, tip, clearTips, update, close, get open() { return !!cur; }, get asking() { return !!cur?.choice; } };
+  return { say, tell, ask, answer, click, line, word, whisper, tip, clearTips, update, close, get open() { return !!cur; }, get asking() { return !!cur?.choice; } };
 };

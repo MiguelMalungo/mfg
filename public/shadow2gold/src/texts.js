@@ -2,7 +2,7 @@
  * Every word the game shows, in one place, so it can be edited without touching the code.
  * (The title card and the Albedo card are in index.html.)
  *
- * How long a text stays: 2 s plus 0.35 s for each word; a click dismisses it sooner.
+ * How long a text stays: 3 s plus 0.45 s for each word; a click dismisses it sooner.
  *
  * Whose words: the Nice One and the cores of anger, fear of abandonment and fear of
  * confrontation are the owner's drafts (PLAN.md 10.4). Everything else was written in the same
@@ -50,6 +50,7 @@ export const WHITE = [
  *             stop; truth backs away; cruelty comes at you; the victim points).
  *   inside    the one line shown in the dark as you go through it
  *   strength  what it gives back, in one word; `gives` says it in full under the word
+ *   now       what is different in your life once it is yours again (shown after the strength)
  *   hint      optional: the bottom line while this shadow is loose (otherwise HINTS[kind])
  */
 export const BLACK = [
@@ -58,121 +59,153 @@ export const BLACK = [
     lines: ['People who shout disgust you.', 'You never raise your voice.', 'You are tired all the time.'],
     inside: 'It was never rage. It was a no you were not allowed to say.',
     strength: 'Force', gives: 'The force to say no.',
+    now: 'You say no early and calmly, so it no longer bursts out late, at the wrong person.',
   },
   {
     id: 'abandonment', kind: 'abandonment',
     lines: ['People who cling make you uneasy.', 'You leave first, so that no one can leave you.'],
     inside: 'It was not leaving. It was waiting to see if you would stay.',
     strength: 'Staying', gives: 'The capacity to stay.',
+    now: 'You can be close without holding on, and let people go without leaving first.',
   },
   {
     id: 'confrontation', kind: 'confrontation',
     lines: ['People who make trouble tire you.', 'You said yes.', 'You are still angry about it.'],
     inside: 'It kept quiet for you. It still knows every word.',
     strength: 'Voice', gives: 'Your own voice.',
+    now: 'You say it on the day it happens. What is said does not turn into a grudge.',
   },
   {
     id: 'judgement', kind: 'judgement',
     lines: ['You see at once what is wrong with people.', 'You keep a list.', 'Your own name is at the top of it.'],
     inside: 'The hardest sentence was the one you passed on yourself.',
     strength: 'Discernment', gives: 'Seeing clearly, without the sentence.',
+    now: 'You still see faults, your own and theirs. You no longer have to punish anyone for them.',
   },
   {
     id: 'envy', kind: 'envy',
     lines: ['People who show what they have bore you.', 'You know exactly what they have.'],
     inside: 'All along it was pointing at what you want.',
     strength: 'Desire', gives: 'Knowing what you want.',
+    now: 'You stop counting what others have, and go after the thing itself.',
   },
   {
     id: 'shame', kind: 'shame',
     lines: ['People who make a scene make you look away.', 'No one has ever seen you fall.'],
     inside: 'It only ever hid what wanted to be seen.',
     strength: 'Seen', gives: 'Being seen.',
+    now: 'You can be seen with your faults and stay in the room.',
   },
   {
     id: 'need', kind: 'need',
     lines: ['Needy people wear you out.', 'You have not asked for anything in years.'],
     inside: 'The hand it held out was your own.',
     strength: 'Receiving', gives: 'Being able to receive.',
+    now: 'You ask before you are desperate. People find out they can give you something.',
   },
   {
     id: 'control', kind: 'control',
     lines: ['Careless people make you furious.', 'If you let go of one thing, everything goes.'],
     inside: 'It held everything, so that you would not feel it fall.',
     strength: 'Trust', gives: 'Trust.',
+    now: 'You hold what is yours and let the rest move. Other people can breathe near you.',
   },
   {
     id: 'body', kind: 'anger',
     lines: ['People who live in their bodies embarrass you:', 'the loud laugh, the second helping, the sweat.', 'You have lived from the neck up for years.'],
     inside: 'It was never beneath you. It was carrying you the whole time.',
     strength: 'Instinct', gives: 'Being at home in your body.',
+    now: 'Your body warns you before your head does, and you listen.',
   },
   {
     id: 'rest', kind: 'abandonment',
     lines: ['Lazy people make you angry.', 'You have not sat down without a reason since you were a child.'],
     inside: 'It was not idleness. It was the part of you that knew when to stop.',
     strength: 'Rest', gives: 'Rest, without earning it.',
+    now: 'You stop before you break, and other people resting no longer offends you.',
   },
   {
     id: 'worth', kind: 'envy',
     lines: ['People who think they are special irritate you.', 'Quietly, you have always believed that you are.', 'You have never dared to find out.'],
     inside: 'It was not vanity. It was what you are for, kept in the dark.',
     strength: 'Worth', gives: 'Taking your own measure.',
+    now: 'You do your own work at its real size, without needing to be above anyone.',
   },
   {
     id: 'softness', kind: 'abandonment',
     lines: ['Weak people embarrass you.', 'You have never once let yourself be carried.'],
     inside: 'It was not weakness. It was the only part of you that could be touched.',
     strength: 'Tenderness', gives: 'Letting yourself be touched.',
+    now: 'You let someone carry you for a while, and you are no weaker for it.',
   },
   {
     id: 'cruelty', kind: 'anger',
     lines: ['Cruel people horrify you.', 'You know exactly which sentence would break each person you love.', 'You have known for years.'],
     inside: 'It was always there. Seen, it can no longer act without you.',
     strength: 'Choice', gives: 'Knowing what you could do, and choosing.',
+    now: 'You know how hard you can hit. So your gentleness is a choice, and people can trust it.',
   },
   {
     id: 'truth', kind: 'confrontation',
     lines: ['Liars disgust you.', 'You tell each person what they want to hear,', 'and you call it kindness.'],
     inside: 'It learned to lie so that you would be loved. It remembers what is true.',
     strength: 'Truth', gives: 'Saying what is so.',
+    now: 'Your yes means yes. People know where they are with you.',
   },
   {
     id: 'selfishness', kind: 'need',
     lines: ['Selfish people enrage you.', 'You can not remember the last thing you did only because you wanted to.'],
     inside: 'It was keeping your share for you, all this time.',
     strength: 'Mine', gives: 'Taking your own share.',
+    now: 'You take your share openly, and what you give is a gift, with no bill to follow.',
   },
   {
     id: 'grief', kind: 'abandonment',
     lines: ['People who cry easily make you impatient.', 'There is a funeral you never went to.'],
     inside: 'It was not sadness you were spared. It was the love the sadness belongs to.',
     strength: 'Tears', gives: 'Being able to mourn.',
+    now: 'What you lost can be mourned, and what you love can be loved all the way.',
   },
   {
     id: 'courage', kind: 'anger',
     lines: ['Fearful people irritate you.', 'You have arranged your whole life so that nothing in it can frighten you.'],
     inside: 'It was not the danger it feared. It was how much you wanted to go.',
     strength: 'Courage', gives: 'Going, afraid.',
+    now: 'You can be afraid and go. The size of your life is no longer set by fear.',
   },
   {
     id: 'victim', kind: 'judgement',
     lines: ['People who are always the victim exhaust you.', 'You keep an exact account of what was done to you.', 'You read it every night.'],
     inside: 'It held the wound open so that someone would see it. You have seen it.',
     strength: 'Authorship', gives: 'Your life as your own doing.',
+    now: 'It happened, and it was wrong. What you do next is yours.',
   },
   {
     id: 'play', kind: 'abandonment',
     lines: ['Childish people annoy you.', 'You stopped playing on a day you could still name.'],
     inside: 'It did not grow up because it was told to wait. It has been waiting.',
     strength: 'Play', gives: 'Play, for nothing.',
+    now: 'You make things for no reason again, and new ideas come back with it.',
   },
   {
     id: 'coldness', kind: 'confrontation',
     lines: ['Cold people frighten you.', 'Something in you went quiet a long time ago,', 'and you called it calm.'],
     inside: 'It was not empty. It went numb so that you could get through.',
     strength: 'Feeling', gives: 'Feeling it.',
+    now: 'You feel things while they happen, and the people near you can feel you there.',
   },
+];
+
+/**
+ * After a shadow is taken back: its strength as the title, its `now` line, then one of these, in order
+ * (the first shadow gets the first, and so on; after the third, none). What it is good for, as Jung saw it:
+ * the shadow holds vitality as well as faults (CW 11, 134), and what is not known in oneself is met in
+ * others as a projection (CW 9ii, 16-19).
+ */
+export const RETURNS = [
+  'Keeping a part of yourself out of sight takes strength, every day. Jung saw that the shadow holds life as well as faults. That strength is yours again.',
+  'What you do not know in yourself, you keep meeting in other people. Jung called it projection. Now you can see them more as they are.',
+  'It is not gone, and it was never meant to go. But what you know in yourself no longer acts behind your back. You are less perfect now, and more whole.',
 ];
 
 /** The bottom line while a shadow is loose, by the way it behaves. */
@@ -222,7 +255,10 @@ export const TIPS = {
     touch: ['Drag the circle to walk; to its edge to hurry. Drag on the right to look: hold your finger at the side of the screen to keep turning.', 'Tap Pick when a mask is in reach.'],
   },
   // the first time you come to the wall
-  wall: 'White masks are the faces you show. Black masks, in the dark on both walls, are what you keep out of sight. Every black mask is a face of the one you do not show. Read as many as you like. Take one that is yours, and face what comes of it.',
+  wall: [
+    'White masks are the faces you show the world. Jung called this the persona. Black masks, in the dark on both walls, are what you keep out of sight. He called that the shadow.',
+    'You will know yours by what you cannot stand in other people. Read as many as you like. Take one that is yours, and face what comes of it.',
+  ],
   // after the first white mask
   persona: 'A mask is not a lie. The danger is forgetting that it is a mask.',
   // when a white mask you read makes a black one move
@@ -258,25 +294,33 @@ export const TIPS = {
 export const LETTERS = [
   {
     id: 'room', title: 'The Secret Room',
-    lines: ['You dream of your own house, and find a door you never saw.', 'Behind it, a room that was always there.', 'Whatever you find in it is a part of you not yet lived in.'],
+    lines: ['You dream of your own house, and find a door you never saw.', 'Behind it, a room that was always there.', 'Jung had this dream many times. The unknown wing, he wrote, was a part of himself he did not yet know.', 'Whatever you find in yours is a part of you not yet lived in.'],
   },
   {
     id: 'feeling', title: 'The Feeling of the Dream',
-    lines: ['Something chases you through the night.', 'Do not ask what it was. Ask what you felt as you ran:', 'fear, or shame, or a strange relief.', 'The feeling is the letter. The story is only the envelope.'],
+    lines: ['Something chases you through the night.', 'Do not ask what it was. Ask what you felt as you ran:', 'fear, or shame, or a strange relief.', 'For Jung a dream balances the day: it brings back what you left out.', 'The feeling is the letter. The story is only the envelope.'],
   },
   {
     id: 'other', title: 'The Other Role',
-    lines: ['Dream it again, as the one who chases.', 'Now you can see what it carried in its hands.', 'It was never trying to catch you. It was trying to give you something.'],
+    lines: ['Jung read the people in a dream as parts of the dreamer.', 'So dream it again, as the one who chases.', 'Now you can see what it carried in its hands.', 'It was never trying to catch you. It was trying to give you something.'],
   },
 ];
 export const ALBEDO = {
   title: 'II · Albedo',
   enter: 'Below the house the water is black and still.',
+  // on the stair down, as a tip
+  dream: 'In his dream, too, Jung went down under the house. Here, under the life you know, are your instincts, your dreams, and the one you are looking for in other people.',
   // the horse (PLAN.md 10.5, step 2): instinct met, not mastered
   horseLine: 'Stand still. Lower your eyes, and your light.',
   horsePushed: 'It will not be driven, and it will not let you past.',
   horseHint: 'It is afraid of your light. Stop, and lower your eyes.',
   horseCame: 'It came to you.',
+  // said while it stands before you (Jung, CW 16, 347: the horse as the animal life of the body, a power that
+  // carries one, and that startles; the light as thinking is this game's own image)
+  horse: [
+    { title: 'The Horse', lines: ['In dreams, Jung wrote, a horse is the animal life of the body: instinct, the power that carries you.', 'And like every instinct it startles. Drive it, and it bars the way.'] },
+    { title: 'The Horse', lines: ['Your light is your thinking. It was too bright for it. You lowered it, and stood still, and instinct came to you by itself.', 'Your head does not know the way through this water. Your body does. Let it lead.'] },
+  ],
   horseFollow: 'Follow it.',
   // the letters and the sunken doors
   letters: 'Three letters float sealed, brighter than the rest. Find them.',
@@ -287,15 +331,15 @@ export const ALBEDO = {
       line: 'A room you never saw. Look round it.',
       pick: 'On the table, a box. Open it.',
       title: 'The Secret Room',
-      lines: ['It was furnished, and warm, and no one had lived in it.', 'It was always part of the house.', 'It is yours now.'],
+      lines: ['It was furnished, and warm, and no one had lived in it.', 'It was always part of the house.', 'A talent, a wish, a life you put off: there is more room in you than you use.', 'It is yours now.'],
     },
     feeling: {
       line: 'Something is coming. Do not run. Choose what you feel.',
       words: { fear: 'Fear', shame: 'Shame', relief: 'Relief' },
       lines: {
-        fear: ['Fear. And it stopped.', 'What chased you was the fear, running beside you.'],
-        shame: ['Shame. And it turned its face away, as you would.', 'It was ashamed too.'],
-        relief: ['Relief. And it stood still and lowered its head.', 'You had been waiting for it a long time.'],
+        fear: ['Fear. And it stopped.', 'What chased you was the fear, running beside you.', 'Felt, it is only a feeling. Not felt, it runs your life from behind.'],
+        shame: ['Shame. And it turned its face away, as you would.', 'It was ashamed too.', 'Felt, it is only a feeling. Not felt, it makes you hide from everyone.'],
+        relief: ['Relief. And it stood still and lowered its head.', 'You had been waiting for it a long time.', 'What you run from is sometimes what you miss most.'],
       },
       title: 'The Feeling of the Dream',
     },
@@ -303,7 +347,7 @@ export const ALBEDO = {
       line: 'Now you are the one who follows. Something is in your hands.',
       give: 'It has stopped. Give it what you carry.',
       title: 'The Other Role',
-      lines: ['It was never running from you.', 'You were bringing it something all along.'],
+      lines: ['It was never running from you.', 'You were bringing it something all along.', 'What frightens you in yourself is often a part that wants to come home.'],
     },
   },
   back: 'The door closes behind you. White comes into the flask.',
@@ -312,32 +356,31 @@ export const ALBEDO = {
   otherFar: 'Someone far off holds up a light of their own.',
   otherRecedes: 'The nearer you come, the further they go.',
   goldBack: 'A statue, not a god. The gold is in your own flask.',
-  // shown as the gold comes back (Jung: the contrasexual soul-image, met first as a projection on someone else;
-  // withdrawn, it becomes the way into one's own depths). The name is cut into the column's pedestal (gallery.js).
+  // shown as the gold comes back, one page after another (Jung: the contrasexual soul-image, met first as a
+  // projection on someone else; unknown, the anima takes a man over as moods and the animus a woman as opinions
+  // (CW 7, 296-340); made conscious, it is the bridge to one's own depths). Clinging, the steady strength and the
+  // rest of what comes back are the owner's, and are not put in Jung's mouth. The name is cut into the column's
+  // pedestal (gallery.js).
   projection: {
-    goddess: {
-      title: 'The Anima',
-      lines: [
-        'Jung called her the anima: the woman in a man, the image of his own soul.',
-        'He does not find her in himself. He finds her in a woman, and she shines gold: he cannot look away, and she can do no wrong.',
-        'Taken back, she is stone, and the one across the hall is a person again. The anima turns inward, and leads him down into himself.',
-      ],
-    },
-    god: {
-      title: 'The Animus',
-      lines: [
-        'Jung called him the animus: the man in a woman, her own spirit and her own word.',
-        'She does not find him in herself. She finds him in a man, and he shines gold: he seems to know, and she follows.',
-        'Taken back, he is stone, and the one across the hall is a person again. The animus turns inward, and becomes her own voice.',
-      ],
-    },
+    goddess: [
+      { title: 'The Anima', lines: ['Jung called her the anima: the feminine side of a man, the image of his own soul.', 'You did not know she was in you. So you saw her on a woman, shining gold, who could do no wrong. Until she was human, and you were disappointed.'] },
+      { title: 'While she is not known', lines: ['She takes you over from behind: dark moods, touchiness, clinging, a need that no one can fill.', 'You ask another person to carry your soul for you. It is too heavy for anyone.'] },
+      { title: 'The gold', lines: ['Now she is yours. Intuition, feeling, imagination, a sense for the magic in things: they lift you now, instead of breaking out as storms.', 'And your manhood can stand at ease: steady, warm, able to decide, to protect and to stay.'] },
+      { title: 'The one across the hall', lines: ['The statue is stone. No woman has to be a goddess for you, or be blamed for not being one.', 'You can see who is really there, and meet her.'] },
+    ],
+    god: [
+      { title: 'The Animus', lines: ['Jung called him the animus: the masculine side of a woman, her own spirit and her own word.', 'You did not know he was in you. So you saw him on a man, shining gold, who always seemed to know. Until he was human, and you were disappointed.'] },
+      { title: 'While he is not known', lines: ['He takes you over from behind: hard opinions, quarrels that must be won, a judge inside that nothing satisfies, or years of waiting to be chosen.', 'You ask another person to carry your strength for you. It is too heavy for anyone.'] },
+      { title: 'The gold', lines: ['Now he is yours. Courage, clear thought, direction, your own word: they carry you now, instead of turning against you and others.', 'And your womanhood can stand at ease: open, intuitive, warm, able to say no and to make what she imagines.'] },
+      { title: 'The one across the hall', lines: ['The statue is stone. No man has to be a god for you, or be blamed for not being one.', 'You can see who is really there, and meet him.'] },
+    ],
   },
   otherWaits: 'The one with the other light has stopped. They are waiting.',
   goToOther: 'Go to them.',
   bird: 'White.',
   follow: 'Follow them down.',
   done: 'The black has turned white.',
-  endCard: '<p>The gold you put on another is back in your own vessel, and the black has turned white.</p><p class="soft">Someone with a light of their own walks beside you now.</p>',
+  endCard: '<p>The gold you put on another is back in your own vessel, and the black has turned white.</p><p>What you looked for in others is awake in you. You can love them now without asking them to complete you.</p><p class="soft">Someone with a light of their own walks beside you now.</p>',
   next: 'III · Rubedo · to come',
   pauseHow: 'Below the house: let the horse come to you, read the three letters and go through the doors they open, then take back the gold from the statue.',
 };
@@ -345,8 +388,11 @@ export const ALBEDO = {
 /** On the pause card: what the level asks of you, in one line. */
 export const PAUSE_HOW = 'Read the masks. Take a black one that is yours, and face what it becomes: turn to it, hold your light on it, and walk into it. The door at the end opens after three.';
 
+/** Small, under a text that has another after it or that is worth its time. */
+export const GO_ON = { desk: 'click to go on', touch: 'tap to go on' };
+
 /** How long a text stays on screen, in seconds. */
-export const readingTime = (text) => 2 + 0.35 * String(text).trim().split(/\s+/).length;
+export const readingTime = (text) => 3 + 0.45 * String(text).trim().split(/\s+/).length;
 
 /**
  * The introduction page, shown before the title card (index.html, wired in main.js).
@@ -358,10 +404,11 @@ export const INTRO = {
   studio: 'Soul Spiral Studio',
   title: ['SHADOW', 'TO GOLD'],
   tag: 'Prototype',
+  // where the game comes from: the house dream of 1909 (Jung, Memories, Dreams, Reflections, ch. 5)
   concept: [
-    'What you push out of sight does not leave. It waits, and it takes your shape.',
-    'The old work begins in the dark, and goes by water and by fire.',
-    'What was never looked at is the lead. It can be turned to gold.',
+    'In 1909 Carl Jung dreamed of a house he did not know, and yet it was his own. He went down through it, and every floor was older than the one above: rooms, a cellar, and under the cellar a cave.',
+    'He came to see it as a picture of the mind. Above is what we know of ourselves. Below is what we have put away, and deeper still what all people share.',
+    'This game is based on that dream. You go down into your own house, to meet what you put away there. It is the lead, and it can be turned to gold.',
   ],
   cards: [
     { num: 'I', name: 'Nigredo', sub: 'the blackening', text: 'The house. The faces you wear.', playable: true, at: null },

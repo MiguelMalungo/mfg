@@ -320,6 +320,7 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
         if (h.near > 9 && !h.hintAt) ((h.hintAt = t), api.words.tip(ALBEDO.horseHint, { id: 'horseHint', times: 1 }));
         if (h.calm > 2.6) {
           h.state = 'come';
+          api.words.clearTips(); // what it asks has been done
           api.sound.glass(392, 0.035, 2.5);
         }
       }
@@ -329,7 +330,13 @@ export const buildAlbedo = ({ scene, house, people, glowTex, renderer, gender, a
       else ((h.state = 'greet'), (h.t = 0), api.words.whisper(ALBEDO.horseCame, 2.6));
     } else if (h.state === 'greet') {
       h.yaw = turnToward(h.yaw, towardYou, 1.0, dt);
-      if (h.t > 3.0) ((h.state = 'turn'), (h.t = 0));
+      // 'It came to you.', then what it is; it stands with you until you have read it
+      if (h.t > 3.4 && !h.told) {
+        h.told = h.reading = true;
+        api.words.clearTips();
+        api.words.tell(ALBEDO.horse, { aside: true, onDone: () => ((h.reading = false), (h.t = 0)) });
+      }
+      if (h.told && !h.reading && h.t > 0.8) ((h.state = 'turn'), (h.t = 0));
     } else if (h.state === 'turn') {
       // it turns away, toward the far end of the water
       h.yaw = turnToward(h.yaw, Math.PI, 0.9, dt);
@@ -1374,7 +1381,7 @@ orbHalo.material.opacity = 0.22;
     } else if (O.state === 'wait') {
       // they stop, turn to you, and wait
       O.yaw = turnToward(O.yaw, toYou, 1.0, dt);
-      if (dist < 3.4 && st.phase === 'gold') startBird();
+      if (dist < 3.4 && st.phase === 'gold' && !api.words.open) startBird();
     } else if (O.state === 'lead') {
       // down the stair at the end of the hall, looking back for you
       const gz = HALL_Z1 - 3.0;

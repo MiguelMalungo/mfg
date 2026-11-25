@@ -11,7 +11,7 @@ import { buildAlbedo } from './albedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, INTRO, RETURNS } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
@@ -915,29 +915,34 @@ const integrate = (F, t) => {
   shadow.wisps.burst(camera.position.clone().addScaledVector(fwd, 0.3));
   shadow.u.ash.value = 1;
   words.clearTips();
-  words.whisper(F.def.inside, 3.6);
-  later(3.7, () => {
+  words.whisper(F.def.inside, 5.0);
+  later(4.4, () => {
     sound.glass(392, 0.12, 6);
     masks.seal(F.mask); // back on the wall, mended with gold
   });
-  later(5.0, () => {
+  later(6.2, () => {
     sound.glass(587.3, 0.08, 7);
-    words.word(F.def.strength, F.def.gives, 3.2);
+    words.word(F.def.strength, F.def.gives, 4.2);
   });
-  later(8.6, () => {
+  later(11.2, () => {
     state.faced += 1;
     save.add('faced', F.mask.id);
-    // the flask comes forward: the black boils, a bloom opens; after the third, the first white stays
-    vessel.react({
-      bloom: state.faced === 3 ? 0.55 : 0.3,
-      onDone: () => {
-        if (state.faced >= 3 && state.doorAt == null) {
-          words.whisper(LINES.more, 3.4);
-          state.doorAt = state.t; // the door that was never there swings open
-          sound.glass(261.6, 0.1, 8);
-        }
-        facing = null;
-      },
+    const n = state.faced;
+    // what it changes, and (the first three times) what taking a shadow back is good for
+    words.tell([{ title: F.def.strength, lines: [F.def.now, RETURNS[n - 1]].filter(Boolean) }], {
+      onDone: () =>
+        // the flask comes forward: the black boils, a bloom opens; after the third, the first white stays
+        vessel.react({
+          bloom: n === 3 ? 0.55 : 0.3,
+          onDone: () => {
+            if (n >= 3 && state.doorAt == null) {
+              words.whisper(LINES.more, 3.4);
+              state.doorAt = state.t; // the door that was never there swings open
+              sound.glass(261.6, 0.1, 8);
+            }
+            facing = null;
+          },
+        }),
     });
   });
 };
@@ -1253,7 +1258,7 @@ const updateShadow = (dt, t, hurry) => {
     visible = sh.fade < 0.999;
     dist = Math.hypot(sh.pos.x - player.pos.x, sh.pos.z - player.pos.z);
     // the light goes out for a breath (long enough to read the line), then comes back
-    sh.dip = smoothstep(0.0, 0.35, since) * (1 - smoothstep(2.0, 4.4, since));
+    sh.dip = smoothstep(0.0, 0.35, since) * (1 - smoothstep(3.0, 5.6, since));
   }
 
   o.visible = visible && sh.fade < 0.999;
@@ -1422,7 +1427,7 @@ const tick = (forceDt) => {
   hand?.update(dt, t, candidate && !hand.busy ? candidate.mesh.position : null, vessel.light);
   // the first time a letter is within reach: how to pick it up, said for the screen you play on
   if (albedo && state.started && !words.open && albedo.letterNear(camera) < 4.2) words.tip(TIPS.letter[touch.on ? 'touch' : 'desk'], { id: 'letter' });
-  if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) words.tip(TIPS.wall, { id: 'wall' }); // at the wall of masks only, not below the house
+  if (state.started && !save.hasProgress && player.pos.z < MASK_WALL.z0 + 3.5 && player.pos.z > MASK_WALL.z1 - 6) TIPS.wall.forEach((text, i) => words.tip(text, { id: 'wall' + i })); // at the wall of masks only, not below the house
   words.update(t);
   words.line(lineNow());
 
@@ -1511,19 +1516,24 @@ const tick = (forceDt) => {
   if (albedo) {
     vessel.light.getWorldPosition(tmp);
     albedo.update(dt, t, camera, tmp, sound, player);
+    // on the stair down
+    if (!state.albedoDream && player.pos.z < Z_END - 1.5 && player.pos.z > Z_STAIR_END - 0.5 && !words.open) {
+      state.albedoDream = true;
+      words.clearTips();
+      words.tip(ALBEDO.dream, { id: 'albedoDream' });
+    }
     if (!state.albedo && player.pos.z < Z_STAIR_END - 0.5) {
       state.albedo = true;
-      words.word(ALBEDO.title, ALBEDO.enter, 4.5);
+      words.word(ALBEDO.title, ALBEDO.enter, 5.5);
     }
     if (albedo.st.gold && !state.goldSaid) {
       state.goldSaid = true;
       state.albedoSave.set({ gold: true });
       // what the gold was: the anima or the animus, named once it is back (then the line about the statue)
       const it = albedo.gallery.items[0], P = ALBEDO.projection[it.who];
-      if (P) later(1.2, () => words.say({ title: P.title, lines: P.lines, anchor: () => it.head.getWorldPosition(tmp2) }));
       words.tip(ALBEDO.goldBack, { id: 'goldBack' });
-      later(6, () => words.tip(ALBEDO.otherWaits, { id: 'otherWaits' }));
-      vessel.react({ bloom: 0.4 });
+      // once the flask is back in its corner; then the one across the hall
+      vessel.react({ bloom: 0.4, onDone: () => words.tell(P ?? [], { anchor: () => it.head.getWorldPosition(tmp2), onDone: () => words.tip(ALBEDO.otherWaits, { id: 'otherWaits' }) }) });
     }
     if (albedo.st.done && !state.albedoDone && !words.open && !vessel.rx.on) {
       state.albedoDone = true;
