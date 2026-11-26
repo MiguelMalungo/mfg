@@ -60,8 +60,12 @@ const rougher = (url, lo, repeat) =>
     img.src = url;
   });
 
-/** lite: the phone setting (main.js): the surfaces and the console only; no chandelier models, busts, clock or paintings. */
-export const dressHouse = async (scene, house, { lite = false } = {}) => {
+/**
+ * lite: the phone setting (main.js). Since 2026-11-26 a phone has the clock, busts, tables and paintings too (they cost
+ * almost nothing: about 700 draw calls either way); the chandelier models (about 400 more, their candles) are hung
+ * later, by hangChandeliers, once the phone has shown it is fast enough (main.js, quality).
+ */
+export const dressHouse = async (scene, house, { lite = false, extra = [] } = {}) => {
   const loader = new THREE.TextureLoader();
   const T = './assets/house/tex/';
 
@@ -95,7 +99,7 @@ export const dressHouse = async (scene, house, { lite = false } = {}) => {
   const M = './assets/house/models/';
   const load = (id) => gltf.loadAsync(`${M}${id}/${id}_1k.gltf`).then((g) => g.scene);
   const all = ['Chandelier_03', 'ClassicConsole_01', 'vintage_grandfather_clock_01', 'marble_bust_01', 'fancy_picture_frame_01', 'brass_candleholders', 'side_table_tall_01'];
-  const inLite = ['ClassicConsole_01', 'brass_candleholders'];
+  const inLite = ['ClassicConsole_01', 'brass_candleholders', 'vintage_grandfather_clock_01', 'marble_bust_01', 'fancy_picture_frame_01', 'side_table_tall_01', ...extra];
   const [chandelier, console_, clock, bust, frame, candelabrum, table] = await Promise.all(all.map((id) => (lite && !inLite.includes(id) ? null : load(id))));
   const shadowed = (o, cast = true) => o.traverse((c) => c.isMesh && ((c.castShadow = cast), (c.receiveShadow = true)));
   const colliders = [];
@@ -109,9 +113,11 @@ export const dressHouse = async (scene, house, { lite = false } = {}) => {
    * model's own candles, found as the tops of the white candle sleeves (local maxima of height in
    * the ring between 0.1 and 0.4 m from the stem).
    */
-  const tips = chandelier ? candleTips(chandelier) : [];
   const S = 1.15; // a little larger than life, for a high corridor
-  if (chandelier) for (const g of house.chandeliers) {
+  let tips = [];
+  const hang = (chandelier) => {
+  tips = candleTips(chandelier);
+  for (const g of house.chandeliers) {
     g.traverse((o) => {
       if (o !== g && (o.isMesh || o.isSprite)) o.visible = false;
     });
@@ -129,6 +135,8 @@ export const dressHouse = async (scene, house, { lite = false } = {}) => {
       fl.parent.children[fl.parent.children.indexOf(fl) - 1].visible = false; // the coded stick: the model has its own
     });
   }
+  };
+  if (chandelier) hang(chandelier);
 
   /* the console against the left wall near the start, with three candles on it (i10) */
   {
@@ -316,7 +324,15 @@ export const dressHouse = async (scene, house, { lite = false } = {}) => {
   }
 
   // the photographed parquet is smoother than the coded one: it would mirror like water at the old strength
-  return { colliders, tips, noMirror, floorReflection: 2.2 };
+  /** (a phone: the chandeliers hung later; at most once) */
+  let hung = !!chandelier;
+  const hangChandeliers = async () => {
+    if (hung) return false;
+    hung = true;
+    hang(await load('Chandelier_03'));
+    return true;
+  };
+  return { colliders, get tips() { return tips; }, noMirror, floorReflection: 2.2, hangChandeliers };
 };
 
 /**

@@ -104,12 +104,13 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
   };
 
   /** kind: 'shell' (light and relief from maps) or 'small' (light in the vertices). rough: how the stone takes a glint. */
-  const rockMat = (kind, { map = null, lm = [1, 1, 1], plain = null, brick = false } = {}) => {
+  const rockMat = (kind, { map = null, lm = [1, 1, 1], plain = null, brick = false, full = false } = {}) => {
     const m = new THREE.MeshStandardMaterial({ roughness: 0.93, metalness: 0 });
     const shell = kind === 'shell';
     m.defines = { ...m.defines };
     if (shell) m.defines.CAVE_SHELL = '';
-    if (lite) m.defines.CAVE_LITE = '';
+    const liteHere = lite && !full;
+    if (liteHere) m.defines.CAVE_LITE = '';
     if (plain) m.defines.CAVE_PLAIN = '';
     if (brick) m.defines.CAVE_BRICK = '';
     m.onBeforeCompile = (sh) => {
@@ -171,7 +172,8 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
           #endif
           reflectedLight.indirectDiffuse += diffuseColor.rgb * (L3.r * uDay + L3.g * uFire + L3.b * uGold);`);
     };
-    m.customProgramCacheKey = () => `st2g-cave-${kind}-${lite}-${!!plain}-${brick}`;
+    m.customProgramCacheKey = () => `st2g-cave-${kind}-${liteHere}-${!!plain}-${brick}`;
+    m.userData.args = [kind, { map, lm, plain, brick }];
     return m;
   };
 
@@ -199,6 +201,20 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
 
   const _sm = new THREE.Color();
   const out = { root, u, ready: false, top: 0.948, loose: [], meshes: {} };
+  const lean = [], twinOf = new Map();
+  let wantRich = false;
+  const richNow = () => {
+    for (const mesh of lean) mesh.material = twinOf.get(mesh.material) ?? mesh.material;
+    lean.length = 0;
+    if (out.meshes.gravel) out.meshes.gravel.visible = true;
+    for (const m of mist ?? []) m.visible = true;
+  };
+  /** A phone that has shown it is fast enough: the cave as on a computer (the rock's relief, the gravel, all the smoke). */
+  out.rich = () => {
+    if (!lite || wantRich) return;
+    wantRich = true;
+    if (out.ready) richNow();
+  };
   out.load = Promise.all([fetch(DIR + 'mesh.json').then((r) => r.json()), fetch(DIR + 'mesh.bin').then((r) => r.arrayBuffer())]).then(([j, b]) => {
     out.top = j.top;
     const maps = { lit: tex('cave_l.jpg'), nrm: tex('cave_n.jpg') };
@@ -218,9 +234,11 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
         continue;
       } else mat = rockMat('small', { lm: m.lm, plain: PLAIN[m.name] ? new THREE.Color(...PLAIN[m.name]) : null });
       if (m.name === 'stairs') mat.side = THREE.DoubleSide;
-      // a lighter cave on a phone: no gravel
-      if (lite && m.name === 'gravel') continue;
       const mesh = new THREE.Mesh(readMesh(b, m), mat);
+      // a lighter cave on a phone: no gravel, and the rock without its photograph's fine relief, until the phone has
+      // shown it is fast enough (out.rich, from main.js)
+      if (lite && m.name === 'gravel') mesh.visible = false;
+      if (lite && mat.userData.args) lean.push(mesh);
       mesh.name = m.name;
       mesh.receiveShadow = true;
       mesh.raycast = () => {}; // too many triangles for the eye's rays: they meet rubedo.js's plain shapes
@@ -228,7 +246,24 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
       root.add(mesh);
       out.meshes[m.name] = mesh;
     }
+    if (lite) {
+      // the full rock for each, made now and kept unseen so that it is made ready with the rest (main.js, warmUp)
+      for (const mesh of lean) {
+        const m = mesh.material;
+        if (!twinOf.has(m)) {
+          const [kind, args] = m.userData.args, t = rockMat(kind, { ...args, full: true });
+          t.side = m.side;
+          t.shadowSide = m.shadowSide;
+          twinOf.set(m, t);
+          const keep = new THREE.Mesh(new THREE.PlaneGeometry(0.001, 0.001), t);
+          keep.visible = false;
+          keep.raycast = () => {};
+          root.add(keep);
+        }
+      }
+    }
     out.ready = true;
+    if (wantRich) richNow();
     root.visible = true;
     return out;
   });
@@ -320,8 +355,8 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
     [-2.0, 0.0, 1.0, 5.0, 1.7, 0.42, 0.71, 2],
     [2.2, 0.0, 0.4, 5.0, 1.7, 0.42, 0.19, 2],
     [-0.6, 0.0, -2.6, 6.0, 1.5, 0.4, 0.47, 2],
-  ].filter((m, i) => !lite || [0, 1, 2, 6].includes(i));
-  const mist = MIST.map(([x, y, z, w, h, dens, seed, kind]) => {
+  ];
+  const mist = MIST.map(([x, y, z, w, h, dens, seed, kind], i) => {
     const m = new THREE.Mesh(
       new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0),
       new THREE.ShaderMaterial({
@@ -364,6 +399,7 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
     m.position.set(x, y, z);
     m.raycast = () => {};
     m.renderOrder = 2;
+    m.visible = !lite || [0, 1, 2, 6].includes(i); // (a phone: four, until it has shown it can take nine)
     root.add(m);
     return m;
   });

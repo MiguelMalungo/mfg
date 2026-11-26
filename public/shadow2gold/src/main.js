@@ -75,7 +75,15 @@ const onTap = (el, fn) => {
 
 /* ── renderer ── */
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, TOUCH ? 1 : 1.5));
+/*
+ * How sharp the picture is (2026-11-26, the owner: "improve the quality on the phone"). A phone was drawn at pixel
+ * ratio 1, a third of an iPhone's own in each direction, and stretched: soft. Now it starts at 1.5 and the game
+ * watches its own frames (quality, below): it goes sharper while the phone keeps up (to 2) and back down when it
+ * does not (to 1, as before). A computer starts at 1.5 and only ever steps down. ?pr=1.25 fixes it, for testing.
+ */
+const PR_FIXED = params.has('pr') ? +params.get('pr') : null;
+const PR = { now: PR_FIXED ?? Math.min(devicePixelRatio, 1.5), max: PR_FIXED ?? Math.min(devicePixelRatio, TOUCH ? 2 : 1.5), min: PR_FIXED ?? Math.min(devicePixelRatio, 1) };
+renderer.setPixelRatio(PR.now);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.NoToneMapping; // the finish pass grades the image
 renderer.shadowMap.enabled = true;
@@ -348,6 +356,7 @@ const prepare = async () => {
 const begin = () => {
   if (state.started || !ready || !gender) return;
   state.started = true;
+  state.startedAt = performance.now();
   save.set({ gender });
   // your own unseen body and the shadows you will face have your shape; the hand is yours too
   child.child.wear(gender === 'woman' ? 'girl' : 'boy');
@@ -726,7 +735,7 @@ const applyLayout = () => {
   vessel.group.position.copy(layout.corner);
   vessel.group.scale.setScalar(layout.scale);
 };
-addEventListener('resize', () => {
+const relayout = () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
@@ -736,20 +745,22 @@ addEventListener('resize', () => {
   dust.u.px.value = renderer.getPixelRatio() * innerHeight;
   shadow?.wisps.resize();
   applyLayout();
-});
+};
+addEventListener('resize', relayout);
 
 /* ── the people: loaded after the first frame is up ── */
 let ready = false;
 let body = null, shadow = null, masks = null, child = null, hand = null, people = null, dressing = null, albedo = null, rubedo = null;
 // the look pass: real surfaces and objects, loaded alongside the people (the house keeps its coded look until they arrive)
 // ?nodress leaves the coded look (to compare, or on a slow machine)
-(params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house, { lite: LITE }))
+(params.has('nodress') ? new Promise(() => {}) : dressHouse(scene, house, { lite: LITE, extra: (params.get('extra') ?? '').split(',').filter(Boolean) }))
   .then((d) => {
     dressing = d;
     refl.u.reflStrength.value = d.floorReflection;
     refl.hideAlso(d.noMirror);
     adapt.list = null; // the eye's rays now meet the new objects too
     window.__g.dressing = d;
+    if (LITE && rich.on) d.hangChandeliers(); // (the phone had shown it before the house was dressed)
   })
   .catch((err) => console.error('The house dressing did not load:', err));
 applyLayout();
@@ -1653,7 +1664,7 @@ const tick = (forceDt) => {
   // in the cave the work goes on: red, then gold (rubedo.js)
   V.stage = ease(V.stage, demo.stage ?? (rubedo?.skull.black ? 0 : rubedo?.st.entered ? Math.max(wantStage, rubedo.st.stage) : wantStage), rubedo?.skull.black ? 1.4 : 0.5);
   water.update(t, dt, player.pos.z < Z_END);
-  if (LITE && player.pos.z < Z_END) waterFlames();
+  if (LITE && !rich.on && player.pos.z < Z_END) waterFlames();
   vessel.update(t);
   vessel.light.intensity *= (adapt.dim ?? 1) * (rubedo?.lightK() ?? 1); // held lower close to a surface (adaptExposure)
   house.update(t);
@@ -1702,7 +1713,7 @@ const tick = (forceDt) => {
   if (albedo) albedo.st.paperGain = Math.min(3, EXPOSURE / Math.max(1e-3, post.finish.uniforms.exposure.value));
   refl.update(params.has('norefl') || LITE || player.y < -1.2);
   waterRefl.setGlow(near);
-  waterRefl.update(params.has('norefl') || LITE || player.pos.z > Z_END + 1.5 || !!rubedo?.here(player));
+  waterRefl.update(params.has('norefl') || (LITE && !rich.on) || player.pos.z > Z_END + 1.5 || !!rubedo?.here(player));
   // the door swings open once three shadows have been faced
   if (state.doorAt != null) house.openDoor(smoothstep(0, 3.5, t - state.doorAt));
   // below the house: level II, albedo (albedo.js)
@@ -1802,7 +1813,63 @@ const warmUp = async (level) => {
   }
   dot.dispose();
 };
+/*
+ * The game watches its own frames and sets the sharpness (PR, above). Every 2.5 s of play: if half the frames took
+ * longer than 22 ms, a step down (and no step up for 30 s); if four in five came within 18 ms three times running,
+ * a step up. Nothing is judged in the first seconds, while a page is open, or right after a change.
+ */
+const quality = { dts: [], since: 0, good: 0, upAfter: 0, last: performance.now(), log: [] };
+/*
+ * A phone that holds its sharpest for three stretches has shown it can take the rest of the look, in every level:
+ * the chandeliers (I), the water's real mirror in place of its painted flames (II, at a third of the screen's
+ * pixels), and the cave's full rock, gravel and smoke (III). Once; the watch goes on after it and can still step down.
+ */
+const rich = { on: !LITE };
+const goRich = () => {
+  if (rich.on) return;
+  rich.on = true;
+  waterRefl.setScale(0.35);
+  water.setFlames([]);
+  dressing?.hangChandeliers();
+  rubedo?.cave?.rich();
+  quality.log.push(['rich', PR.now]);
+};
+const setPR = (pr) => {
+  PR.now = Math.round(pr * 100) / 100;
+  renderer.setPixelRatio(PR.now);
+  relayout();
+};
+const watchFrames = (quality.watch = (now) => {
+  const q = quality, dt = now - q.last;
+  q.last = now;
+  if (PR_FIXED || !state.started || state.paused || state.preparing || document.hidden || now - (state.startedAt ?? now) < 5000 || dt > 250) return void ((q.dts.length = 0), (q.since = now));
+  q.dts.push(dt);
+  if (now - q.since < 2500) return;
+  const d = q.dts.sort((a, b) => a - b), p50 = d[d.length >> 1], p80 = d[Math.floor(d.length * 0.8)];
+  q.dts.length = 0;
+  q.since = now;
+  if (p50 > 22 && PR.now > PR.min) {
+    setPR(Math.max(PR.min, PR.now - 0.25));
+    q.good = 0;
+    q.upAfter = now + 30000;
+    q.log.push(['down', PR.now, Math.round(p50)]);
+  } else if (p80 < 18 && PR.now < PR.max && now > q.upAfter) {
+    if (++q.good >= 3) {
+      setPR(Math.min(PR.max, PR.now + 0.25));
+      q.good = 0;
+      q.log.push(['up', PR.now, Math.round(p80)]);
+    }
+  } else if (p80 < 18 && PR.now >= PR.max && !rich.on) {
+    // a phone at its sharpest and still keeping up: the rest of the look (goRich, above)
+    if (++q.good >= 3) {
+      q.good = 0;
+      goRich();
+    }
+  } else q.good = 0;
+});
+
 const frame = () => {
+  watchFrames(performance.now());
   // paused: the picture stays, nothing moves (dt 0: no walking, no clock, no timers)
   if (state.paused) tick(0);
   else tick();
@@ -1830,6 +1897,11 @@ window.__g = {
   edge, touchMove,
   puppet,
   LITE,
+  quality,
+  PR,
+  setPR,
+  rich,
+  goRich,
   stand, spotFor, darkestSpot, shiningSpot,
   tp: (x, z, yaw = player.yaw, pitch = player.pitch) => teleport(x, z, yaw, pitch),
   applyLayout, demo,

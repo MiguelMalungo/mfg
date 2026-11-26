@@ -997,5 +997,5 @@ export const buildRubedo = ({ scene, house, glowTex, albedo, sack, child, round 
   // what main.js makes ready for the graphics card beforehand (warmUp)
   const loaded = Promise.allSettled([cave.load, openSack.load, skull.load]);
 
-  return { loaded, hold, choosing, tapAt, group, st, update, lookedAt, line, here, home, skull, placeVessel, lightK, restore, sun, places: { Z0, Z1, CAVE_Y, FURN, SACK_AT, CHILD_AT, UP_X, UP_END, STAND } };
+  return { loaded, cave, hold, choosing, tapAt, group, st, update, lookedAt, line, here, home, skull, placeVessel, lightK, restore, sun, places: { Z0, Z1, CAVE_Y, FURN, SACK_AT, CHILD_AT, UP_X, UP_END, STAND } };
 };
