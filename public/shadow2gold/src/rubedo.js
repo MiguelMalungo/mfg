@@ -50,7 +50,7 @@ const vnoise = (x, y, z) => {
 
 /** The sun in the opening: s 0 black, 1 white, 2 red, 3 gold; in between, one turns into the next from its rim inward. */
 const makeSun = () => {
-  const u = { s: { value: 0 }, time: { value: 0 }, rimUp: { value: 0 } };
+  const u = { s: { value: 0 }, time: { value: 0 }, rimUp: { value: 0 }, blaze: { value: 0 } };
   const mat = new THREE.ShaderMaterial({
     uniforms: u,
     transparent: true,
@@ -61,7 +61,7 @@ const makeSun = () => {
     fog: false,
     vertexShader: /* glsl */ `varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: /* glsl */ `
-      uniform float s; uniform float time; uniform float rimUp; varying vec2 vP;
+      uniform float s; uniform float time; uniform float rimUp; uniform float blaze; varying vec2 vP;
       float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
@@ -83,6 +83,17 @@ const makeSun = () => {
         float cor = smoothstep(0.98, 1.0, r) * exp(-(r - 1.0) * mix(7.5, 3.2, smoothstep(0.4, 1.0, f + i0))) * (0.35 + 1.4 * lick * lick);
         vec3 hc = mix(halo(i0), halo(i0 + 1.0), f);
         vec3 col = d * body + hc * (rim * (1.6 + rimUp) * 2.0 + cor * 1.1);
+        // the ring burns (06-furnace-1..4): a band of fire on the rim and tongues of it licking outward, hotter and wider
+        // as the work goes on (blaze 0..1: the heatings, the red, and all of it at the gold)
+        float tng = fbm(q * 4.0 + vec2(time * 0.21, r * 3.4 - time * 0.55));
+        float tng2 = fbm(q * 9.0 - vec2(time * 0.33, r * 6.0 - time * 0.9));
+        float band = exp(-abs(r - 1.0) * mix(40.0, 15.0, blaze)) * (0.55 + 0.9 * tng);
+        float tongue = smoothstep(0.985, 1.0, r) * exp(-(r - 1.0) * mix(7.0, 2.3, blaze)) * pow(tng * 0.75 + tng2 * 0.45, 2.2) * 2.2;
+        float inner = smoothstep(0.82, 1.0, r) * body * (0.4 + 0.6 * tng);
+        float flick = 0.88 + 0.12 * sin(time * 7.3 + a * 3.0) * sin(time * 3.1);
+        // (kept low: brighter, the picture's tone curve turns fire to cream)
+        vec3 hot = mix(vec3(0.9, 0.12, 0.012), vec3(1.0, 0.4, 0.05), clamp(band * 0.7 + tng2 * 0.3, 0.0, 1.0));
+        col += hot * flick * (band * (0.022 + 0.15 * blaze) + tongue * (0.016 + 0.13 * blaze) + inner * 0.035 * blaze);
         float edge = 1.0 - smoothstep(1.3, 1.72, r); // (no further: the second stair is beside it)
         gl_FragColor = vec4(col * edge, body);
       }`,
@@ -678,12 +689,17 @@ export const buildRubedo = ({ scene, house, glowTex, albedo, sack, child, round 
     }
     // the cave's own light: the day by the sun's colour, the fire, the gold of the sack
     dayCol.copy(SUNS[Math.floor(Math.min(st.sun, 2.999))]).lerp(SUNS[Math.floor(Math.min(st.sun, 2.999)) + 1], Math.min(st.sun, 2.999) % 1);
-    cave.update(dt, t, { day: 0.58, dayColor: dayCol, fire: Math.min(1.6, st.fire), heat: st.phase === 'red' || st.heats >= 3 ? 0.8 : st.heat * 0.7 + 0.12 * st.heats, gold: gold * 1.0, camera });
+    // the ring's fire: a little at first, more with each heating, strong at the red, most of all at the gold (past 1)
+    const blazeWant = st.goldAt != null || st.phase === 'gold' || st.phase === 'up' ? 1.35 : st.phase === 'red' || st.heats >= 3 ? 0.72 : 0.24 + 0.15 * (st.heats + (hold.on ? hold.heat : 0));
+    st.blaze = (st.blaze ?? 0.24) + (blazeWant - (st.blaze ?? 0.24)) * (1 - Math.exp(-dt * (blazeWant > (st.blaze ?? 0) ? 0.5 : 0.3)));
+    ringCol.setRGB(1.0, 0.36, 0.08).lerp(_ringGold, ss(0.72, 1.3, st.blaze) * 0.6);
+    cave.update(dt, t, { day: 0.58, dayColor: dayCol, fire: Math.min(1.6, st.fire), heat: st.phase === 'red' || st.heats >= 3 ? 0.8 : st.heat * 0.7 + 0.12 * st.heats, gold: gold * 1.0, camera, ring: 0.35 + 1.4 * st.blaze, ringColor: ringCol });
     coal.material.opacity = st.fire * (0.7 + 0.3 * st.heat) * (0.9 + 0.1 * Math.sin(t * 9.1) * Math.sin(t * 4.7));
     upGlow.visible = st.phase === 'up';
     sun.u.s.value = st.sun;
     sun.u.time.value = t;
     sun.u.rimUp.value = Math.min(1, 0.25 * (round - 1));
+    sun.u.blaze.value = st.blaze;
 
     // up the second stair, into the house
     if (st.phase === 'up' && !st.busy && player.pos.z < UP_END + 0.7) {
@@ -953,6 +969,7 @@ export const buildRubedo = ({ scene, house, glowTex, albedo, sack, child, round 
   const SUNS = [new THREE.Color(0.52, 0.24, 0.105), new THREE.Color(1.0, 0.93, 0.8), new THREE.Color(1.0, 0.46, 0.25), new THREE.Color(1.15, 0.68, 0.24)];
   const dayCol = new THREE.Color(), _back = new THREE.Color();
   const fireCol = new THREE.Color(1.0, 0.42, 0.12), goldCol = new THREE.Color(1.0, 0.6, 0.18);
+  const ringCol = new THREE.Color(), _ringGold = new THREE.Color(1.0, 0.62, 0.2);
 
   /** Where the flask is, between the eye's corner (0) and the furnace (1), in the rig's own space. */
   const placeVessel = (rig, vessel) => {

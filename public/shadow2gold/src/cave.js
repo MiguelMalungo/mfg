@@ -300,6 +300,74 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
     return m;
   });
 
+  /*
+   * The cave's own smoke (the owner, 2026-11-26, after 06-furnace-1..4): soft banks of it hang through the chamber, roll
+   * up past the furnace and drift across the opening. Each is a sheet turned to the eye about its upright; its light is
+   * the fire below it, the day, and the burning ring behind it where it lies between you and the ring.
+   */
+  const mistU = {
+    time: u.time, noiseT: u.noiseT, day: { value: new THREE.Color() }, fire: { value: new THREE.Color() }, ring: { value: new THREE.Color() },
+    firePos: { value: new THREE.Vector3() }, sunPos: { value: new THREE.Vector3() },
+  };
+  // [x, y, z, width, height, density, seed, kind] in the furnace's own space; kind 0 a bank, 1 rising, 2 low on the ground
+  const MIST = [
+    [0.15, 0.55, -1.0, 3.4, 5.2, 0.62, 0.11, 1],
+    [-1.3, 1.5, -4.0, 6.5, 4.2, 0.5, 0.37, 0],
+    [1.5, 2.2, -5.3, 6.5, 4.6, 0.46, 0.61, 0],
+    [0.25, 3.0, -6.4, 5.5, 3.6, 0.24, 0.83, 0], // (thin: the ring shows through it)
+    [-3.3, 0.0, -2.1, 4.2, 3.6, 0.5, 0.29, 0],
+    [3.4, 0.0, -2.7, 4.2, 3.6, 0.5, 0.53, 0],
+    [-2.0, 0.0, 1.0, 5.0, 1.7, 0.42, 0.71, 2],
+    [2.2, 0.0, 0.4, 5.0, 1.7, 0.42, 0.19, 2],
+    [-0.6, 0.0, -2.6, 6.0, 1.5, 0.4, 0.47, 2],
+  ].filter((m, i) => !lite || [0, 1, 2, 6].includes(i));
+  const mist = MIST.map(([x, y, z, w, h, dens, seed, kind]) => {
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0),
+      new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, fog: false,
+        blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+        uniforms: { ...mistU, size: { value: new THREE.Vector2(w, h) }, dens: { value: dens }, seed: { value: seed }, kind: { value: kind } },
+        vertexShader: /* glsl */ `varying vec2 vU; varying vec3 vW;
+          void main() { vU = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+        fragmentShader: /* glsl */ `
+          uniform float time, dens, seed, kind; uniform vec2 size; uniform sampler2D noiseT;
+          uniform vec3 day, fire, ring, firePos, sunPos; varying vec2 vU; varying vec3 vW;
+          float N(vec2 p) { return texture2D(noiseT, p).r; }
+          void main() {
+            // metres across the sheet, so every sheet has the same grain; it drifts sideways and climbs
+            vec2 p = vU * size;
+            float climb = kind > 0.5 && kind < 1.5 ? 0.09 : 0.025;
+            vec2 q = p * 0.11 + vec2(seed * 3.7 - time * 0.008, seed - time * climb);
+            vec2 warp = vec2(N(q * 0.8 + vec2(0.0, time * 0.006)), N(q * 0.8 + vec2(0.37, -time * 0.005))) - 0.5;
+            q += warp * 0.55;
+            float n = N(q) * 0.55 + N(q * 2.3 + 0.5) * 0.3 + texture2D(noiseT, q * 4.7).g * 0.15;
+            // a bank: thick in its middle, eaten away at the edges; on the ground it lies low
+            vec2 c = (vU - vec2(0.5, kind > 1.5 ? 0.0 : 0.5)) * vec2(2.0, kind > 1.5 ? 1.0 : 2.0);
+            float shape = 1.0 - smoothstep(0.35, 1.0, length(c) + (n - 0.5) * 0.7);
+            float d = smoothstep(0.5, 0.86, n) * shape * dens;
+            d *= smoothstep(0.0, kind > 1.5 ? 0.05 : 0.14, vU.y); // never a line on the floor
+            if (d < 0.003) discard;
+            // its light: the fire under it, the day, and the ring when it lies between you and the ring
+            vec3 V = normalize(vW - cameraPosition);
+            float df = distance(vW, firePos);
+            float back = pow(max(0.0, dot(V, normalize(sunPos - vW))), 22.0);
+            float nearRing = 1.0 / (1.0 + 0.12 * dot(vW - sunPos, vW - sunPos));
+            vec3 L = day * 0.018 + vec3(0.0035, 0.003, 0.0025) + fire / (1.0 + 0.45 * df * df) + ring * (1.1 * back + 0.09 * nearRing);
+            // thin smoke lets the light through and shines at its edges; thick smoke is darker in its heart
+            L *= 0.55 + 0.9 * (1.0 - smoothstep(0.0, 0.6, d));
+            float a = clamp(d, 0.0, 0.7);
+            gl_FragColor = vec4(L * a, a);
+          }`,
+      }),
+    );
+    m.position.set(x, y, z);
+    m.raycast = () => {};
+    m.renderOrder = 2;
+    root.add(m);
+    return m;
+  });
+
   /* the sky beyond the opening, and the haze that hangs in it */
   const sky = new THREE.Mesh(new THREE.CircleGeometry(1.72, 48), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }));
   sky.position.set(0.25, 4.1, -9.8);
@@ -309,8 +377,15 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
   root.add(sky, haze);
 
   /** day, fire, gold: 0..1 and their colours; heat: how hard the fire burns. */
-  out.update = (dt, t, { day, dayColor, fire, heat, gold, camera }) => {
+  out.update = (dt, t, { day, dayColor, fire, heat, gold, camera, ring = 0, ringColor = null }) => {
     u.time.value = t;
+    // the smoke: lit, and turned to the eye
+    mistU.day.value.copy(dayColor).multiplyScalar(day);
+    mistU.fire.value.setRGB(1.0, 0.36, 0.1).multiplyScalar(fire * (0.06 + 0.1 * heat));
+    mistU.ring.value.copy(ringColor ?? _sm.setRGB(1.0, 0.4, 0.1)).multiplyScalar(ring * 0.1);
+    mistU.firePos.value.set(at.x, at.y + 0.35, at.z + 0.3);
+    mistU.sunPos.value.set(at.x + 0.25, at.y + 4.15, at.z - 9.4);
+    for (const m of mist) m.rotation.y = Math.atan2(camera.position.x - (at.x + m.position.x), camera.position.z - (at.z + m.position.z));
     const fl = 1 + 0.10 * Math.sin(t * 9.1) * Math.sin(t * 4.7) + 0.05 * Math.sin(t * 2.3);
     u.uDay.value.copy(dayColor).multiplyScalar(day);
     u.uFire.value.setRGB(1.0, 0.36, 0.10).multiplyScalar(fire * (0.12 + 0.2 * heat) * fl);
@@ -321,7 +396,7 @@ export const buildCave = ({ group, at, glowTex, lite = false, renderer }) => {
     smokeU.col.value.copy(dayColor).multiplyScalar(0.02).add(_sm.setRGB(0.006, 0.0025, 0.0008).multiplyScalar(fire));
     for (const m of smoke) m.visible = fire > 0.02;
     sky.material.color.copy(dayColor).multiplyScalar(0.022 * day);
-    haze.material.color.copy(dayColor).multiplyScalar(0.016 * day);
+    haze.material.color.copy(dayColor).multiplyScalar(0.016 * day).add(_sm.copy(mistU.ring.value).multiplyScalar(0.05 * Math.max(0, ring - 0.8))); // (the opening glows as the ring burns)
     const yaw = Math.atan2(camera.position.x - at.x, camera.position.z - at.z);
     for (const f of flames) {
       f.visible = fire > 0.02;
