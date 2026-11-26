@@ -80,6 +80,12 @@
       .say-btn.take { border-color: #ffd89a; color: #ffd89a; }
       .say-btn small { font-family: Inter, sans-serif; font-size: 9px; letter-spacing: 0.2em; opacity: 0.65; }
       .line { left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: min(74vw, 760px); text-align: center; font-size: 12px; letter-spacing: 0.26em; line-height: 1.7; text-transform: uppercase; opacity: 0.8; text-shadow: 0 0 10px #000, 0 0 3px #000; }
+      /* a phone held upright (2026-11-26, the owner: texts over each other when picking): the bottom is the thumbs' and the
+         hand's, so the instruction line goes up under the pause button and the tip under it, stacked (--lineh: words.js) */
+      @media (orientation: portrait) and (max-width: 760px) {
+        .line { top: calc(70px + env(safe-area-inset-top)); bottom: auto; max-width: 84vw; font-size: 11px; letter-spacing: 0.2em; line-height: 1.6; }
+        .tip { top: calc(80px + var(--lineh, 0px) + env(safe-area-inset-top)); bottom: auto; font-size: clamp(17px, 2.3vh, 21px); }
+      }
       .word { left: 50%; top: 44%; transform: translate(-50%, -50%); text-align: center; transition: opacity 1.4s ease; }
       .word-main { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(44px, 8vh, 92px); letter-spacing: 0.2em; margin-left: 0.2em; color: #ffd89a; text-shadow: 0 0 40px rgba(255, 200, 110, 0.45), 0 0 6px #000; }
       .word-sub { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(17px, 2.3vh, 22px); margin-top: 10px; opacity: 0.85; text-shadow: 0 0 10px #000; }

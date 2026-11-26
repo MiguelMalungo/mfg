@@ -343,7 +343,9 @@ export const buildRubedo = ({ scene, house, glowTex, albedo, sack, child, round 
     const tall = innerWidth < innerHeight * 0.9; // a phone held upright: one above the other
     wordsUp = left.map((w, i) => {
       const s = wordSprite(w), k = i - (left.length - 1) / 2;
-      s.position.set(tall ? 0 : k * 0.66, CAVE_Y + (tall ? 1.68 - k * 0.2 : 1.46), STAND.z - 1.5);
+      // (upright: a smaller column between the line at the top and the bright glass, where each can be read)
+      s.position.set(tall ? 0 : k * 0.66, CAVE_Y + (tall ? 1.74 - k * 0.14 : 1.46), STAND.z - 1.5);
+      if (tall) s.scale.multiplyScalar(0.72);
       s.material.opacity = 0;
       s.material.color.setScalar(0.26); // under the bloom: lit, not burning
       group.add(s);

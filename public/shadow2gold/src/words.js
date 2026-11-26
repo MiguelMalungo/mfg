@@ -29,6 +29,7 @@ export const makeWords = (camera, mode) => {
   const tipEl = el('div', 'tip hidden');
 
   let cur = null; // { anchor, until, onDone, choice }
+  let lastLineH = -1;
   let now = 0;
   const _v = new THREE.Vector3();
 
@@ -164,6 +165,9 @@ export const makeWords = (camera, mode) => {
       Object.assign(tips, { cur: next.id, until: t + readingTime(next.text) + 1.2 });
     }
     tipEl.classList.toggle('behind', !!cur);
+    // (on a phone held upright the line and the tip are stacked at the top: the tip sits under the line's real height)
+    const lh = lineEl.classList.contains('hidden') ? 0 : lineEl.offsetHeight;
+    if (lh !== lastLineH) document.documentElement.style.setProperty('--lineh', (lastLineH = lh) + 'px');
     if (wordUntil && t > wordUntil) (wordEl.classList.add('hidden'), (wordUntil = 0));
     if (whisperUntil && t > whisperUntil) (whisperEl.classList.add('hidden'), (whisperUntil = 0));
     if (!cur) return;
@@ -173,7 +177,7 @@ export const makeWords = (camera, mode) => {
     if (cur.aside) {
       const short = !narrow && innerHeight < 500; // a phone held sideways: above the thumb circle
       box.style.left = narrow ? 'calc(50% + 22px)' : short ? '110px' : 'calc(5vw + 22px)';
-      box.style.top = narrow ? '96px' : short ? '34px' : '50%';
+      box.style.top = narrow ? 96 + Math.max(0, lastLineH - 8) + 'px' : short ? '34px' : '50%'; // (under the line, upright)
       box.style.transform = narrow ? 'translate(-50%, 0)' : short ? 'none' : 'translate(0, -50%)';
     } else if (!p) {
       box.style.left = 'calc(50% + 22px)'; // (the box's own side margin is -22px)
