@@ -259,8 +259,9 @@ export class Sound {
 
   /**
    * Either the songs or the world's own sound (2026-11-26, the owner). false silences everything that goes in by
-   * `fx` / `fxWet`: steps, atmosphere, doors, fire, breath, whispers, the heart. What belongs to the puzzle and
-   * its goals (glass, exhale, ring) goes in by `bus` and is heard either way.
+   * `fx` / `fxWet`: steps, atmosphere, doors, fire, breath, whispers. What belongs to the puzzle and its goals
+   * (glass, exhale, ring) and the warnings of danger (the heart, the drone's swell) goes in by `bus` and is heard
+   * either way.
    */
   setEffects(on) {
     this.effects = on;
@@ -334,7 +335,7 @@ export class Sound {
     const ctx = this.ctx;
     this.droneGain = ctx.createGain();
     this.droneGain.gain.value = 0.05 * AMBIENCE;
-    this.droneGain.connect(this.fx);
+    this.droneGain.connect(this.bus); // (a warning: heard with the songs too)
     [32.7, 49.0, 65.4, 98.0].forEach((f, i) => {
       [0.996, 1.004].forEach((det) => {
         const o = ctx.createOscillator();
@@ -635,7 +636,7 @@ export class Sound {
       g.gain.linearRampToValueAtTime(amp * a, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
       o.connect(g);
-      g.connect(this.fx);
+      g.connect(this.bus);
       o.start(t);
       o.stop(t + 0.4);
     }
