@@ -19,7 +19,8 @@ const ALONG = {
   L_UpperArm: ['L_Forearm', 'lowerarm_l'], L_Forearm: ['L_Hand', 'hand_l'], R_UpperArm: ['R_Forearm', 'lowerarm_r'], R_Forearm: ['R_Hand', 'hand_r'],
   L_Thigh: ['L_Calf', 'lowerleg_l'], L_Calf: ['L_Foot', 'foot_l'], R_Thigh: ['R_Calf', 'lowerleg_r'], R_Calf: ['R_Foot', 'foot_r'],
 };
-const HEIGHT = 1.2; // metres
+// (2026-11-26, the owner: it read as a very small man or woman) younger: shorter, the head larger for the body
+const HEIGHT = 1.06; // metres
 const bare = (n) => n.replace(/^Bip0\d_/, '');
 
 export const loadChildBodies = async () => {
@@ -92,7 +93,7 @@ export const makeChildBody = (src, who, { root, driver, u }) => {
   const S = HEIGHT / Math.max(0.5, at(B.Head).y + 0.18);
   const ankle = Math.min(at(B.L_Foot).y, at(B.R_Foot).y) * S;
   obj.scale.setScalar(S);
-  B.Head.scale.setScalar(1.1);
+  B.Head.scale.setScalar(1.3);
   for (const [b, [p, r, s]] of keep) (b.position.copy(p), b.quaternion.copy(r), b.scale.copy(s));
   // the hand that holds the rope is half closed
   for (const f of ['1', '2', '3', '4'])
