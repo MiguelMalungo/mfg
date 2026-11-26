@@ -637,3 +637,11 @@ export const INTRO = {
   test: 'Prototype: try any level',
   testHint: 'for testing · your saved progress is not touched',
 };
+
+/** The loading line on the intro page and the title card, and what the title card says while you wake (main.js). */
+export const LOADING = {
+  intro: 'Preparing the house',
+  title: 'Lighting the candles',
+  ready: 'The house is ready',
+  waking: 'Waking…',
+};

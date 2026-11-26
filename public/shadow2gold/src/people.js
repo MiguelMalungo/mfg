@@ -3,6 +3,7 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { rng } from './textures.js';
 import { loadChildBodies, makeChildBody } from './childbody.js';
+import { loadScan } from './scan.js';
 
 /*
  * Everything made from the two scanned people (Renderpeople "Nathan" and "Sophia", see
@@ -15,11 +16,11 @@ import { loadChildBodies, makeChildBody } from './childbody.js';
 
 const plain = (name) => name.replace(/^rp_[a-z]+_animated_\d+_[a-z]+_/i, '');
 
-const loadFBX = async (url) => {
+const loadFBX = async (url, onProgress) => {
   // textures are assigned by hand, so skip the paths baked into the FBX
   const manager = new THREE.LoadingManager();
   manager.setURLModifier((u) => (/\.(jpe?g|png|tga)$/i.test(u) ? 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' : u));
-  const fbx = await new FBXLoader(manager).loadAsync(url);
+  const fbx = await new FBXLoader(manager).loadAsync(url, onProgress);
   fbx.traverse((o) => (o.name = plain(o.name)));
   for (const clip of fbx.animations)
     for (const t of clip.tracks) {
@@ -120,8 +121,15 @@ const boneMap = (obj) => {
   return bones;
 };
 
-export const loadPeople = async () => {
-  const [nathanFBX, sophiaFBX, childBodies] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx'), loadChildBodies().catch((e) => (console.error('The children did not load (the scan made small stays):', e), null))]);
+/** onProgress(id, loaded, total): the two scans are most of what the game downloads (the loading line on the cards). */
+/** A scan in its small form (scan.js: 0.6 and 1.3 MB instead of 24.6 and 10.1), the FBX only if that fails. */
+const loadPerson = (who, onProgress) =>
+  loadScan(`./assets/people/${who}/`, (e) => onProgress?.(who, e.loaded, e.total)).catch((e) => {
+    console.warn(`The small ${who} did not load; the FBX instead:`, e);
+    return loadFBX(`./assets/people/${who}/model.fbx`, (ev) => onProgress?.(who, ev.loaded, ev.total));
+  });
+export const loadPeople = async (onProgress) => {
+  const [nathanFBX, sophiaFBX, childBodies] = await Promise.all([loadPerson('nathan', onProgress), loadPerson('sophia', onProgress), loadChildBodies().catch((e) => (console.error('The children did not load (the scan made small stays):', e), null))]);
   const WOMAN_HIP = 84.2 / 94.6;
   const walkNathan = withoutTPose(inPlace(nathanFBX.animations[0], 1));
   /* The player is a man or a woman (PLAN.md 10.3): Nathan's scan or Sophia's. Both share one

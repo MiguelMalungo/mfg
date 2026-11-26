@@ -12,7 +12,7 @@ import { buildRubedo } from './rubedo.js';
 import { makeHand } from './pick.js';
 import { makeWords } from './words.js';
 import { save } from './save.js';
-import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, RUBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK } from './texts.js';
+import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, RUBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK, LOADING } from './texts.js';
 import { makePost, Sound } from './fx.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
@@ -305,7 +305,7 @@ onTap($('wakefire'), (e) => {
   if (!ready || !gender) return;
   startAt = 'fire';
   if (!touch.on) lock();
-  begin();
+  wake();
 });
 onTap($('restart'), (e) => {
   e.stopPropagation();
@@ -313,6 +313,38 @@ onTap($('restart'), (e) => {
   location.reload();
 });
 
+/*
+ * Waking. The tap is answered at once ("Waking…", the mark turning); the house is built and every program made ready
+ * for the graphics card behind the black card (compileAsync: the driver's own threads, so the page does not freeze),
+ * one picture is drawn unseen (the pictures go up), and only then does the card fade. Without this the screen stood
+ * still for about four seconds after the tap (2026-11-26).
+ */
+const wake = () => {
+  if (state.started || state.waking || !ready || !gender) return;
+  state.waking = true;
+  if (!DEBUG) sound.start(); // (inside the tap: a browser only lets sound start from one)
+  $('start').classList.add('waking');
+  $('go').innerHTML = `<span>${LOADING.waking}</span>`;
+  $('wakefire').style.display = 'none';
+  $('restart').style.display = 'none';
+  document.body.classList.add('busy');
+  // two frames, so the words are on the screen before the work starts
+  requestAnimationFrame(() => requestAnimationFrame(() => begin()));
+};
+const prepare = async () => {
+  state.preparing = true;
+  try {
+    const rt = renderer.getRenderTarget();
+    renderer.setRenderTarget(post.composer.readBuffer); // (the programs depend on what is drawn into)
+    const done = renderer.compileAsync(scene, camera);
+    renderer.setRenderTarget(rt);
+    await Promise.race([done, new Promise((ok) => setTimeout(ok, 15000))]);
+  } catch (e) {
+    console.warn('Preparing the programs:', e);
+  }
+  await new Promise((ok) => requestAnimationFrame(ok));
+  state.preparing = false;
+};
 const begin = () => {
   if (state.started || !ready || !gender) return;
   state.started = true;
@@ -373,7 +405,13 @@ const begin = () => {
     }
   }
   Object.assign(window.__g, { body, shadow, albedo, rubedo });
-  $('start').classList.add('hidden');
+  // the card stays until everything is ready to be drawn (DEBUG: at once)
+  const lift = () => {
+    $('start').classList.add('hidden');
+    document.body.classList.remove('busy');
+  };
+  if (DEBUG) lift();
+  else prepare().then(lift);
   if (!DEBUG) sound.start();
   // how to play, said once when you first wake
   if (!save.hasProgress) later(1.5, () => TIPS.wake[touch.on ? 'touch' : 'desk'].forEach((text, i) => words.tip(text, { id: 'wake' + i })));
@@ -432,7 +470,7 @@ const lock = () => {
 $('start').addEventListener('click', () => {
   if (!ready || !gender) return;
   lock();
-  begin();
+  wake();
 });
 renderer.domElement.addEventListener('click', () => {
   if (state.started && document.pointerLockElement !== renderer.domElement) lock();
@@ -715,7 +753,32 @@ let body = null, shadow = null, masks = null, child = null, hand = null, people 
   })
   .catch((err) => console.error('The house dressing did not load:', err));
 applyLayout();
-loadPeople()
+/*
+ * The loading line (2026-11-26, the owner: people may think the game is not working). The two scans are 35 of the
+ * 53 MB: their bytes are counted (with their known sizes when the server does not say), shown on the intro page and
+ * the title card, and the studio mark turns while anything is being made ready. (Since 2026-11-26 the scans are packed
+ * small, scan.js: 1.8 MB together; the game is ready when they are.)
+ */
+const loadBar = {
+  parts: { nathan: [0, 0.59e6], sophia: [0, 1.25e6] }, // (scan.bin; the FBX's sizes are taken from the server if it falls back)
+  set(id, loaded, total) {
+    const p = this.parts[id];
+    if (!p) return;
+    p[0] = loaded;
+    if (total > 0) p[1] = total;
+    const all = Object.values(this.parts);
+    const k = all.reduce((a, [l]) => a + l, 0) / all.reduce((a, [, t]) => a + t, 0);
+    this.show(Math.min(97, Math.floor(k * 97)));
+  },
+  show(pct) {
+    if (ready) return;
+    $('loading').textContent = `${LOADING.title} · ${pct}%`;
+    $('intro-load').textContent = `${LOADING.intro} · ${pct}%`;
+  },
+};
+loadBar.show(0);
+document.body.classList.add('busy');
+loadPeople((id, l, t) => loadBar.set(id, l, t))
   .then((p) => {
     people = p;
     masks = buildMaskHall(scene, people, MASK_WALL, W / 2);
@@ -729,6 +792,8 @@ loadPeople()
     applyLayout();
     ready = true;
     $('loading').style.display = 'none';
+    $('intro-load').textContent = LOADING.ready;
+    document.body.classList.remove('busy');
     showChoice();
     Object.assign(window.__g, { masks, people, child });
     if (DEBUG) begin();
@@ -1688,7 +1753,7 @@ const tick = (forceDt) => {
     $('end2').classList.remove('hidden');
     document.exitPointerLock?.();
   }
-  post.composer.render(dt);
+  if (!state.preparing) post.composer.render(dt);
 };
 /**
  * Level III's surfaces are made ready for the graphics card while the player is still far from it: without this each

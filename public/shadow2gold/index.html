@@ -29,7 +29,13 @@
       #start.fire { gap: 16px; }
       @media (max-height: 500px) { #start.fire .small, #start.fire .howto { display: none; } #start.fire .keys { display: none !important; } }
       @media (max-height: 820px) { #start.fire { gap: 12px; } #start.fire #mark { display: none; } }
-      #loading { font-size: 11px; letter-spacing: 0.4em; margin-left: 0.4em; text-transform: uppercase; opacity: 0.5; }
+      #loading { font-size: 11px; letter-spacing: 0.4em; margin-left: 0.4em; text-transform: uppercase; opacity: 0.8; animation: breathe 3.2s ease-in-out infinite; }
+      #intro-load { font-size: 10px; letter-spacing: 0.35em; opacity: 0.7; min-height: 1.4em; }
+      /* while the game is being made ready the studio mark turns (a transform: it goes on turning even while the page is busy) */
+      @keyframes turn { to { transform: rotate(360deg); } }
+      body.busy #mark, body.busy #mark2 { animation: turn 7s linear infinite; will-change: transform; }
+      #start.waking { cursor: default; }
+      #start.waking .who, #start.waking .keys, #start.waking #choose { opacity: 0.25; transition: opacity 0.4s; pointer-events: none; }
       .howto { max-width: 560px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; line-height: 1.45; }
       .howto p { margin: 0 0 14px; }
       .howto b { font-weight: 600; color: #ffd89a; }
@@ -133,6 +139,7 @@
       <div class="concept" id="intro-concept"></div>
       <div class="cards" id="intro-cards"></div>
       <button id="intro-begin" class="bigbtn" type="button"></button>
+      <div class="small" id="intro-load"></div>
       <div class="hint" id="intro-hint"></div>
       <!-- credits: the CC BY models must be named where players can see them (assets/*/CREDITS.md has the rest) -->
       <details id="intro-credits">
