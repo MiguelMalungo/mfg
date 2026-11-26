@@ -431,11 +431,18 @@ const begin = () => {
 };
 /* ── the songs on or off: a button on the title card and on the pause card, or M ── */
 const musicButtons = [$('music'), $('musicpause')];
-const showMusic = () => musicButtons.forEach((b) => (b.textContent = music.on ? 'Music: on' : 'Music: off'));
+const showMusic = () => {
+  musicButtons.forEach((b) => (b.textContent = music.on ? 'Music: on' : 'Music: off'));
+  $('musicbtn').classList.toggle('off', !music.on);
+  $('musicbtn').setAttribute('aria-pressed', String(music.on));
+};
 const toggleMusic = () => (music.toggle(), showMusic());
 showMusic();
 musicButtons.forEach((b) => onTap(b, (e) => (e.stopPropagation(), toggleMusic())));
 addEventListener('keydown', (e) => !e.repeat && e.code === 'KeyM' && toggleMusic());
+// the one on the screen while you play: it acts on the touch itself, so it works with a thumb already walking
+$('musicbtn').addEventListener('touchstart', (e) => (e.preventDefault(), e.stopPropagation(), toggleMusic()), { passive: false });
+$('musicbtn').addEventListener('click', (e) => (e.stopPropagation(), e.currentTarget.blur(), toggleMusic())); // (blur: Space must turn you round, not press it again)
 document.addEventListener('visibilitychange', () => music.hold(document.hidden || !!state.paused));
 /* ── the pause card: Esc or P, losing the mouse, or the II button on touch ── */
 const pause = () => {
