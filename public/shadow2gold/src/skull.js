@@ -93,6 +93,11 @@ export const buildSkull = ({ group, glowTex, st, api, oth, albedo, stones, place
     return e;
   });
   group.add(obj);
+  // by the path it calls you: a slow ember breath on the stone under it (and along its own edges, below in update)
+  const call = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(0.75, 0.2, 0.045), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  call.rotation.x = -Math.PI / 2;
+  call.raycast = () => {};
+  group.add(call);
   // your own cast shadow, horned: a mesh that only casts
   const shadowHorns = new THREE.Group();
   for (const g of horns()) {
@@ -277,6 +282,15 @@ export const buildSkull = ({ group, glowTex, st, api, oth, albedo, stones, place
     const d = obj.position.distanceTo(camera.position);
     S.eye = ease(S.eye, quiet ? 0 : S.offering ? 1 : ss(10, 3, d) * 0.8 + 0.1, 1.2);
     for (const e of eyes) e.material.opacity = S.eye * (0.8 + 0.2 * Math.sin(t * 2.3) * Math.sin(t * 0.9));
+    // waiting by the path, it glows to be picked up: a slow breath, stronger as you come near, out once answered
+    const calling = S.where === 'path' && !S.answered && !S.offering && obj.visible ? 1 : 0;
+    S.callK = ease(S.callK ?? 0, calling, 1.5);
+    const breath = 0.55 + 0.45 * Math.sin(t * 1.9);
+    const callA = S.callK * breath * (0.6 + 0.4 * ss(9, 2.5, d));
+    call.visible = S.callK > 0.01;
+    call.position.set(obj.position.x, CAVE_Y + 0.03, obj.position.z);
+    call.material.opacity = callA * 0.9;
+    if (S.where === 'path') rim.value.setRGB(0.03 + 0.2 * callA, 0.008 + 0.05 * callA, 0.003 + 0.014 * callA);
     // by the path it rises to your eye, as a mask does
     if (S.rise != null && obj.visible) {
       S.rise = Math.min(1, S.rise + dt / 1.3);
