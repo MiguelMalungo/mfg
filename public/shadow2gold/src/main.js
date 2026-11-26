@@ -429,12 +429,12 @@ const begin = () => {
   // how to play, said once when you first wake
   if (!save.hasProgress) later(1.5, () => TIPS.wake[touch.on ? 'touch' : 'desk'].forEach((text, i) => words.tip(text, { id: 'wake' + i })));
 };
-/* ── the songs on or off: a button on the title card and on the pause card, or M ── */
+/* ── the songs, or the sound effects: a button on the title card, the pause card and in play, or M ── */
 const musicButtons = [$('music'), $('musicpause')];
 const showMusic = () => {
-  musicButtons.forEach((b) => (b.textContent = music.on ? 'Music: on' : 'Music: off'));
-  $('musicbtn').classList.toggle('off', !music.on);
-  $('musicbtn').setAttribute('aria-pressed', String(music.on));
+  musicButtons.forEach((b) => (b.textContent = music.on ? 'Sound: music' : 'Sound: effects'));
+  $('musicmode').textContent = music.on ? '♪ Music' : 'Effects';
+  sound.setEffects(!music.on); // one or the other (the puzzle's own sounds are heard with both: fx.js)
 };
 const toggleMusic = () => (music.toggle(), showMusic());
 showMusic();

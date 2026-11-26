@@ -254,6 +254,18 @@ const AMBIENCE = 0;
 export class Sound {
   constructor() {
     this.ctx = null;
+    this.effects = true;
+  }
+
+  /**
+   * Either the songs or the world's own sound (2026-11-26, the owner). false silences everything that goes in by
+   * `fx` / `fxWet`: steps, atmosphere, doors, fire, breath, whispers, the heart. What belongs to the puzzle and
+   * its goals (glass, exhale, ring) goes in by `bus` and is heard either way.
+   */
+  setEffects(on) {
+    this.effects = on;
+    if (!this.ctx) return;
+    for (const g of [this.fx, this.fxWet]) g.gain.setTargetAtTime(on ? 1 : 0, this.ctx.currentTime, 0.15);
   }
 
   start() {
@@ -283,6 +295,11 @@ export class Sound {
     this.bus = ctx.createGain();
     this.bus.connect(this.master);
     this.bus.connect(this.wet);
+    this.fx = ctx.createGain();
+    this.fx.connect(this.bus);
+    this.fxWet = ctx.createGain();
+    this.fxWet.connect(this.wet);
+    this.fx.gain.value = this.fxWet.gain.value = this.effects ? 1 : 0;
     const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = b.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -308,7 +325,7 @@ export class Sound {
     g.gain.value = 0;
     src.connect(f);
     f.connect(g);
-    g.connect(this.bus);
+    g.connect(this.fx);
     g.filter = f;
     return g;
   }
@@ -317,7 +334,7 @@ export class Sound {
     const ctx = this.ctx;
     this.droneGain = ctx.createGain();
     this.droneGain.gain.value = 0.05 * AMBIENCE;
-    this.droneGain.connect(this.bus);
+    this.droneGain.connect(this.fx);
     [32.7, 49.0, 65.4, 98.0].forEach((f, i) => {
       [0.996, 1.004].forEach((det) => {
         const o = ctx.createOscillator();
@@ -356,7 +373,7 @@ export class Sound {
     g.gain.linearRampToValueAtTime(amp, t + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g);
-    g.connect(this.bus);
+    g.connect(this.fx);
     o.start(t);
     o.stop(t + dur + 0.05);
   }
@@ -374,7 +391,7 @@ export class Sound {
     g.gain.linearRampToValueAtTime((stone ? 0.09 : 0.16) * strength, t + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t + (stone ? 0.14 : 0.2));
     o.connect(g);
-    g.connect(this.bus);
+    g.connect(this.fx);
     o.start(t);
     o.stop(t + 0.25);
     const src = ctx.createBufferSource();
@@ -389,10 +406,10 @@ export class Sound {
     ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
     src.connect(f);
     f.connect(ng);
-    ng.connect(this.bus);
+    ng.connect(this.fx);
     src.start(t, Math.random());
     src.stop(t + 0.12);
-    if (stone) (g.connect(this.wet), ng.connect(this.wet)); // rock gives it back
+    if (stone) (g.connect(this.fxWet), ng.connect(this.fxWet)); // rock gives it back
   }
 
   /** A child's footfall: small, light, quick. amp 0..1 (how near). */
@@ -411,8 +428,8 @@ export class Sound {
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
     src.connect(f);
     f.connect(g);
-    g.connect(this.bus);
-    g.connect(this.wet);
+    g.connect(this.fx);
+    g.connect(this.fxWet);
     src.start(t, Math.random());
     src.stop(t + 0.12);
   }
@@ -424,7 +441,7 @@ export class Sound {
     if (!this.caveGain) {
       this.caveGain = ctx.createGain();
       this.caveGain.gain.value = 0;
-      this.caveGain.connect(this.bus);
+      this.caveGain.connect(this.fx);
       // two low tones a hair apart, so it swells and falls; and the air moving in the rock
       for (const f of [41.2, 41.55]) {
         const o = ctx.createOscillator();
@@ -460,8 +477,8 @@ export class Sound {
     lp.frequency.value = 420;
     o.connect(g);
     g.connect(lp);
-    lp.connect(this.bus);
-    lp.connect(this.wet); // more room than your own steps: it is further off
+    lp.connect(this.fx);
+    lp.connect(this.fxWet); // more room than your own steps: it is further off
     o.start(t);
     o.stop(t + 0.35);
   }
@@ -516,8 +533,8 @@ export class Sound {
     g.gain.linearRampToValueAtTime(0.5 * amp, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
     o.connect(g);
-    g.connect(this.bus);
-    g.connect(this.wet);
+    g.connect(this.fx);
+    g.connect(this.fxWet);
     o.start(t);
     o.stop(t + 0.55);
     const src = ctx.createBufferSource();
@@ -531,8 +548,8 @@ export class Sound {
     ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
     src.connect(f);
     f.connect(ng);
-    ng.connect(this.bus);
-    ng.connect(this.wet);
+    ng.connect(this.fx);
+    ng.connect(this.fxWet);
     src.start(t, Math.random());
     src.stop(t + 0.2);
     setTimeout(() => this._click(2400, 0.02 * amp, 0.05), 120); // the latch
@@ -598,8 +615,8 @@ export class Sound {
     g.gain.linearRampToValueAtTime(0, t + seconds + 0.3);
     src.connect(f);
     f.connect(g);
-    g.connect(this.bus);
-    g.connect(this.wet);
+    g.connect(this.fx);
+    g.connect(this.fxWet);
     src.start(t, Math.random());
     src.stop(t + seconds + 0.4);
   }
@@ -618,7 +635,7 @@ export class Sound {
       g.gain.linearRampToValueAtTime(amp * a, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
       o.connect(g);
-      g.connect(this.bus);
+      g.connect(this.fx);
       o.start(t);
       o.stop(t + 0.4);
     }

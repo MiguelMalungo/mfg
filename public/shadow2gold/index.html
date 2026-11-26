@@ -61,12 +61,9 @@
       .tbtn.hidden, #stick.away { opacity: 0; pointer-events: none; }
       #pausebtn { left: calc(14px + env(safe-area-inset-left)); top: calc(14px + env(safe-area-inset-top)); padding: 10px 15px; font-size: 13px; letter-spacing: 0.1em; }
       #pause { background: rgba(0, 0, 0, 0.86); }
-      /* the songs on or off while you play: top right, on a computer too (there the M beside it is how: the mouse is taken) */
-      #musicbtn { right: calc(14px + env(safe-area-inset-right)); top: calc(14px + env(safe-area-inset-top)); padding: 8px 14px; font-size: 16px; line-height: 1.2; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+      /* the songs or the sound effects, while you play: top right, on a computer too (there the M beside it is how: the mouse is taken) */
+      #musicbtn { right: calc(14px + env(safe-area-inset-right)); top: calc(14px + env(safe-area-inset-top)); padding: 8px 14px; font-size: 11px; line-height: 1.2; display: flex; align-items: center; gap: 8px; cursor: pointer; }
       body:not(.touch) #musicbtn { opacity: 0.75; border-width: 1px; }
-      #musicbtn .note-icon { font-size: 22px; line-height: 1; min-width: 14px; text-align: center; }
-      #musicbtn.off .note-icon { position: relative; opacity: 0.6; }
-      #musicbtn.off .note-icon::after { content: ''; position: absolute; left: -4px; right: -4px; top: 50%; height: 2px; background: currentColor; transform: rotate(-45deg); }
       #nub { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(242, 230, 204, 0.7); }
       /* the man / woman choice on the title card */
       .who { display: flex; gap: 14px; align-items: center; }
@@ -200,7 +197,7 @@
       <div id="choose" class="prompt" style="display: none">Choose, then wake</div>
       <div id="go" class="prompt" style="display: none"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
       <button id="wakefire" class="again" type="button" style="display: none"></button>
-      <button id="music" class="restart" type="button">Music: on</button>
+      <button id="music" class="restart" type="button">Sound: music</button>
       <button id="restart" class="restart" type="button" style="display: none">Start again</button>
     </div>
 
@@ -214,7 +211,7 @@
         <div><kbd>Q · RIGHT CLICK</kbd>leave</div>
         <div><kbd>SHIFT</kbd>hurry</div>
         <div><kbd>ESC · P</kbd>pause</div>
-        <div><kbd>M</kbd>music</div>
+        <div><kbd>M</kbd>music · effects</div>
       </div>
       <div class="keys touch-only">
         <div><kbd>LEFT CIRCLE</kbd>walk · to its edge: hurry</div>
@@ -224,7 +221,7 @@
       <div class="howto"><p class="soft" id="pausehow"></p></div>
       <div class="who">
         <button id="resume" class="again" type="button">Go on</button>
-        <button id="musicpause" class="again" type="button">Music: on</button>
+        <button id="musicpause" class="again" type="button">Sound: music</button>
  <button id="distilpause" class="again" type="button" style="display: none">Distil again</button>
         <button id="restartgame" class="again" type="button">Start again</button>
       </div>
@@ -248,7 +245,7 @@
     <!-- touch only: a button to tap while a mask is within reach, and the pause button -->
     <button id="pausebtn" class="tbtn touch-only" type="button" aria-label="Pause">II</button>
     <button id="pickbtn" class="tbtn pick touch-only hidden" type="button">Pick</button>
-    <button id="musicbtn" class="tbtn" type="button" aria-label="Music on or off"><span class="note-icon">♪</span><kbd class="desk-only">M</kbd></button>
+    <button id="musicbtn" class="tbtn" type="button" aria-label="Switch between music and sound effects"><span id="musicmode">♪ Music</span><kbd class="desk-only">M</kbd></button>
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>
