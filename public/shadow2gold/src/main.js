@@ -14,6 +14,7 @@ import { makeWords } from './words.js';
 import { save } from './save.js';
 import { LINES, TIPS, HINTS, PAUSE_HOW, LETTERS, ALBEDO, RUBEDO, INTRO, RETURNS, RETURNS_AGAIN, DISTIL, BLACK, LOADING } from './texts.js';
 import { makePost, Sound } from './fx.js';
+import { music } from './music.js';
 import { makeFloorReflection } from './reflect.js';
 import { applyBake } from './bake.js';
 import { makeWater } from './water.js';
@@ -330,7 +331,10 @@ onTap($('restart'), (e) => {
 const wake = () => {
   if (state.started || state.waking || !ready || !gender) return;
   state.waking = true;
-  if (!DEBUG) sound.start(); // (inside the tap: a browser only lets sound start from one)
+  if (!DEBUG) {
+    sound.start(); // (inside the tap: a browser only lets sound start from one)
+    music.start(sound.ctx, startAt === 'rubedo' || startAt === 'fire' ? 2 : startAt === 'albedo' ? 1 : 0);
+  }
   $('start').classList.add('waking');
   $('go').innerHTML = `<span>${LOADING.waking}</span>`;
   $('wakefire').style.display = 'none';
@@ -425,6 +429,14 @@ const begin = () => {
   // how to play, said once when you first wake
   if (!save.hasProgress) later(1.5, () => TIPS.wake[touch.on ? 'touch' : 'desk'].forEach((text, i) => words.tip(text, { id: 'wake' + i })));
 };
+/* ── the songs on or off: a button on the title card and on the pause card, or M ── */
+const musicButtons = [$('music'), $('musicpause')];
+const showMusic = () => musicButtons.forEach((b) => (b.textContent = music.on ? 'Music: on' : 'Music: off'));
+const toggleMusic = () => (music.toggle(), showMusic());
+showMusic();
+musicButtons.forEach((b) => onTap(b, (e) => (e.stopPropagation(), toggleMusic())));
+addEventListener('keydown', (e) => !e.repeat && e.code === 'KeyM' && toggleMusic());
+document.addEventListener('visibilitychange', () => music.hold(document.hidden || !!state.paused));
 /* ── the pause card: Esc or P, losing the mouse, or the II button on touch ── */
 const pause = () => {
   if (state.paused || !state.started || state.ended) return;
@@ -437,6 +449,7 @@ const pause = () => {
   $('distilpause').style.display = (rubedo ? state.rubedoDone || save.data.rubedo.done : state.albedoDone) ? '' : 'none';
   $('pause').classList.remove('hidden');
   sound.ctx?.suspend?.();
+  music.hold(true);
   if (document.pointerLockElement) document.exitPointerLock?.();
 };
 const resume = () => {
@@ -444,6 +457,7 @@ const resume = () => {
   state.paused = false;
   $('pause').classList.add('hidden');
   sound.ctx?.resume?.();
+  music.hold(false);
   lastT = performance.now(); // no jump in time for the pause
   if (!touch.on && !DEBUG) lock();
 };
@@ -1684,6 +1698,7 @@ const tick = (forceDt) => {
   }
   sound.update(breathLoud, sh.dread);
   sound.cave(rubedo?.here(player) ? 1 : 0);
+  if (state.started) music.update(rubedo?.here(player) ? 2 : albedo && (player.pos.z < Z_END - 0.4 || player.pos.z > 100) ? 1 : 0, sound.hushed ?? 0, dt);
 
   /* haze: the vessel and the nearest candles */
   vessel.light.getWorldPosition(tmp);

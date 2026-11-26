@@ -245,7 +245,11 @@ export const makePost = (renderer, scene, camera) => {
   return { composer, haze, dof, bloom, finish, setHaze, resize, sceneRT };
 };
 
-/* ───────── sound: everything synthesized, nothing loaded ───────── */
+/* ───────── sound: everything synthesized (the songs are apart, music.js) ───────── */
+
+/* The bed of atmosphere under the game: the low drone, the air, the clock in the house, the hum of the cave.
+ * 0 leaves only the footsteps and the effects (2026-11-26, the owner); 1 is as it was. */
+const AMBIENCE = 0;
 
 export class Sound {
   constructor() {
@@ -312,7 +316,7 @@ export class Sound {
   _drone() {
     const ctx = this.ctx;
     this.droneGain = ctx.createGain();
-    this.droneGain.gain.value = 0.05;
+    this.droneGain.gain.value = 0.05 * AMBIENCE;
     this.droneGain.connect(this.bus);
     [32.7, 49.0, 65.4, 98.0].forEach((f, i) => {
       [0.996, 1.004].forEach((det) => {
@@ -337,7 +341,7 @@ export class Sound {
 
   _air() {
     const g = this._band(260, 0.5);
-    g.gain.value = 0.035;
+    g.gain.value = 0.035 * AMBIENCE;
   }
 
   _click(freq, amp, dur, pan = 0) {
@@ -433,7 +437,7 @@ export class Sound {
       air.disconnect();
       air.connect(this.caveGain);
     }
-    this.caveGain.gain.setTargetAtTime(amount * 0.045, t, 1.2);
+    this.caveGain.gain.setTargetAtTime(amount * 0.045 * AMBIENCE, t, 1.2);
   }
 
   /**
@@ -570,6 +574,7 @@ export class Sound {
 
   /** Everything but the ringing glass goes quiet: k 0..1. */
   hush(k) {
+    this.hushed = k; // (the song goes quiet with the room: main.js)
     if (this.ctx) this.bus.gain.setTargetAtTime(1 - 0.94 * k, this.ctx.currentTime, 0.4);
   }
 
@@ -649,10 +654,10 @@ export class Sound {
     const t = ctx.currentTime;
     this.breathGain.gain.setTargetAtTime(breath * 0.11, t, 0.12);
     this.breathGain.filter.frequency.setTargetAtTime(380 + breath * 320, t, 0.2);
-    this.droneGain.gain.setTargetAtTime(0.05 + dread * 0.09, t, 0.5);
+    this.droneGain.gain.setTargetAtTime(0.05 * AMBIENCE + dread * 0.09, t, 0.5);
     // the clock in the house, somewhere behind you; it stops while you hold the gaze
     if (t >= this.nextTick) {
-      if (dread < 0.5) this._click(this.tock ? 1250 : 1650, 0.012, 0.03);
+      if (AMBIENCE && dread < 0.5) this._click(this.tock ? 1250 : 1650, 0.012, 0.03);
       this.tock = !this.tock;
       this.nextTick = t + 1;
     }

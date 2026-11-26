@@ -35,7 +35,7 @@
       @keyframes turn { to { transform: rotate(360deg); } }
       body.busy #mark, body.busy #mark2 { animation: turn 7s linear infinite; will-change: transform; }
       #start.waking { cursor: default; }
-      #start.waking .who, #start.waking .keys, #start.waking #choose { opacity: 0.25; transition: opacity 0.4s; pointer-events: none; }
+      #start.waking #music, #start.waking .who, #start.waking .keys, #start.waking #choose { opacity: 0.25; transition: opacity 0.4s; pointer-events: none; }
       .howto { max-width: 560px; text-align: center; font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; line-height: 1.45; }
       .howto p { margin: 0 0 14px; }
       .howto b { font-weight: 600; color: #ffd89a; }
@@ -69,6 +69,8 @@
       .who button.on { opacity: 1; border-color: #ffd89a; background: rgba(255, 216, 154, 0.08); color: #ffd89a; }
       .restart { font: inherit; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: inherit; background: none; border: 0; cursor: pointer; opacity: 0.4; padding: 6px; }
       .restart:hover { opacity: 0.85; }
+      /* the songs on or off, on the title card: in a corner, so it is on the screen however short that is */
+      #music { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); opacity: 0.6; }
       /* words over the game (src/words.js): a text beside an object, the line at the bottom, a word in the middle */
       .say, .line, .word, .whisper, .tip { position: fixed; z-index: 4; transition: opacity 0.6s ease; pointer-events: none; }
       .say.hidden, .line.hidden, .word.hidden, .whisper.hidden, .tip.hidden, .tip.behind { opacity: 0; }
@@ -192,6 +194,7 @@
       <div id="choose" class="prompt" style="display: none">Choose, then wake</div>
       <div id="go" class="prompt" style="display: none"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
       <button id="wakefire" class="again" type="button" style="display: none"></button>
+      <button id="music" class="restart" type="button">Music: on</button>
       <button id="restart" class="restart" type="button" style="display: none">Start again</button>
     </div>
 
@@ -205,6 +208,7 @@
         <div><kbd>Q · RIGHT CLICK</kbd>leave</div>
         <div><kbd>SHIFT</kbd>hurry</div>
         <div><kbd>ESC · P</kbd>pause</div>
+        <div><kbd>M</kbd>music</div>
       </div>
       <div class="keys touch-only">
         <div><kbd>LEFT CIRCLE</kbd>walk · to its edge: hurry</div>
@@ -214,6 +218,7 @@
       <div class="howto"><p class="soft" id="pausehow"></p></div>
       <div class="who">
         <button id="resume" class="again" type="button">Go on</button>
+        <button id="musicpause" class="again" type="button">Music: on</button>
  <button id="distilpause" class="again" type="button" style="display: none">Distil again</button>
         <button id="restartgame" class="again" type="button">Start again</button>
       </div>
