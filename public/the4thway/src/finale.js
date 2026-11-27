@@ -276,10 +276,17 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
         vec3 dir = normalize(vW - cameraPosition);
         vec3 col = mix(vec3(0.02, 0.025, 0.07), vec3(0.06, 0.04, 0.12), smoothstep(-0.1, 0.6, dir.y));
         // stars, fixed on the sky behind the door, in two sizes
-        float s1 = h3(floor(dir * 320.0));
-        float s2 = h3(floor(dir * 900.0) + 7.0);
-        col += vec3(1.0, 0.95, 0.9) * smoothstep(0.9965, 1.0, s1) * (0.7 + 0.3 * sin(time * 2.0 + s1 * 90.0)) * 2.0;
-        col += vec3(0.8, 0.85, 1.0) * smoothstep(0.985, 1.0, s2) * 0.5;
+        for (int k = 0; k < 2; k++) {
+          vec3 sp = dir * (k == 0 ? 170.0 : 420.0);
+          vec3 cell = floor(sp);
+          float h = h3(cell + float(k) * 7.0);
+          vec3 jit = vec3(h3(cell + 1.7), h3(cell + 5.3), h3(cell + 9.1)) - 0.5;
+          float dd = length(fract(sp) - 0.5 - jit * 0.5);
+          float mag = fract(h * 37.0);
+          float size = (k == 0 ? 0.2 : 0.3) * (0.4 + 0.8 * mag);
+          float st = step(k == 0 ? 0.97 : 0.975, h) * smoothstep(size, size * 0.2, dd) * (0.3 + 0.7 * mag);
+          col += (k == 0 ? vec3(1.0, 0.95, 0.9) * (0.7 + 0.3 * sin(time * 2.0 + h * 90.0)) * 2.2 : vec3(0.8, 0.85, 1.0) * 0.7) * st;
+        }
         // the milky band and the column of light up the middle, brightest at the base
         float x = vW.x;
         float band = exp(-pow(x / 9.0, 2.0)) * (0.6 + 0.5 * vn(vec2(x * 0.3, vW.y * 0.08))) ;
@@ -357,6 +364,10 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
     },
     get shafts() {
       return F.shafts;
+    },
+    /** How brightly the diamond (then the symbol) lights the plain, 0..1. */
+    get glow() {
+      return F.glow || 0;
     },
     get tiltUp() {
       return F.tiltUp;
@@ -556,6 +567,7 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
       core.material.opacity = Math.max(grow, symOn) * (1 - 0.6 * unfold) * 0.6;
       core.scale.setScalar(30 * (0.3 + 0.7 * grow) * (1 - 0.5 * unfold));
       coreLight.intensity = 900 * grow * (1 - 0.6 * unfold);
+      F.glow = grow * (1 - 0.6 * unfold);
       F.shafts = rays * (1 - unfold);
       dustMat.uniforms.power.value = rays * (1 - unfold) * 1.5;
 

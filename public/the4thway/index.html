@@ -41,6 +41,13 @@
       .prompt { font-size: 14px; letter-spacing: 0.45em; margin-left: 0.45em; text-transform: uppercase; opacity: 0.85; animation: breathe 3.2s ease-in-out infinite; }
       @keyframes breathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.95; } }
       #start { cursor: pointer; }
+      /* a short window: keep the whole start screen, with the chapter buttons, in view */
+      @media (max-height: 800px) { #start { gap: 16px; } #start .title { font-size: clamp(34px, 5vw, 60px); } #start .howto { font-size: 18px; line-height: 1.35; } #start .howto p { margin-bottom: 10px; } #start .howto .soft { font-size: 14px; } }
+      @media (max-height: 640px) { #start { gap: 10px; justify-content: flex-start; padding-top: 14px; overflow-y: auto; } #start #mark { width: 54px; height: 54px; } }
+      .levels { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; max-width: 92vw; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.8; }
+      .levels span { opacity: 0.6; margin-right: 6px; }
+      .levels button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; cursor: pointer; border: 1px solid rgba(242, 230, 204, 0.3); border-radius: 4px; padding: 8px 12px; }
+      .levels button:hover { border-color: #ffd89a; color: #ffd89a; }
       #end { background: rgba(0, 0, 0, 0.82); }
       /* the end of the game: after the gate, a white-gold card */
       #end.light { background: rgba(255, 244, 220, 0.96); color: #3a2a1a; }
@@ -100,12 +107,22 @@
         <p class="soft touch-only" style="justify-content:center">Best with sound, and the phone held sideways.</p>
       </div>
       <div class="prompt"><span class="desk-only">Click to wake</span><span class="touch-only">Tap to wake</span></div>
+      <!-- while this is a prototype, any chapter can be started directly (the earlier ones count as done) -->
+      <div class="levels" id="levels">
+        <span>Prototype · start at</span>
+        <button data-level="plain">The plain</button>
+        <button data-level="forest">The forest</button>
+        <button data-level="tower">The tower</button>
+        <button data-level="lotus">The lotus</button>
+        <button data-level="ending">The ending</button>
+      </div>
     </div>
 
     <div id="help" class="overlay hidden">
       <div class="small">How to play</div>
       <div class="howto">
-        <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br />One of them carries a spark of gold. <b>Find them, and raise your light to wake them.</b></p>
+        <p>Everyone here walks asleep, each drawn by a thread toward the moon.<br /><b>Read the standing stones, wake the sleeper with the spark of gold, and follow them</b> through the forest, the tower and the lotus. Then bring back what you were given.</p>
+        <p class="soft" id="helpNow"></p>
         <p class="soft">Walking costs you presence (the ring at the bottom). Stand still and hold <span class="desk-only">Space</span><span class="touch-only">Remember</span> to remember yourself and refill it; while you do, the gold spark shows you where to go.<br />If the ring empties, you sleepwalk for a few seconds. Nothing is lost, only time.</p>
         <div class="keys desk-only">
           <div><kbd>W A S D</kbd>walk</div>

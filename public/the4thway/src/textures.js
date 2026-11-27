@@ -452,6 +452,30 @@ export const stoneSymbol = (kind, w = 1024, h = 420) => {
     g.stroke();
   };
   switch (kind) {
+    case 'ways': {
+      // three ways (body, heart, mind) drawn separately below; the fourth is their one line upward
+      const top = 44, join = cy + 10, foot = h - 46;
+      for (const dx of [-170, 0, 170]) {
+        circle(cx + dx, foot - 22, 20);
+        g.beginPath();
+        g.moveTo(cx + dx, foot - 44);
+        g.quadraticCurveTo(cx + dx, join + 40, cx, join);
+        g.stroke();
+      }
+      g.lineWidth = 13;
+      g.beginPath();
+      g.moveTo(cx, join);
+      g.lineTo(cx, top + 34);
+      g.stroke();
+      g.lineWidth = 9;
+      // an arrowhead, and the one who walks it: awake
+      g.beginPath();
+      g.moveTo(cx - 34, top + 62);
+      g.lineTo(cx, top + 22);
+      g.lineTo(cx + 34, top + 62);
+      g.stroke();
+      break;
+    }
     case 'hourglass': {
       // time passes, nothing is lost
       g.beginPath();

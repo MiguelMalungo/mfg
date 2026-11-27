@@ -8,6 +8,7 @@ import { glowTexture } from './textures.js';
 import { makePost, Sound } from './fx.js';
 import { NOTES } from './lotus-interior.js';
 import { buildFinale } from './finale.js';
+import { loadArm, ARM_REST_DIR } from './arm.js';
 
 /*
  * The Fourth Way, prototype: the plain of sleepers.
@@ -47,11 +48,12 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.95;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 document.body.prepend(renderer.domElement);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 4000);
+camera.layers.enable(1); // the threads: drawn for the eye, not in the water's mirror
 scene.add(camera);
 
 await document.fonts.load('500 64px "Cormorant Garamond"').catch(() => {});
@@ -60,13 +62,18 @@ const glowTex = glowTexture();
 const world = buildWorld(scene, renderer);
 const sleepers = createSleepers(scene, glowTex);
 const finale = buildFinale({ scene, glowTex, sleepers });
-const people = await loadPeople(scene, glowTex).catch((e) => {
+const people = await loadPeople(scene, glowTex, renderer, sleepers).catch((e) => {
   console.warn('scanned people unavailable, using simple figures', e);
   return null;
 });
 const lantern = buildLantern(glowTex);
 camera.add(lantern.group);
-const hand = people?.buildHand();
+// the arm modelled in Blender; if it can't be loaded, the hand built from the scan in code stands in
+const armModel = await loadArm().catch((e) => {
+  console.warn('modelled arm unavailable, using the scan-built hand', e);
+  return null;
+});
+const hand = armModel ? null : people?.buildHand();
 // stones at the thresholds of the three places: what each one teaches
 {
   const F = world.forest;
@@ -74,12 +81,17 @@ const hand = people?.buildHand();
   world.addStele(fe.x, fe.z, Math.atan2(F.out.x, F.out.z), ['The moving centre learns by imitation', 'and works faster than thought.', 'Let the body keep the time.'], { symbol: 'moving' });
   const S = world.spire;
   const se = S.doorPos.clone().addScaledVector(S.facing, 26).addScaledVector(new THREE.Vector3(S.facing.z, 0, -S.facing.x), 5);
-  world.addStele(se.x, se.z, Math.atan2(S.facing.x, S.facing.z), ['Essence: what you were born with.', 'Personality: what you were given.', 'Only essence can grow.'], { symbol: 'essence' });
+  world.addStele(se.x, se.z, Math.atan2(S.facing.x, S.facing.z), ['Essence: what you were born with.', 'Personality: what you were given.', 'Real I can grow only from essence.'], { symbol: 'essence' });
   world.addStele(-9, -90, 0, ['The heart, the breath, the day, a life:', 'everything that lives has its rhythm.', 'The lotus keeps time for all of them.'], { symbol: 'rhythm' });
   world.addStele(9, -91, 0, ['Nothing goes straight.', 'Where the line bends,', 'only a shock keeps it true.'], { symbol: 'octave' });
+  // where the ways to the three places part: what the Fourth Way is (after Ouspensky, In Search of the
+  // Miraculous, ch. 2: the fakir's way of the body, the monk's of feeling, the yogi's of the mind;
+  // the fourth works on all three at once, and asks no withdrawal from life)
+  world.addStele(-8, -44, Math.atan2(8, 78), ['Three ways: of body, heart, mind.', 'The fourth works on all three', 'at once, in the midst of life.'], { symbol: 'ways' });
 }
 // the Lantern-Bearer herself, for the end of the tower's trial (Sophia, grey-haired)
 if (people) world.cutscene.setActor(people.makeActor(2));
+if (armModel) lantern.attachArm(armModel.root, ARM_REST_DIR);
 if (hand) lantern.attachHand(hand);
 const post = makePost(renderer, scene, camera);
 // on a phone the depth of field costs more than it gives
@@ -106,6 +118,10 @@ const player = { pos: START.clone(), vel: new THREE.Vector3(), yaw: 0, pitch: -0
 const state = { pressAt: -99, lotusDone: false, gems: 0, cut: false, towerDone: false, aimed: null, doorsOpen: false, doorsAt: 0, passed: [false, false, false, false], prevAlong: null, hollow: 0, forestDone: false, free: false, goalText: '', goalUntil: 0, started: false, presence: 1, sleep: 0, asleepFor: 0, raise: 0, breathing: 0, ended: false, t: 0, lastBeat: 0 };
 const keys = {};
 let mouseDown = false;
+/* Things that happen a little later run on the game's own clock, not the wall clock,
+   so they stay in order when the tab is hidden, the frame rate drops, or a test steps the game. */
+const pending = [];
+const later = (sec, fn) => pending.push({ at: state.t + sec, fn });
 
 const begin = () => {
   if (state.started) return;
@@ -138,6 +154,8 @@ const toggleHelp = (show = $('help').classList.contains('hidden')) => {
   $('help').classList.toggle('hidden', !show);
   $('restart').classList.remove('confirm');
   $('restart').textContent = 'Restart';
+  // the pause screen also says what to do now
+  $('helpNow').textContent = show && state.goalText ? 'Now: ' + state.goalText : '';
   if (show) {
     unlockingOnPurpose = true;
     document.exitPointerLock?.();
@@ -384,15 +402,16 @@ const travel = (to, yaw) => {
   state.fading = true;
   $('fade').style.opacity = '1';
   sound.bell(146.8, 0.08, 5);
-  setTimeout(() => {
+  later(0.75, () => {
     player.pos.set(to.x, 0, to.z);
     player.vel.set(0, 0, 0);
     player.yaw = yaw;
     player.pitch = 0.02;
     state.prevAlong = null;
+    shadowTick = 0;
     $('fade').style.opacity = '0';
-    setTimeout(() => (state.fading = false), 900);
-  }, 750);
+    later(0.9, () => (state.fading = false));
+  });
 };
 
 /* ── the forest chapter: the breathing roots across the path, and the hollow ── */
@@ -436,6 +455,8 @@ scene.add(seedFly);
 let seedFlyAge = -1;
 const seedFrom = new THREE.Vector3();
 const _lp = new THREE.Vector3();
+const _lampCol = new THREE.Color();
+const _crowdCol = new THREE.Color();
 const _sp = new THREE.Vector3();
 // the end of the game: a line of Gurdjieff's and the credits the project owes
 const FINAL_LINE = 'Remember yourself always and everywhere.<br><span style="opacity:0.7;letter-spacing:0.3em">G. I. Gurdjieff</span>';
@@ -495,12 +516,18 @@ const forward = new THREE.Vector3();
 const right = new THREE.Vector3();
 const wish = new THREE.Vector3();
 let last = performance.now();
+let shadowTick = 0;
+renderer.shadowMap.autoUpdate = false;
 
 const tick = (now) => {
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
+  // never negative: __g.step() can run the clock ahead of the next animation frame
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+  last = Math.max(last, now);
   state.t += dt;
   const t = state.t;
+  for (let i = pending.length - 1; i >= 0; i--) {
+    if (pending[i].at <= t) pending.splice(i, 1)[0].fn();
+  }
   const active = state.started && !state.ended;
 
   /* input → desired motion */
@@ -621,14 +648,14 @@ const tick = (now) => {
         $('fade').style.background = '#fff';
         $('fade').style.opacity = '1';
         sound.bell(523.3, 0.12, 10);
-        setTimeout(() => {
+        later(0.9, () => {
           world.cutscene.start();
           lantern.group.visible = false;
           $('fade').style.opacity = '0';
-          setTimeout(() => ($('fade').style.background = '#000'), 900);
+          later(0.9, () => ($('fade').style.background = '#000'));
           state.walk = null;
           world.interior.passing = false;
-        }, 900);
+        });
     }
   }
   if (world.cutscene.active) {
@@ -643,16 +670,17 @@ const tick = (now) => {
       // and then toward the lotus
       sleepers.companion.goal = new THREE.Vector3(-4, 0, -138); // to the lotus's door
       $('fade').style.opacity = '1';
-      setTimeout(() => {
+      later(0.9, () => {
         lantern.addSeed(new THREE.Color(0.6, 1.0, 2.4)); // the mind's seed, blue
         $('endTitle').textContent = 'THE TOWER';
         $('endSmall').textContent = 'What you were taught is not who you are';
-        $('endPrompt').textContent = 'Next: the last level, coming soon';
+        $('endPrompt').textContent = 'Next: the lotus';
+        $('again').textContent = 'Continue';
         state.ended = true;
         document.exitPointerLock?.();
         $('end').classList.remove('hidden');
         $('fade').style.opacity = '0';
-      }, 900);
+      });
     }
   }
 
@@ -690,12 +718,12 @@ const tick = (now) => {
         seedFly.material.color.copy(state.seedColor);
         seedFrom.copy(L.centre).setY(L.heartY + 1);
         seedFlyAge = 0;
-        setTimeout(() => {
+        later(9, () => {
           state.lotusDone = true;
           // the last level: back out onto the plain, facing the sleepers, to give it all back
           travel(new THREE.Vector3(0, 0, -139), Math.PI);
-          setTimeout(() => finale.start(state.t), 900);
-        }, 9000);
+          later(0.9, () => finale.start(state.t));
+        });
       }
     }
   }
@@ -706,9 +734,12 @@ const tick = (now) => {
     const dS = Math.hypot(player.pos.x - S.doorPos.x, player.pos.z - S.doorPos.z);
     const LD = new THREE.Vector3(0, 0, -144); // just outside the opening in the lotus's petals
     const dL = Math.hypot(player.pos.x - LD.x, player.pos.z - LD.z);
-    if (!inside && !inLotus && state.doorsOpen && dL < 3.6) travel(world.lotusIn.entry, 0);
+    // The three places are entered in order: the forest (body), then the tower, then the lotus.
+    // The lotus leads straight into the ending, which gathers all three seeds, so it must come last;
+    // once its octave is whole it stays shut (its pillar now burns on the plain).
+    if (!inside && !inLotus && state.doorsOpen && state.towerDone && !state.lotusDone && dL < 3.6) travel(world.lotusIn.entry, 0);
     else if (inLotus && world.lotusIn.atExit(player.pos)) travel(new THREE.Vector3(0, 0, -139), Math.PI);
-    else if (!inside && state.doorsOpen && dS < 3.4) travel(world.interior.entry, 0);
+    else if (!inside && !inLotus && state.doorsOpen && state.forestDone && dS < 3.4) travel(world.interior.entry, 0);
     else if (inside && world.interior.atExit(player.pos)) {
       const out = S.doorPos.clone().addScaledVector(S.facing, 4.5);
       travel(out, Math.atan2(-S.facing.x, -S.facing.z));
@@ -719,6 +750,11 @@ const tick = (now) => {
   if (active && moving > 0.2 && Math.floor(player.stride / Math.PI) !== player.lastStep) {
     player.lastStep = Math.floor(player.stride / Math.PI);
     sound.step(0.6 + moving * 0.5);
+    // each of your steps touches the water too
+    if (!inside) {
+      const side = player.lastStep % 2 ? 0.13 : -0.13;
+      (inLotus ? world.lotusIn.waterObj : world.waterObj).drop(player.pos.x + right.x * side + forward.x * 0.25, player.pos.z + right.z * side + forward.z * 0.25, 0.24, 1.2);
+    }
   }
 
   /* inscriptions appear in the lantern's light */
@@ -775,7 +811,7 @@ const tick = (now) => {
         sparkVel.push([(Math.random() - 0.5) * 0.8, 0.8 + Math.random() * 1.8, (Math.random() - 0.5) * 0.8]);
       }
       // a few breaths later the three places wake with her, and she sets off toward the forest
-      setTimeout(() => {
+      later(5, () => {
         world.openDoors();
         state.doorsOpen = true;
         state.doorsAt = state.t;
@@ -784,7 +820,7 @@ const tick = (now) => {
         setTimeout(() => sound.bell(329.6, 0.1, 8), 800);
         const F = world.forest;
         c.goal = F.entrance.clone().addScaledVector(F.across, 3.5);
-      }, 5000);
+      });
     }
   }
   if (c.awake > 0) c.awake = Math.min(1, c.awake + dt * 0.3);
@@ -816,9 +852,9 @@ const tick = (now) => {
       seedFly.material.color.copy(state.seedColor);
       seedFrom.copy(F.doorPos).setY(3.2);
       // an inscription by the hollow, for the one who walked with the breath
-      const side = F.doorPos.clone().addScaledVector(F.across, 5.5).addScaledVector(F.out, 4);
+      const side = F.doorPos.clone().addScaledVector(F.across, 6).addScaledVector(F.out, 8.5);
       world.addStele(side.x, side.z, Math.atan2(F.out.x, F.out.z) - 0.4, ['The body knew the way.', 'It only asked you to be there.'], { symbol: 'tree' });
-      setTimeout(() => {
+      later(7, () => {
         state.forestDone = true;
         // the companion walks on toward the tower's stepping stones
         const S = world.spire;
@@ -826,11 +862,12 @@ const tick = (now) => {
         if (state.free) return;
         $('endTitle').textContent = 'THE ROOT TREE';
         $('endSmall').textContent = 'The body remembers';
-        $('endPrompt').textContent = 'The tower and the lotus: coming soon';
+        $('endPrompt').textContent = 'Next: the tower';
+        $('again').textContent = 'Continue';
         state.ended = true;
         document.exitPointerLock?.();
         $('end').classList.remove('hidden');
-      }, 7000);
+      });
     }
     if (seedFlyAge >= 0) {
       // the tree's seed of green light flies into the lantern
@@ -855,12 +892,31 @@ const tick = (now) => {
     state.lastBeat = t;
     const d = Math.hypot(player.pos.x, player.pos.z + 175);
     sound.thump(Math.min(0.3, 9 / Math.max(15, d)));
+    // and each beat sends a ring out across the water from the foot of the lotus
+    if (d < 75) world.waterObj.ring(0, -175, 29.3, 1.6);
   }
 
   /* update everything */
   world.update(t, dt, camera);
-  world.followShadow(player.pos);
+  // The moon's shadows fall only on things that stand still (stones, towers, trees), so the shadow
+  // map is redrawn every third frame, and its box follows you only then (no lag, no shimmer).
+  if (!state.noRender && shadowTick++ % 3 === 0) {
+    world.followShadow(player.pos);
+    renderer.shadowMap.needsUpdate = true;
+  }
   sleepers.update(t, dt, player.pos);
+  for (const st of sleepers.steps) world.waterObj.drop(st[0], st[1], 0.22, 1);
+  // the far crowd's pictures take the air's light (and the diamond's, in the ending)
+  _crowdCol.copy(world.crowdLight);
+  if (finale.phase >= 3) _crowdCol.r += 0.5 * finale.glow, _crowdCol.g += 0.4 * finale.glow, _crowdCol.b += 0.27 * finale.glow;
+  sleepers.setCrowdLight(_crowdCol);
+  // the lantern's light on the water: a warm pool that moves with you
+  {
+    const k = state.presence * (1 - state.sleep * 0.7) * (0.8 + 0.2 * Math.sin(t * 9.3) * Math.sin(t * 5.1));
+    _lp.set(camera.position.x + forward.x * 0.55 + right.x * 0.3, camera.position.y - 0.42 + state.raise * 0.4, camera.position.z + forward.z * 0.55 + right.z * 0.3);
+    _lampCol.setRGB(0.085 * k, 0.045 * k, 0.016 * k);
+    (inLotus ? world.lotusIn.waterObj : world.waterObj).setLamp(_lp, _lampCol);
+  }
   people?.update(t, dt, sleepers, player.pos);
   lantern.update(t, state.presence * (1 - state.sleep * 0.7), state.raise, player.stride, moving, camera.aspect);
   sound.update(state.breathing, state.sleep);
@@ -925,9 +981,16 @@ const tick = (now) => {
           : `Seven lamps, seven notes. Go to the glowing lamp, ${NOTES[lampN][0]}. (${LT.active} of 7 lit)`;
         target = lp;
       }
-    } else if (state.doorsOpen && Math.hypot(player.pos.x, player.pos.z + 144) < 40 && !state.lotusDone) {
+    } else if (state.lotusDone) {
+      // between the lotus and the first step of the ending
+      goal = '';
+      target = null;
+    } else if (state.doorsOpen && state.towerDone && Math.hypot(player.pos.x, player.pos.z + 144) < 40) {
       goal = 'Walk into the lotus through the opening in its petals.';
       target = new THREE.Vector3(0, 0, -144);
+    } else if (state.doorsOpen && !state.towerDone && Math.hypot(player.pos.x, player.pos.z + 144) < 14) {
+      goal = state.forestDone ? 'The lotus is the last of the three. First the tower.' : 'The lotus is the last of the three. First the forest, then the tower.';
+      target = state.forestDone ? S.doorPos : c.walking > 0.5 ? c.pos : F.entrance;
     } else if (inside) {
       const T = world.interior.trial;
       if (state.towerDone) {
@@ -957,9 +1020,12 @@ const tick = (now) => {
         }
         target = best;
       }
-    } else if (state.doorsOpen && dS < 30) {
+    } else if (state.doorsOpen && state.forestDone && !state.towerDone && dS < 30) {
       goal = 'Walk into the crack of light at the foot of the tower.';
       target = S.doorPos;
+    } else if (state.doorsOpen && !state.forestDone && !F.solved && dS < 14) {
+      goal = 'The tower stays shut for now. First the body: follow your companion to the forest.';
+      target = c.walking > 0.5 ? c.pos : F.entrance;
     } else if (state.towerDone && !state.lotusDone) {
       goal = 'Your companion walks on, toward the lotus. Follow.';
       target = c.pos;
@@ -1044,7 +1110,7 @@ const tick = (now) => {
         $('fade').style.background = '#fff4dc';
         $('fade').style.transition = 'opacity 3s';
         $('fade').style.opacity = '1';
-        setTimeout(() => {
+        later(3.2, () => {
           $('endTitle').textContent = 'THE FOURTH WAY';
           $('endSmall').innerHTML = FINAL_LINE;
           $('endPrompt').innerHTML = CREDITS;
@@ -1054,7 +1120,7 @@ const tick = (now) => {
           state.ended = true;
           document.exitPointerLock?.();
           $('end').classList.remove('hidden');
-        }, 3200);
+        });
       }
     }
     // the chord is struck again quietly while the diamond hangs there
@@ -1101,9 +1167,104 @@ const tick = (now) => {
     sound.tone((NOTES[Math.max(0, Math.min(7, LT.done ? 7 : n - 1))][1] / 2) * (1 - 0.06 * LT.lean), on ? (LT.done ? 0.05 : 0.03) : 0);
   }
   if (world.cutscene.active) post.dof.uniforms.focus.value = camera.position.distanceTo(world.cutscene.centre) - 0.2;
-  post.composer.render(dt);
-  requestAnimationFrame(tick);
+  if (!state.noRender) post.composer.render(dt);
 };
+/*
+ * Resolution that follows the machine: if frames take too long the picture is drawn a little
+ * smaller (and scaled up); when there is time to spare it grows back, cautiously. Off under ?debug
+ * (test shots must not change size) unless &dr is given.
+ */
+const DR = { on: !DEBUG || new URLSearchParams(location.search).has('dr'), max: renderer.getPixelRatio(), min: 0.7, ema: 16, lastReal: 0, checkAt: 0, holdUntil: 0, good: 0 };
+const adapt = (now) => {
+  const real = now - DR.lastReal;
+  DR.lastReal = now;
+  if (!DR.on || document.hidden || real > 250 || real <= 0 || !state.started) return;
+  DR.ema += (real - DR.ema) * 0.06;
+  if (now < DR.checkAt) return;
+  DR.checkAt = now + 1500;
+  const pr = renderer.getPixelRatio();
+  let next = pr;
+  if (DR.ema > 23 && pr > DR.min) {
+    next = Math.max(DR.min, pr - 0.15);
+    DR.holdUntil = now + 30000; // don't try growing again for a while
+    DR.good = 0;
+  } else if (DR.ema < 17.6 && pr < DR.max && now > DR.holdUntil) {
+    if (++DR.good >= 8) {
+      next = Math.min(DR.max, pr + 0.15);
+      DR.good = 0;
+    }
+  } else DR.good = 0;
+  if (next !== pr) {
+    renderer.setPixelRatio(next);
+    post.resize();
+    DR.ema = 16;
+  }
+};
+const frame = (now) => {
+  adapt(now);
+  tick(now);
+  requestAnimationFrame(frame);
+};
+
+/*
+ * Starting at a later chapter (the prototype's start menu, and the test jumps): everything before it
+ * counts as done. The stones are read, the companion is awake and waiting at that chapter's door, and
+ * the lantern carries the seeds already won.
+ */
+const LEVELS = ['plain', 'forest', 'tower', 'lotus', 'ending'];
+function jumpTo(level) {
+  const n = LEVELS.indexOf(level);
+  if (n <= 0) return;
+  const c = sleepers.companion;
+  const F = world.forest, S = world.spire;
+  for (const s of world.steles) if (s.required) (s.read = true), (s.progress = 1);
+  state.gems = gemsNeeded();
+  drawGems(false);
+  c.awake = c.waking = 1;
+  world.openDoors();
+  state.doorsOpen = true;
+  state.doorsAt = state.t;
+  const stand = (p, toward) => {
+    player.pos.set(p.x, 0, p.z);
+    player.vel.set(0, 0, 0);
+    player.yaw = Math.atan2(-(toward.x - p.x), -(toward.z - p.z));
+    player.pitch = 0.04;
+  };
+  if (n === 1) {
+    c.free = F.entrance.clone().addScaledVector(F.across, 3.5);
+    stand(F.entrance.clone().addScaledVector(F.out, 10), F.pos);
+  }
+  if (n >= 2) {
+    F.wake();
+    state.passed = [true, true, true, true];
+    state.forestDone = true;
+    lantern.addSeed(new THREE.Color(0.4, 2.2, 1.3)); // the body's seed, green
+  }
+  if (n === 2) {
+    c.free = S.doorPos.clone().addScaledVector(S.facing, 22).addScaledVector(new THREE.Vector3(S.facing.z, 0, -S.facing.x), -3);
+    stand(S.doorPos.clone().addScaledVector(S.facing, 34), S.doorPos);
+  }
+  if (n >= 3) {
+    state.towerDone = true;
+    lantern.addSeed(new THREE.Color(0.6, 1.0, 2.4)); // the tower's seed, blue
+    c.free = new THREE.Vector3(-4, 0, -138);
+  }
+  if (n === 3) stand(new THREE.Vector3(0, 0, -92), new THREE.Vector3(0, 0, -175));
+  if (n === 4) {
+    state.lotusDone = true;
+    lantern.addSeed(new THREE.Color(2.4, 0.6, 0.45)); // the heart's seed, red
+    stand(new THREE.Vector3(0, 0, -139), new THREE.Vector3(0, 0, 0));
+    finale.start(state.t);
+  }
+}
+for (const b of document.querySelectorAll('#levels button')) {
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    jumpTo(b.dataset.level);
+    lock();
+    begin();
+  });
+}
 
 if (DEBUG) {
   begin();
@@ -1122,10 +1283,14 @@ if (DEBUG) {
     finale,
     camera,
     // testing: advance the game by n frames even when the page is hidden (requestAnimationFrame pauses then)
-    step(n = 1) {
+    step(n = 1, render = true) {
       let now = last;
+      state.noRender = world.noRender = !render;
+      if (render) shadowTick = 0; // a test shot always has fresh shadows
       for (let i = 0; i < n; i++) tick((now += 1000 / 60));
+      state.noRender = world.noRender = false;
     },
+    later,
     tp(x, z, yaw = player.yaw, pitch = player.pitch) {
       player.pos.set(x, 0, z);
       player.vel.set(0, 0, 0);
@@ -1133,38 +1298,26 @@ if (DEBUG) {
       player.pitch = pitch;
     },
   };
-  // testing only: ?debug&at=lotus starts inside the lotus with the earlier levels done
+  // testing only: ?debug&at=forest|tower|lotus|finale starts there with the earlier levels done
   const at = new URLSearchParams(location.search).get('at');
-  if (at === 'lotus' || at === 'finale') {
-    for (const s of world.steles) if (s.required) s.read = true;
-    state.gems = gemsNeeded();
-    drawGems(false);
-    world.openDoors();
-    state.doorsOpen = state.forestDone = state.towerDone = true;
-    lantern.addSeed(new THREE.Color(0.5, 2.2, 1.4));
-    lantern.addSeed(new THREE.Color(0.6, 1.0, 2.4));
-    if (at === 'lotus') {
-      player.pos.copy(world.lotusIn.entry);
+  if (at === 'forest' || at === 'tower') jumpTo(at);
+  if (at === 'lotus') {
+    jumpTo('lotus');
+    // straight inside; &lit=3 starts at the drift, &lit=7 at the silence
+    player.pos.copy(world.lotusIn.entry);
+    player.yaw = 0;
+    const lit = +new URLSearchParams(location.search).get('lit');
+    if (lit) world.lotusIn.debugLight(lit, state.t);
+  }
+  if (at === 'finale') {
+    // ?debug&at=finale[&phase=2..5]: the lotus done, the finale begun
+    jumpTo('ending');
+    const ph = +new URLSearchParams(location.search).get('phase');
+    if (ph >= 2) {
+      player.pos.set(0, 0, 4);
       player.yaw = 0;
-      // &lit=3 starts at the drift, &lit=7 at the silence
-      const lit = +new URLSearchParams(location.search).get('lit');
-      if (lit) world.lotusIn.debugLight(lit, state.t);
-    }
-    if (at === 'finale') {
-      // ?debug&at=finale[&phase=2..5]: the lotus done, the finale begun
-      state.lotusDone = true;
-      lantern.addSeed(new THREE.Color(2.4, 0.6, 0.45));
-      sleepers.companion.awake = 1;
-      player.pos.set(0, 0, -139);
-      player.yaw = Math.PI;
-      finale.start(state.t);
-      const ph = +new URLSearchParams(location.search).get('phase');
-      if (ph >= 2) {
-        player.pos.set(0, 0, 4);
-        player.yaw = 0;
-        finale.skipTo(ph, state.t);
-      }
+      finale.skipTo(ph, state.t);
     }
   }
 }
-requestAnimationFrame(tick);
+requestAnimationFrame(frame);

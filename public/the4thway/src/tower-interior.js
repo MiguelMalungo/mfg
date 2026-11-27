@@ -77,32 +77,46 @@ const cobbles = () =>
     g.fillRect(0, 0, W, H);
     let y = 0;
     while (y < H) {
-      const rh = 46 + r() * 34;
+      const rh = 70 + r() * 50;
       let x = -r() * 60;
       while (x < W + 60) {
-        const w = 50 + r() * 70;
+        const w = 90 + r() * 110;
         const v = 85 + r() * 85;
         const cx = x + w / 2, cy = y + rh / 2;
-        // an irregular rounded polygon
-        const n = 7 + Math.floor(r() * 4);
-        const pts = [];
-        for (let k = 0; k < n; k++) {
-          const a = (k / n) * Math.PI * 2 + r() * 0.3;
-          const rr = 0.82 + r() * 0.18;
-          pts.push([cx + Math.cos(a) * (w / 2 - 4) * rr, cy + Math.sin(a) * (rh / 2 - 4) * rr]);
-        }
-        const grad = g.createRadialGradient(cx - w * 0.12, cy - rh * 0.15, 3, cx, cy, Math.max(w, rh) * 0.6);
-        grad.addColorStop(0, `rgb(${v + 34},${v + 30},${v + 24})`);
-        grad.addColorStop(1, `rgb(${v - 34},${v - 36},${v - 38})`);
+        // a worn flagstone: four corners, each a little off true, its edges rounded by centuries of feet
+        const j = () => (r() - 0.5) * 9;
+        const pts = [
+          [x + 4 + j(), y + 4 + j()],
+          [x + w - 4 + j(), y + 4 + j()],
+          [x + w - 4 + j(), y + rh - 4 + j()],
+          [x + 4 + j(), y + rh - 4 + j()],
+        ];
+        const n = 4;
+        const grad = g.createLinearGradient(x, y, x + w * (0.4 + r() * 0.6), y + rh);
+        grad.addColorStop(0, `rgb(${v + 16},${v + 14},${v + 10})`);
+        grad.addColorStop(1, `rgb(${v - 16},${v - 17},${v - 18})`);
         g.fillStyle = grad;
         g.beginPath();
+        // corners cut by a short curve
         pts.forEach(([px, py], k) => {
           const [qx, qy] = pts[(k + 1) % n];
-          if (k === 0) g.moveTo((px + qx) / 2, (py + qy) / 2);
-          else g.quadraticCurveTo(px, py, (px + qx) / 2, (py + qy) / 2);
+          const [ox, oy] = pts[(k + n - 1) % n];
+          const ax = px + (ox - px) * 0.12, ay = py + (oy - py) * 0.12;
+          const bx = px + (qx - px) * 0.12, by = py + (qy - py) * 0.12;
+          if (k === 0) g.moveTo(ax, ay);
+          else g.lineTo(ax, ay);
+          g.quadraticCurveTo(px, py, bx, by);
         });
-        g.quadraticCurveTo(pts[0][0], pts[0][1], (pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2);
+        g.closePath();
         g.fill();
+        // chips and a worn hollow in the middle of some
+        if (r() > 0.5) {
+          const hg = g.createRadialGradient(cx, cy, 2, cx, cy, Math.min(w, rh) * 0.45);
+          hg.addColorStop(0, 'rgba(0,0,0,0.16)');
+          hg.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = hg;
+          g.fillRect(x, y, w, rh);
+        }
         x += w + r() * 6;
       }
       y += rh + r() * 4;
@@ -116,43 +130,107 @@ const cobbles = () =>
     }
   });
 
-/** A pale mask: an oval face with empty eyes, a nose ridge and closed lips (alpha cut-out). */
+/**
+ * A mask of pale porcelain. The face itself is sculpted (maskGeometry); this map only gives it its
+ * outline and the two empty eyes (cut out), the shadow that gathers in its hollows, and the fine
+ * crazing of old glaze.
+ */
 const maskCanvas = () =>
-  canvas(256, 320, (g, W, H) => {
-    const grad = g.createRadialGradient(W / 2, H * 0.42, 10, W / 2, H / 2, W * 0.62);
-    grad.addColorStop(0, '#f2ece2');
-    grad.addColorStop(1, '#a9a49b');
+  canvas(512, 640, (g, W, H) => {
+    const r = rng(404);
+    g.clearRect(0, 0, W, H);
+    const grad = g.createRadialGradient(W / 2, H * 0.4, 20, W / 2, H / 2, W * 0.62);
+    grad.addColorStop(0, '#f4efe6');
+    grad.addColorStop(0.7, '#e6dfd3');
+    grad.addColorStop(1, '#c9c1b4');
     g.fillStyle = grad;
     g.beginPath();
-    g.ellipse(W / 2, H / 2, W * 0.46, H * 0.47, 0, 0, Math.PI * 2);
+    g.ellipse(W / 2, H / 2, W * 0.47, H * 0.48, 0, 0, Math.PI * 2);
     g.fill();
-    // a calm, closed face: brow ridges, almond eyes in shadow, a long nose, closed lips
-    g.fillStyle = 'rgba(80,74,66,0.28)';
-    g.beginPath();
-    g.ellipse(W / 2, H * 0.56, W * 0.05, H * 0.12, 0, 0, Math.PI * 2);
-    g.fill();
-    for (const x of [0.33, 0.67]) {
-      const sh = g.createRadialGradient(W * x, H * 0.43, 2, W * x, H * 0.43, W * 0.14);
-      sh.addColorStop(0, 'rgba(40,36,32,0.95)');
-      sh.addColorStop(0.45, 'rgba(60,55,50,0.6)');
-      sh.addColorStop(1, 'rgba(60,55,50,0)');
+    // shadow in the hollows: round the eyes, beside the nose, under the lip
+    const shade = (x, y, rx, ry, a) => {
+      const sh = g.createRadialGradient(x, y, 1, x, y, Math.max(rx, ry));
+      sh.addColorStop(0, `rgba(58,50,42,${a})`);
+      sh.addColorStop(1, 'rgba(58,50,42,0)');
       g.fillStyle = sh;
+      g.save();
+      g.translate(x, y);
+      g.scale(rx / Math.max(rx, ry), ry / Math.max(rx, ry));
+      g.translate(-x, -y);
       g.beginPath();
-      g.ellipse(W * x, H * 0.43, W * 0.13, H * 0.06, x < 0.5 ? 0.15 : -0.15, 0, Math.PI * 2);
+      g.arc(x, y, Math.max(rx, ry), 0, Math.PI * 2);
       g.fill();
-      g.strokeStyle = 'rgba(70,64,58,0.55)';
-      g.lineWidth = 4;
+      g.restore();
+    };
+    for (const sx of [-1, 1]) {
+      shade(W / 2 + sx * W * 0.19, H * 0.435, W * 0.17, H * 0.075, 0.55);
+      shade(W / 2 + sx * W * 0.075, H * 0.56, W * 0.05, H * 0.1, 0.3);
+    }
+    shade(W / 2, H * 0.745, W * 0.16, H * 0.03, 0.3);
+    // crazing: hairline cracks in the glaze
+    g.strokeStyle = 'rgba(70,62,52,0.22)';
+    for (let k = 0; k < 26; k++) {
+      let x = r() * W, y = r() * H;
+      g.lineWidth = 0.6 + r() * 0.8;
       g.beginPath();
-      g.arc(W * x, H * 0.45, W * 0.12, Math.PI * 1.15, Math.PI * 1.85);
+      g.moveTo(x, y);
+      for (let n = 0; n < 7; n++) {
+        x += (r() - 0.5) * 60;
+        y += (r() - 0.5) * 60;
+        g.lineTo(x, y);
+      }
       g.stroke();
     }
-    g.strokeStyle = 'rgba(60,55,50,0.7)';
-    g.lineWidth = 5;
-    g.beginPath();
-    g.moveTo(W * 0.4, H * 0.75);
-    g.quadraticCurveTo(W / 2, H * 0.78, W * 0.6, H * 0.75);
-    g.stroke();
+    // the eyes: empty, almond-shaped (cut right through)
+    g.globalCompositeOperation = 'destination-out';
+    for (const sx of [-1, 1]) {
+      g.save();
+      g.translate(W / 2 + sx * W * 0.19, H * 0.435);
+      g.rotate(sx * -0.1);
+      g.beginPath();
+      g.moveTo(-W * 0.085, 0);
+      g.quadraticCurveTo(0, -H * 0.04, W * 0.085, 0);
+      g.quadraticCurveTo(0, H * 0.03, -W * 0.085, 0);
+      g.fill();
+      g.restore();
+    }
+    g.globalCompositeOperation = 'source-over';
   });
+
+/**
+ * The mask's form: a shallow oval shell with a brow, a long nose, eye hollows, cheekbones, closed lips
+ * and a chin, so light models it as a face. Faces +z; about 0.48 m wide and 0.64 m tall.
+ */
+const maskGeometry = () => {
+  const W = 0.24, H = 0.32, D = 0.115;
+  const geo = new THREE.PlaneGeometry(2, 2, 40, 52);
+  const pp = geo.attributes.position;
+  const bump = (u, v, cu, cv, su, sv) => Math.exp(-(((u - cu) / su) ** 2 + ((v - cv) / sv) ** 2));
+  for (let i = 0; i < pp.count; i++) {
+    const u = pp.getX(i), v = pp.getY(i);
+    const au = Math.abs(u);
+    const r2 = Math.min(1, u * u + v * v);
+    let z = D * Math.pow(1 - r2, 0.55);
+    // brow ridge, lighter over the nose
+    z += 0.016 * Math.exp(-(((v - 0.3) / 0.075) ** 2)) * Math.max(0, 1 - au * 1.15) * (1 - 0.4 * Math.exp(-((u / 0.12) ** 2)));
+    // the nose: a ridge from between the brows, widening to a rounded tip
+    const along = smooth01((0.34 - v) / 0.2) * smooth01((v + 0.33) / 0.14);
+    z += 0.034 * Math.exp(-((u / (0.085 + 0.05 * smooth01((0.1 - v) / 0.4))) ** 2)) * along * (0.55 + 0.45 * smooth01((0.2 - v) / 0.45));
+    z += 0.02 * bump(u, v, 0, -0.2, 0.13, 0.085);
+    // eye hollows, cheekbones
+    z -= 0.03 * bump(au, v, 0.39, 0.13, 0.21, 0.1);
+    z += 0.012 * bump(au, v, 0.5, -0.14, 0.25, 0.17);
+    // lips (closed, with the faint line between them) and chin
+    z += 0.013 * bump(u, v, 0, -0.455, 0.2, 0.05) + 0.01 * bump(u, v, 0, -0.535, 0.17, 0.04);
+    z -= 0.008 * bump(u, v, 0, -0.495, 0.21, 0.014);
+    z += 0.012 * bump(u, v, 0, -0.74, 0.25, 0.12);
+    // the chin is narrower than the brow
+    const taper = 1 - 0.16 * Math.max(0, -v) + 0.03 * Math.max(0, v);
+    pp.setXYZ(i, u * W * taper, v * H, z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+};
 
 /* ───── geometry helpers ───── */
 
@@ -461,9 +539,10 @@ export const buildInterior = ({ scene, glowTex }) => {
   const NM = 72;
   const maskTex = new THREE.CanvasTexture(maskCanvas());
   maskTex.colorSpace = THREE.SRGBColorSpace;
-  const maskGeo = new THREE.SphereGeometry(1, 24, 16, 0, Math.PI); // the front half (facing +z)
-  maskGeo.scale(0.24, 0.32, 0.13);
-  const masks = new THREE.InstancedMesh(maskGeo, new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.55, color: 0xf0e8dc, emissive: 0x8a8378, emissiveMap: maskTex }), NM);
+  maskTex.anisotropy = 8;
+  const maskGeo = maskGeometry(); // a sculpted face (facing +z)
+  // glazed porcelain: it takes the firelight on one cheek and the window's cold light on the other
+  const masks = new THREE.InstancedMesh(maskGeo, new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.3, color: 0xf0e8dc, emissive: 0x38342f, emissiveMap: maskTex }), NM);
   masks.castShadow = true;
   masks.frustumCulled = false; // they move far from where they started
   add(masks);
@@ -488,7 +567,7 @@ export const buildInterior = ({ scene, glowTex }) => {
   ];
   const special = SPEAKING.map(([label, line], i) => {
     const m = new THREE.Group();
-    const face = new THREE.Mesh(maskGeo, new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.5, color: 0xf6efe4, emissive: 0x9a9286, emissiveMap: maskTex, transparent: true }));
+    const face = new THREE.Mesh(maskGeo, new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.28, color: 0xf6efe4, emissive: 0x4a453e, emissiveMap: maskTex, transparent: true }));
     face.scale.setScalar(1.25);
     m.add(face);
     // a faint gold seam marks the masks that speak, once you know to look
@@ -506,7 +585,7 @@ export const buildInterior = ({ scene, glowTex }) => {
   const trial = { count: 0, settle: 0, fall: 0, mirror: 0, mirrorHold: 0, done: false, aimed: null };
   // the last mask: when the social masks have fallen, one more rises on the dais, grows, and turns to light.
   // The player walks through it (main.js drives that walk).
-  const lastMat = new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.5, color: 0xf6efe4, emissive: 0xffffff, emissiveMap: maskTex, emissiveIntensity: 0 });
+  const lastMat = new THREE.MeshStandardMaterial({ map: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.3, color: 0xf6efe4, emissive: 0xffffff, emissiveMap: maskTex, emissiveIntensity: 0 });
   const lastMask = new THREE.Mesh(maskGeo, lastMat);
   lastMask.visible = false;
   add(lastMask);
@@ -628,20 +707,24 @@ export const buildInterior = ({ scene, glowTex }) => {
       fireMat.uniforms.time.value = t;
       // the speaking masks: drifting like the rest; found, they stop and turn to you; faced, they fall away in light
       special.forEach((S, i) => {
-        const a = S.a + t * S.speed * (1 - S.found);
+        // its place on the circle is carried forward step by step, so a mask caught in the light
+        // stops where it is (computing it from the clock made it leap away the moment it was found)
+        S.a += S.speed * (1 - S.found) * dt;
+        const a = S.a;
         const x = FIRE.x + Math.cos(a) * S.rad, z = FIRE.z + Math.sin(a) * S.rad;
         if (!S.faced) S.m.position.set(x, S.y + Math.sin(t * 0.4 + i) * 0.3, z);
-        else {
+        else if (S.m.visible) {
           S.gone = Math.min(1, S.gone + dt * 0.5);
           S.m.position.y -= dt * (0.2 + S.gone * 2);
           S.m.rotation.x += dt * 1.5;
+          if (S.gone >= 1) S.m.visible = false; // fallen away and faded: nothing left to draw
         }
         if (!S.faced) S.m.lookAt(playerPos.x, S.m.position.y + INTERIOR.y, playerPos.z);
         if (!S.faced && S.found < 0.05) S.m.rotation.y += Math.sin(t * 0.3 + i) * 0.6;
         S.textMat.opacity = S.faced ? Math.max(0, 1 - S.gone * 3) : S.found;
         S.seam.material.opacity = S.faced ? Math.max(0, 0.9 - S.gone) : 0.25 + S.found * 0.6 + S.hold * 0.25;
         S.face.material.opacity = 1 - S.gone;
-        S.face.material.emissive.setRGB(0.6 + S.hold * 0.25, 0.57 + S.hold * 0.2, 0.52 + S.hold * 0.1);
+        S.face.material.emissive.setRGB(0.08 + S.found * 0.1 + S.hold * 0.2, 0.075 + S.found * 0.09 + S.hold * 0.17, 0.065 + S.found * 0.07 + S.hold * 0.1);
       });
       const st = trial.settle;
       flames.forEach((f) => (f.visible = st < 0.95));

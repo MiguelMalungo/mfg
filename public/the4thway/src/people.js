@@ -11,7 +11,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
  * - A grey aura (cool rim light plus a soft haze) marks them as asleep; it turns gold and fades on waking.
  */
 
-const NEAR = 20; // scanned figures shown at once
+const NEAR = 14; // scanned figures shown at once (beyond them the crowd is drawn as pictures: see bakeImpostors)
 const SWAP_EVERY = 0.4; // seconds between re-picking the nearest sleepers
 const WALK_SPEED = 1.26; // metres per second the source walk clip covers at timeScale 1
 const AURA = new THREE.Color(0.62, 0.68, 0.78);
@@ -306,7 +306,11 @@ const robeMaterial = (u) => {
   return m;
 };
 
-export const loadPeople = async (scene, glowTex) => {
+/* The far crowd: flat pictures of the scanned people, baked once at load (see bakeImpostors). */
+const IMP = { ANG: 8, PH: 12, VAR: 2, CW: 72, CH: 152, W: 1.14, H: 2.0 };
+IMP.ROWS = IMP.PH * 2 + 1;
+
+export const loadPeople = async (scene, glowTex, renderer = null, crowd = null) => {
   const [nathanFBX, sophiaFBX] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx')]);
   const walkNathan = inPlace(nathanFBX.animations[0], 1);
   const walkSophia = inPlace(nathanFBX.animations[0], 84.2 / 94.6); // Sophia's hips are lower
@@ -315,7 +319,11 @@ export const loadPeople = async (scene, glowTex) => {
   const maps = {};
   for (const n of ['nathan', 'sophia']) {
     const base = { norm: tex(`./assets/people/${n}/norm.jpg`), rough: tex(`./assets/people/${n}/rough.jpg`) };
-    maps[n] = { ...base, dif: tex(`./assets/people/${n}/dif.jpg`, true) };
+    // the young faces are waited for: the far crowd's pictures are baked from them at load
+    const dif = await texLoader.loadAsync(`./assets/people/${n}/dif.jpg`);
+    dif.colorSpace = THREE.SRGBColorSpace;
+    dif.anisotropy = 4;
+    maps[n] = { ...base, dif };
     maps[`${n}_old`] = { ...base, dif: tex(`./assets/people/${n}/dif_old.jpg`, true) };
   }
   const variants = [
@@ -336,7 +344,9 @@ export const loadPeople = async (scene, glowTex) => {
       if (o.isSkinnedMesh) {
         mesh = o;
         o.frustumCulled = false;
-        o.castShadow = true;
+        // no moon shadow from the walkers: on the open water there is nothing for it to fall on,
+        // and skinning every body a second time for the shadow map was a fifth of the frame
+        o.castShadow = false;
         o.receiveShadow = true;
       }
     });
@@ -422,6 +432,85 @@ export const loadPeople = async (scene, glowTex) => {
     halo.material.color.copy(u.auraColor.value);
     halo.material.opacity = 0.11 * u.aura.value;
   };
+
+  /*
+   * The far crowd. Beyond the nearest twenty, each sleeper is a flat picture of a scanned person that
+   * turns to face the camera: for each of the two bodies, 8 directions × (12 steps of the bowed
+   * sleepwalk + 12 steps of the upright, awake walk + 1 standing, looking up), drawn once here into
+   * one atlas. sleepers.js draws all of them in a single call and picks the picture per sleeper.
+   */
+  const bakeImpostors = () => {
+    const { ANG, PH, VAR, CW, CH, W, H, ROWS } = IMP;
+    const rt = new THREE.WebGLRenderTarget(ANG * VAR * CW, ROWS * CH, { generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+    const bscene = new THREE.Scene();
+    bscene.add(new THREE.HemisphereLight(0xffffff, 0x9aa0aa, 2.4));
+    const cam = new THREE.OrthographicCamera(-W / 2, W / 2, H / 2, -H / 2, 0.1, 20);
+    // a soft key from over the viewer's shoulder, so the body reads as a form from every side
+    const key = new THREE.DirectionalLight(0xffffff, 1.5);
+    key.position.set(-0.6, 0.7, 1);
+    cam.add(key, key.target);
+    key.target.position.set(0, 0, -1);
+    bscene.add(cam);
+    const save = { target: renderer.getRenderTarget(), viewport: renderer.getViewport(new THREE.Vector4()), scissor: renderer.getScissor(new THREE.Vector4()), scissorTest: renderer.getScissorTest(), clear: renderer.getClearColor(new THREE.Color()), alpha: renderer.getClearAlpha() };
+    renderer.setRenderTarget(rt);
+    renderer.setClearColor(0x000000, 0);
+    renderer.setScissorTest(false);
+    renderer.clear();
+    renderer.setScissorTest(true);
+    const fa = new THREE.Vector3(), fb = new THREE.Vector3();
+    for (let v = 0; v < VAR; v++) {
+      const fig = makeFigure(variants[v]);
+      scene.remove(fig.halo);
+      bscene.add(fig.obj);
+      const dur = fig.walk.getClip().duration;
+      const u = fig.mat.userData.u;
+      // standing: the moment of the walk when the feet are closest together (Nathan has no idle of his own)
+      let standAt = 0, best = 1e9;
+      for (let k = 0; k < 24; k++) {
+        fig.walk.time = (k / 24) * dur;
+        place(fig, { x: 0, y: 0, z: 0, face: 0, awake: 1, speed: WALK_SPEED, walking: 1, lookUp: 0 }, 0, 0);
+        const d = Math.abs(fig.bones.foot_l.getWorldPosition(fa).z - fig.bones.foot_r.getWorldPosition(fb).z);
+        if (d < best) {
+          best = d;
+          standAt = fig.walk.time;
+        }
+      }
+      for (let r = 0; r < ROWS; r++) {
+        const asleep = r < PH;
+        const standing = r === PH * 2;
+        fig.walk.time = standing ? standAt : ((r % PH) / PH) * dur;
+        place(fig, { x: 0, y: 0, z: 0, face: 0, awake: asleep ? 0 : 1, speed: WALK_SPEED, walking: standing ? (fig.idle ? 0 : 1) : 1, lookUp: standing ? 0.7 : 0 }, 0, 0);
+        fig.halo.visible = false;
+        u.footY.value = -100; // whole to the soles: the water's own reflection and rings meet them
+        u.aura.value = asleep ? 0.45 : 0.12;
+        u.auraColor.value.copy(AURA);
+        for (let k = 0; k < ANG; k++) {
+          const a = (k / ANG) * Math.PI * 2;
+          cam.position.set(Math.sin(a) * 6, H / 2, Math.cos(a) * 6);
+          cam.lookAt(0, H / 2, 0);
+          cam.updateMatrixWorld(true);
+          renderer.setViewport((v * ANG + k) * CW, r * CH, CW, CH);
+          renderer.setScissor((v * ANG + k) * CW, r * CH, CW, CH);
+          renderer.render(bscene, cam);
+        }
+      }
+      bscene.remove(fig.obj);
+      fig.mat.dispose();
+    }
+    renderer.setRenderTarget(save.target);
+    renderer.setViewport(save.viewport);
+    renderer.setScissor(save.scissor);
+    renderer.setScissorTest(save.scissorTest);
+    renderer.setClearColor(save.clear, save.alpha);
+    return { texture: rt.texture, ...IMP };
+  };
+  if (renderer && crowd?.useImpostors) {
+    try {
+      crowd.useImpostors(bakeImpostors());
+    } catch (e) {
+      console.warn('far crowd pictures unavailable, keeping the simple figures', e);
+    }
+  }
 
   /*
    * The player's hand: Sophia's scanned right forearm and hand, closed in a fist around the lantern's ring.
@@ -517,6 +606,8 @@ export const loadPeople = async (scene, glowTex) => {
         .replace(
           '#include <map_fragment>',
           `#include <map_fragment>
+          // skin by lantern and firelight: keep it flesh, not red (the scan's own colour is strong)
+          diffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), diffuseColor.rgb, 0.62) * vec3(0.94, 1.0, 1.04);
           // a heavy dark wool sleeve in herringbone, as in the key art: soft folds, a woven pattern up close
           float fold = 0.5 + 0.5 * sin(vObj.x * 0.6 + sin(vObj.y * 0.3 + vObj.z * 0.2) * 2.0);
           vec2 wv = vec2(vObj.x + vObj.z * 0.6, vObj.y) * 5.0;
@@ -534,7 +625,7 @@ export const loadPeople = async (scene, glowTex) => {
           #include <opaque_fragment>`,
         );
     };
-    mat.customProgramCacheKey = () => 'hand-v5';
+    mat.customProgramCacheKey = () => 'hand-v6';
     mesh.material = mat;
     mesh.frustumCulled = false;
     mesh.castShadow = mesh.receiveShadow = false;

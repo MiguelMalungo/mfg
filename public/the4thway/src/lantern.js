@@ -259,6 +259,13 @@ export const buildLantern = (glowTex) => {
   const ELBOW_HIGH = new THREE.Vector3(1.0, -1.25, 0.8);
   const elbow = new THREE.Vector3();
   let lastRaise = -1;
+  // the modelled arm (arm.js): built for one direction of the forearm; raising the lantern swings it
+  // about the grip so the elbow drops and the sleeve still runs off the lower right of the frame
+  let arm = null;
+  const armRest = new THREE.Vector3();
+  const ARM_RAISED = new THREE.Vector3(0.52, -0.74, 0.43).normalize();
+  const _aq = new THREE.Quaternion();
+  const _av = new THREE.Vector3();
   // seeds of light gathered from the three centers: small motes that circle the flame
   const seeds = [];
   return {
@@ -274,6 +281,12 @@ export const buildLantern = (glowTex) => {
     removeSeed() {
       const sp = seeds.shift();
       if (sp) group.remove(sp);
+    },
+    /** The modelled arm (arm.js): its meshes are already in this group's space. restDir: the way its forearm runs. */
+    attachArm(root, restDir) {
+      arm = root;
+      armRest.copy(restDir).normalize();
+      group.add(root);
     },
     /** Puts the player's hand (from people.js) on the ring. */
     attachHand(h) {
@@ -301,6 +314,11 @@ export const buildLantern = (glowTex) => {
       group.rotation.set(0.06 - raise * 0.12, -0.3, Math.sin(stride) * 0.05 * moving + Math.sin(t * 1.3) * 0.015);
       flame.scale.set(1, 0.85 + 0.25 * flick, 1).multiplyScalar(0.55 + 0.45 * p);
       flameMat.uniforms.time.value = t;
+      if (arm) {
+        _aq.setFromUnitVectors(armRest, _av.copy(armRest).lerp(ARM_RAISED, raise).normalize());
+        arm.quaternion.copy(_aq);
+        arm.position.copy(GRIP).sub(_av.copy(GRIP).applyQuaternion(_aq));
+      }
       if (hand && Math.abs(raise - lastRaise) > 0.002) {
         lastRaise = raise;
         hand.place(GRIP, elbow.copy(ELBOW_LOW).lerp(ELBOW_HIGH, raise));

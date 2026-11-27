@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { Water } from 'three/addons/objects/Water.js';
+import { createWater } from './water.js';
+import { applyStone } from './stone.js';
 import { fbm, noise2, smoothstep, rng, tileNormalMap, moonTexture, glowTexture, textTexture, rockTexture, attentionDiagram, stoneSymbol } from './textures.js';
 import { buildSpire, buildLotus, buildTree, buildLotusAvenue } from './monuments.js';
 import { buildInterior, buildCutscene } from './tower-interior.js';
@@ -93,10 +94,21 @@ const SKY_FRAG = /* glsl */ `
     vec3 cloud = mix(lit, shade, smoothstep(0.35, 0.95, c) * (1.0 - pow(md, 6.0) * 0.6));
     col = mix(col, cloud, (0.55 + 0.45 * c) * fade);
 
-    // a few stars in the thinnest gaps
-    vec3 cell = floor(d * 260.0);
-    float s = hash3(cell);
-    float star = smoothstep(0.9975, 1.0, s) * (0.6 + 0.4 * sin(time * 2.0 + s * 90.0));
+    // a few stars in the thinnest gaps: round points of several sizes, the brightest ones twinkling
+    float star = 0.0;
+    float s = 0.0;
+    for (int k = 0; k < 2; k++) {
+      vec3 sp = d * (k == 0 ? 150.0 : 310.0);
+      vec3 cell = floor(sp);
+      float h = hash3(cell + float(k) * 17.0);
+      vec3 jit = vec3(hash3(cell + 1.7), hash3(cell + 5.3), hash3(cell + 9.1)) - 0.5;
+      float dd = length(fract(sp) - 0.5 - jit * 0.5);
+      float keep = step(k == 0 ? 0.985 : 0.988, h);
+      float mag = fract(h * 37.0);
+      float size = (k == 0 ? 0.2 : 0.27) * (0.45 + 0.75 * mag);
+      star += keep * smoothstep(size, size * 0.25, dd) * (0.35 + 0.65 * mag) * (k == 0 ? 0.75 + 0.25 * sin(time * (1.5 + mag * 2.5) + h * 90.0) : 0.55);
+      s = max(s, h);
+    }
     col += vec3(0.8, 0.85, 1.0) * star * smoothstep(0.1, 0.4, d.y) * mix(1.0 - smoothstep(0.2, 0.5, c), 1.0, clamp(stars - 1.0, 0.0, 1.0) * 0.7) * 0.5 * stars;
 
     // the moon's corona in the haze: tight and bright, then a wide soft veil
@@ -129,11 +141,14 @@ const SKY_FRAG = /* glsl */ `
     gl_FragColor = vec4(col, 1.0);
   }`;
 
-const stoneMaterial = (normalMap, color = 0x3b4049, repeat = 1) => {
+const stoneMaterial = (normalMap, color = 0x3b4049, repeat = 1, stone = {}) => {
   const n = normalMap.clone();
   n.repeat.set(repeat, repeat);
   n.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.82, metalness: 0.05, normalMap: n, normalScale: new THREE.Vector2(0.35, 0.35) });
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.82, metalness: 0.05, normalMap: n, normalScale: new THREE.Vector2(0.35, 0.35) });
+  // weathered stone (stone.js); a material that sets its own onBeforeCompile calls applyStone itself
+  m.onBeforeCompile = (sh) => applyStone(sh, stone);
+  return m;
 };
 
 const hdr = (r, g, b, k) => new THREE.Color(r * k, g * k, b * k);
@@ -311,28 +326,21 @@ export const buildWorld = (scene, renderer) => {
   terrain.receiveShadow = true;
   scene.add(terrain);
 
-  /* ── water ── */
-  const water = new Water(new THREE.PlaneGeometry(760, 760), {
-    textureWidth: LOW ? 512 : 1024,
-    textureHeight: LOW ? 512 : 1024,
-    waterNormals: normalMap,
-    sunDirection: moonDir.clone(),
-    sunColor: 0xc6d0e4,
-    waterColor: 0x1a1e22,
-    distortionScale: 0.09,
-    fog: true,
+  /* ── water (see water.js): a still, dark mirror; footsteps send rings across it ── */
+  const waterNormals = tileNormalMap(512, 30, 1.5, 23);
+  const waterObj = createWater({
+    size: 760,
+    normalMap: waterNormals,
+    mirrorSize: LOW ? 512 : 1024,
+    deepColor: 0x020304,
+    calm: 0.016,
+    reflectBase: 0.24,
+    reach: 70,
+    sparkle: 0.5,
+    ripples: true,
+    rippleSize: 64,
   });
-  water.rotation.x = -Math.PI / 2;
-  water.material.uniforms.size.value = 0.55; // long, slow swells: still water
-  water.material.transparent = true;
-  water.material.fragmentShader = water.material.fragmentShader.replace(
-    'gl_FragColor = vec4( outgoingLight, alpha );',
-    `// shallow, clear water: transparent where you look down, a mirror at grazing angles and far away
-    // still grey water: a mirror almost everywhere, only faintly clear right at your feet
-    float clarity = clamp(0.72 + reflectance * 1.5 + smoothstep(4.0, 16.0, distance), 0.0, 1.0);
-    gl_FragColor = vec4( outgoingLight + waterColor * 0.35 * (1.0 - clarity), clarity * alpha );`,
-  );
-  water.material.needsUpdate = true;
+  const water = waterObj.mesh;
   scene.add(water);
 
   /* ── the three monuments (see monuments.js) ── */
@@ -445,8 +453,11 @@ export const buildWorld = (scene, renderer) => {
   let lotusAmt = 0;
   let lotusInAmt = 0;
   let dawn = 0;
-  return {
+  const world = {
+    /** The ambient light of the place you are in, for things that are not lit by the scene's lamps. */
+    crowdLight: new THREE.Color(0.5, 0.56, 0.66),
     water,
+    waterObj,
     /** Keeps the moon's shadow box centred on the player, snapped to texels so it doesn't shimmer. */
     followShadow(p) {
       const x = Math.round(p.x / shadowTexel) * shadowTexel;
@@ -540,7 +551,10 @@ export const buildWorld = (scene, renderer) => {
         hemi.intensity = inside ? 0.28 : 1.5;
         mistFill.intensity = inside ? 0 : 0.8;
         if (inside) interior.update(t, dt, camera.position);
-        if (inLotus) lotusIn.update(t, dt, camera.position);
+        if (inLotus) {
+          lotusIn.update(t, dt, camera.position);
+          if (!world.noRender) lotusIn.waterObj.update(renderer, t, dt, camera.position.x, camera.position.z);
+        }
         // the finale's dawn over the plain
         if (dawn > 0) {
           scene.fog.color.lerp(DAWN_FOG, dawn);
@@ -560,9 +574,11 @@ export const buildWorld = (scene, renderer) => {
         scene.environmentIntensity = cin ? 0.04 : 0.7;
         if (cin) scene.fog.density = 0.0005;
       }
+      world.crowdLight.copy(hemi.color).multiplyScalar((2.3 * hemi.intensity) / 1.5);
       sky.position.copy(camera.position);
-      water.material.uniforms.time.value = t * 0.18; // slow: still water
+      if (!world.noRender) waterObj.update(renderer, t, dt, camera.position.x, camera.position.z);
       for (const u of updaters) u(t, dt);
     },
   };
+  return world;
 };

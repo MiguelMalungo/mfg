@@ -29,7 +29,8 @@ const FinishShader = {
       c.x *= aspect;
       float r = length(c);
       // while an "I" has the controls, the edges blur and drain of colour
-      vec2 off = c * sleep * 0.012;
+      // (a real lens also fringes a little toward the corners, always)
+      vec2 off = c * (sleep * 0.012 + r * r * 0.0022);
       vec3 col = vec3(
         texture2D(tDiffuse, vUv + off).r,
         texture2D(tDiffuse, vUv).g,
@@ -46,11 +47,15 @@ const FinishShader = {
       // over the lotus's lake (refs/lotus-beam.webp): an ember grade, the light amber, the shadows teal-black
       col = mix(col, col * mix(vec3(0.75, 0.9, 1.0), vec3(1.15, 0.78, 0.5), smoothstep(0.02, 0.5, lum)), lake * 0.8);
       // lifted, slightly cool blacks, like haze in front of the lens
-      col = col * 0.97 + vec3(0.0035, 0.0045, 0.006);
+      col = col * 0.97 + vec3(0.0022, 0.0029, 0.0042);
+      // a film-like contrast curve round middle grey: deeper shadows, cleaner lights
+      col = 0.16 * pow(max(col, 0.0) / 0.16, vec3(1.13));
       col = mix(col, vec3(lum) * vec3(0.85, 0.9, 1.0), sleep * 0.75);
-      float vig = smoothstep(0.95, 0.25 - sleep * 0.15, r);
-      col *= mix(0.42, 1.0, vig);
-      col += (hash(vUv * 1000.0 + fract(time * 7.0)) - 0.5) * 0.028;
+      float vig = smoothstep(1.0, 0.3 - sleep * 0.15, r);
+      col *= mix(0.5, 1.0, vig);
+      // fine grain, strongest in the mid-darks, none in the lights
+      float g = hash(vUv * 1000.0 + fract(time * 7.0)) - 0.5;
+      col += g * 0.011 * (0.35 + 0.65 * smoothstep(0.6, 0.0, lum));
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
@@ -167,6 +172,9 @@ export const makePost = (renderer, scene, camera) => {
   shaft.enabled = false; // only in the finale
   composer.addPass(shaft);
   const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.36, 0.5, 0.92);
+  // the glow is soft by nature: three quarters of the size costs about half as much
+  const bloomSetSize = bloom.setSize.bind(bloom);
+  bloom.setSize = (w, h) => bloomSetSize(Math.round(w * 0.75), Math.round(h * 0.75));
   composer.addPass(bloom);
   const finish = new ShaderPass(FinishShader);
   composer.addPass(finish);

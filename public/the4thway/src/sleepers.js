@@ -164,6 +164,8 @@ export const createSleepers = (scene, glowTex) => {
   });
   const threads = new THREE.LineSegments(threadGeo, threadMat);
   threads.frustumCulled = false;
+  // layer 1: seen by the eye, left out of the water's mirror (hair-thin lines turn to scribble in a ripple)
+  threads.layers.set(1);
   scene.add(threads);
   // the beads: points that creep up the thread, swelling and glinting
   const beadU = new Float32Array(BEADS);
@@ -207,6 +209,7 @@ export const createSleepers = (scene, glowTex) => {
   });
   const beads = new THREE.Points(beadGeo, beadMat);
   beads.frustumCulled = false;
+  beads.layers.set(1);
   scene.add(beads);
   const resizeBeads = () => (beadMat.uniforms.scale.value = innerHeight * (window.devicePixelRatio > 1 ? 1.2 : 1) * 0.75);
   resizeBeads();
@@ -240,7 +243,7 @@ export const createSleepers = (scene, glowTex) => {
   ringGeo.rotateX(-Math.PI / 2);
   const rings = new THREE.InstancedMesh(
     ringGeo,
-    new THREE.MeshBasicMaterial({ map: ringTex, color: new THREE.Color(0.55, 0.62, 0.78), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ map: ringTex, color: new THREE.Color(0.55, 0.62, 0.78), transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false }),
     N,
   );
   rings.frustumCulled = false;
@@ -257,6 +260,92 @@ export const createSleepers = (scene, glowTex) => {
   const walkFace = new Float32Array(N);
   /** Where the awake look (faceTo, a Vector3 or null) and how far their heads lift (lookUp 0..1). */
   const crowd = { faceTo: null, lookUp: 0, pace: 1.2 };
+  /*
+   * The far crowd as pictures of the scanned people (baked in people.js): one quad per sleeper that
+   * turns to face the camera and shows the right direction and step of the walk. It replaces the
+   * simple turned figures above, which stay as the fallback if the scans did not load.
+   */
+  let imp = null;
+  const useImpostors = (A) => {
+    const geo = new THREE.InstancedBufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0]), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
+    geo.setIndex([0, 1, 2, 0, 2, 3]);
+    const iPos = new THREE.InstancedBufferAttribute(new Float32Array(N * 4), 4);
+    const iAnim = new THREE.InstancedBufferAttribute(new Float32Array(N * 4), 4);
+    const iTone = new THREE.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+    iPos.setUsage(THREE.DynamicDrawUsage);
+    iAnim.setUsage(THREE.DynamicDrawUsage);
+    iTone.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('iPos', iPos);
+    geo.setAttribute('iAnim', iAnim);
+    geo.setAttribute('iTone', iTone);
+    geo.instanceCount = N;
+    const mat = new THREE.ShaderMaterial({
+      fog: true,
+      uniforms: THREE.UniformsUtils.merge([
+        THREE.UniformsLib.fog,
+        { atlas: { value: null }, size: { value: new THREE.Vector2(A.W, A.H) }, light: { value: new THREE.Color(0.5, 0.56, 0.66) }, lift: { value: new THREE.Color(0.012, 0.014, 0.018) } },
+      ]),
+      vertexShader: /* glsl */ `
+        attribute vec4 iPos; attribute vec4 iAnim; attribute vec2 iTone;
+        uniform vec2 size;
+        varying vec2 vUvA; varying vec2 vUvB; varying float vMix; varying float vTone;
+        #include <common>
+        #include <fog_pars_vertex>
+        const float ANG = ${A.ANG.toFixed(1)}; const float PH = ${A.PH.toFixed(1)}; const float ROWS = ${A.ROWS.toFixed(1)}; const float VAR = ${A.VAR.toFixed(1)};
+        void main() {
+          vec3 base = iPos.xyz;
+          vec3 toCam = cameraPosition - base;
+          // which of the baked directions: the camera's bearing, seen from the walker's own heading
+          float rel = atan(toCam.x, toCam.z) - iPos.w;
+          float k = mod(floor(rel / 6.2831853 * ANG + 0.5), ANG);
+          float ph = fract(iAnim.x) * PH;
+          float p0 = floor(ph);
+          float p1 = mod(p0 + 1.0, PH);
+          vMix = ph - p0;
+          float row0 = p0, row1 = p1;
+          if (iAnim.y > 0.5) {
+            if (iAnim.z > 0.5) { row0 += PH; row1 += PH; }
+            else { row0 = row1 = PH * 2.0; vMix = 0.0; }
+          }
+          vec2 cell = vec2(1.0 / (ANG * VAR), 1.0 / ROWS);
+          // (a hair inside each cell, so neighbours never bleed in)
+          vec2 quv = mix(vec2(0.012, 0.006), vec2(0.988, 0.994), uv);
+          vUvA = (vec2(iAnim.w * ANG + k, row0) + quv) * cell;
+          vUvB = (vec2(iAnim.w * ANG + k, row1) + quv) * cell;
+          vTone = iTone.x;
+          vec3 right = normalize(vec3(toCam.z, 0.0, -toCam.x));
+          vec3 wp = base + (right * position.x * size.x + vec3(0.0, position.y * size.y, 0.0)) * iTone.y;
+          vec4 mvPosition = viewMatrix * vec4(wp, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform sampler2D atlas; uniform vec3 light; uniform vec3 lift;
+        varying vec2 vUvA; varying vec2 vUvB; varying float vMix; varying float vTone;
+        #include <common>
+        #include <fog_pars_fragment>
+        void main() {
+          vec4 a = texture2D(atlas, vUvA);
+          vec4 b = texture2D(atlas, vUvB);
+          vec4 c = mix(a, b, smoothstep(0.25, 0.75, vMix));
+          if (c.a < 0.5) discard;
+          vec3 col = c.rgb / max(c.a, 1e-3);
+          gl_FragColor = vec4(col * light * vTone + lift, 1.0);
+          #include <fog_fragment>
+        }`,
+    });
+    mat.uniforms.atlas.value = A.texture;
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    scene.add(mesh);
+    for (const m of [bodies, heads, hairs, arms]) m.visible = false;
+    imp = { mesh, mat, iPos, iAnim, iTone };
+  };
+  // footfalls near the player this frame, [x, z] each: they send rings across the water (water.js)
+  const steps = [];
+  const stepIdx = new Int32Array(N);
 
   return {
     count: N,
@@ -264,6 +353,12 @@ export const createSleepers = (scene, glowTex) => {
     companion,
     state,
     crowd,
+    steps,
+    useImpostors,
+    /** The light the far crowd's pictures are shown in (they are not lit by the scene's lamps). */
+    setCrowdLight(c) {
+      if (imp) imp.mat.uniforms.light.value.copy(c);
+    },
     /** The finale: sleeper i wakes from time t (over 2.5 s). */
     wakeAt(i, t) {
       wakeAt[i] = t;
@@ -285,6 +380,7 @@ export const createSleepers = (scene, glowTex) => {
       threadMat.uniforms.time.value = t;
       beadMat.uniforms.time.value = t;
       let hy_override = 0;
+      steps.length = 0;
       for (let i = 0; i < N; i++) {
         const d = data[i];
         const wk = Math.min(1, Math.max(0, (t - wakeAt[i]) / 2.5));
@@ -368,8 +464,24 @@ export const createSleepers = (scene, glowTex) => {
         const bob = Math.sin(stride * 2) * 0.012 * strideOn;
         const fx = Math.sin(face);
         const fz = Math.cos(face);
+        // each footfall within sight of the player touches the water
+        const si = Math.floor(stride / Math.PI);
+        if (si !== stepIdx[i]) {
+          stepIdx[i] = si;
+          const dxp = x - playerPos.x, dzp = z - playerPos.z;
+          if (strideOn > 0.3 && dxp * dxp + dzp * dzp < 34 * 34) {
+            const side = si % 2 ? 0.11 : -0.11;
+            steps.push([x + fz * side + fx * 0.2, z - fx * side + fz * 0.2]);
+          }
+        }
         const lean = 0.07 * (1 - awake);
 
+        if (imp) {
+          // the same walker as a picture: where, which way, which step, asleep or awake
+          imp.iPos.setXYZW(i, x, y + bob, z, face);
+          imp.iAnim.setXYZW(i, stride / (Math.PI * 2), awake, st.walking, i % 2);
+          imp.iTone.setXY(i, 0.86 + 0.28 * ((i * 0.618) % 1), hide * (0.95 + 0.1 * ((i * 0.377) % 1)));
+        }
         dummy.rotation.order = 'YXZ';
         dummy.scale.set(hide, hide, hide);
         dummy.position.set(x, y + bob, z);
@@ -415,6 +527,7 @@ export const createSleepers = (scene, glowTex) => {
           seed.scale.setScalar(0.45 + companion.waking * 0.9 + awake * 0.6);
         }
       }
+      if (imp) imp.iPos.needsUpdate = imp.iAnim.needsUpdate = imp.iTone.needsUpdate = true;
       bodies.instanceMatrix.needsUpdate = true;
       heads.instanceMatrix.needsUpdate = true;
       hairs.instanceMatrix.needsUpdate = true;

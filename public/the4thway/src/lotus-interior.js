@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Water } from 'three/addons/objects/Water.js';
+import { createWater } from './water.js';
 import { petalGeometry, needleTower, mergeGeos } from './monuments.js';
 import { rng } from './textures.js';
 import { buildPillar } from './pillar.js';
@@ -95,18 +95,19 @@ export const buildLotusInterior = ({ scene, glowTex, normalMap }) => {
   const pointMats = [];
 
   /* ── the lake: black, still, a true mirror for the pillar and the city's lights ── */
-  const water = new Water(new THREE.CircleGeometry(420, 96), {
-    textureWidth: 512,
-    textureHeight: 512,
-    waterNormals: normalMap,
-    sunDirection: new THREE.Vector3(0, 1, 0),
-    sunColor: 0x000000,
-    waterColor: 0x050302,
-    distortionScale: 0.35,
-    fog: true,
+  const waterObj = createWater({
+    geometry: new THREE.CircleGeometry(420, 96),
+    normalMap,
+    mirrorSize: 768,
+    deepColor: 0x030201,
+    calm: 0.03,
+    reflectBase: 0.1,
+    reach: 110,
+    sparkle: 0.5,
+    ripples: true,
+    rippleSize: 64,
   });
-  water.rotation.x = -Math.PI / 2;
-  water.material.uniforms.size.value = 1.4;
+  const water = waterObj.mesh;
   add(water);
 
   /* ── the flower: three rings of luminous petals round the heart ── */
@@ -440,6 +441,7 @@ export const buildLotusInterior = ({ scene, glowTex, normalMap }) => {
 
   const api = {
     group: g,
+    waterObj,
     trial: T,
     lamps,
     pillar,
@@ -704,7 +706,6 @@ export const buildLotusInterior = ({ scene, glowTex, normalMap }) => {
         m.position.set(Math.sin(a) * m.userData.rad, 0.6, Math.cos(a) * m.userData.rad);
       }
       for (const m of pointMats) m.uniforms.time.value = t;
-      water.material.uniforms.time.value = t * 0.25;
     },
   };
   return api;
