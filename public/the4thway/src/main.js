@@ -8,7 +8,7 @@ import { glowTexture } from './textures.js';
 import { makePost, Sound } from './fx.js';
 import { NOTES } from './lotus-interior.js';
 import { buildFinale } from './finale.js';
-import { loadArm, ARM_REST_DIR } from './arm.js';
+import { loadArm } from './arm.js';
 
 /*
  * The Fourth Way, prototype: the plain of sleepers.
@@ -91,7 +91,7 @@ const hand = armModel ? null : people?.buildHand();
 }
 // the Lantern-Bearer herself, for the end of the tower's trial (Sophia, grey-haired)
 if (people) world.cutscene.setActor(people.makeActor(2));
-if (armModel) lantern.attachArm(armModel.root, ARM_REST_DIR);
+if (armModel) lantern.attachArm(armModel);
 if (hand) lantern.attachHand(hand);
 const post = makePost(renderer, scene, camera);
 // on a phone the depth of field costs more than it gives
@@ -115,7 +115,7 @@ scene.add(guide);
 
 /* ── state ── */
 const player = { pos: START.clone(), vel: new THREE.Vector3(), yaw: 0, pitch: -0.04, stride: 0, lastStep: 0 };
-const state = { pressAt: -99, lotusDone: false, gems: 0, cut: false, towerDone: false, aimed: null, doorsOpen: false, doorsAt: 0, passed: [false, false, false, false], prevAlong: null, hollow: 0, forestDone: false, free: false, goalText: '', goalUntil: 0, started: false, presence: 1, sleep: 0, asleepFor: 0, raise: 0, breathing: 0, ended: false, t: 0, lastBeat: 0 };
+const state = { pressAt: -99, lotusDone: false, gems: 0, cut: false, towerDone: false, aimed: null, doorsOpen: false, doorsAt: 0, passed: [false, false, false, false], prevAlong: null, hollow: 0, forestDone: false, free: false, goalText: '', goalUntil: 0, started: false, presence: 1, sleep: 0, asleepFor: 0, raise: 0, raiseVel: 0, breathing: 0, ended: false, t: 0, lastBeat: 0 };
 const keys = {};
 let mouseDown = false;
 /* Things that happen a little later run on the game's own clock, not the wall clock,
@@ -604,7 +604,11 @@ const tick = (now) => {
 
   /* the lantern */
   const wantRaise = active && mouseDown && !controlled;
-  state.raise += ((wantRaise ? 1 : 0) - state.raise) * (1 - Math.exp(-dt * 6));
+  // lifting is a movement of the arm, not a switch: it gathers speed, then settles (a critically damped spring)
+  for (let n = Math.max(1, Math.ceil(dt / 0.02)), h = dt / n, i = 0; i < n; i++) {
+    state.raiseVel += (((wantRaise ? 1 : 0) - state.raise) * 121 - 22 * state.raiseVel) * h;
+    state.raise = Math.min(1, Math.max(0, state.raise + state.raiseVel * h));
+  }
 
   /* camera */
   const inside = world.interior.contains(player.pos);
@@ -910,6 +914,8 @@ const tick = (now) => {
   _crowdCol.copy(world.crowdLight);
   if (finale.phase >= 3) _crowdCol.r += 0.5 * finale.glow, _crowdCol.g += 0.4 * finale.glow, _crowdCol.b += 0.27 * finale.glow;
   sleepers.setCrowdLight(_crowdCol);
+  // and so does the arm that holds the lantern
+  if (armModel) armModel.uniforms.uFillCol.value.copy(_crowdCol).multiplyScalar(0.5);
   // the lantern's light on the water: a warm pool that moves with you
   {
     const k = state.presence * (1 - state.sleep * 0.7) * (0.8 + 0.2 * Math.sin(t * 9.3) * Math.sin(t * 5.1));

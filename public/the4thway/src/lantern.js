@@ -147,6 +147,10 @@ const filigreeTexture = () => {
   return t;
 };
 
+/** The carrying ring is turned this far about the upright, so its top lies square across the fist that
+ *  holds it (the forearm comes from the lower right). Keep in step with RING_TURN in blender/02_arm.py. */
+const RING_TURN = (32 * Math.PI) / 180;
+
 export const buildLantern = (glowTex) => {
   const group = new THREE.Group();
   const patina = patinaTexture();
@@ -186,9 +190,9 @@ export const buildLantern = (glowTex) => {
   add(new THREE.SphereGeometry(0.014, 12, 10), bronze, 0, 0.221);
   add(new THREE.CylinderGeometry(0.006, 0.009, 0.012, 8), bronze, 0, 0.236);
   const loop = add(new THREE.TorusGeometry(0.011, 0.0035, 8, 16), bronze, 0, 0.249);
-  loop.rotation.y = Math.PI / 2;
-  // the carrying ring, facing the eye, so the fist closes around its top
-  add(new THREE.TorusGeometry(0.046, 0.0055, 10, 40), bronze, 0, 0.298);
+  loop.rotation.y = Math.PI / 2 + RING_TURN;
+  // the carrying ring: the fist closes around its top
+  add(new THREE.TorusGeometry(0.046, 0.0055, 12, 64), bronze, 0, 0.298).rotation.y = RING_TURN;
   const GRIP = new THREE.Vector3(0, 0.298 + 0.046, 0);
   // corner posts and, on each face, a pane of filigree
   const filigree = new THREE.MeshStandardMaterial({ color: 0xd8c0a0, map: patina, roughnessMap: patina, roughness: 1, metalness: 0.6, envMapIntensity: 1.6, alphaMap: filigreeTexture(), alphaTest: 0.5, side: THREE.DoubleSide, emissive: 0x140d05 });
@@ -259,13 +263,9 @@ export const buildLantern = (glowTex) => {
   const ELBOW_HIGH = new THREE.Vector3(1.0, -1.25, 0.8);
   const elbow = new THREE.Vector3();
   let lastRaise = -1;
-  // the modelled arm (arm.js): built for one direction of the forearm; raising the lantern swings it
-  // about the grip so the elbow drops and the sleeve still runs off the lower right of the frame
+  // the modelled arm (arm.js): one mesh with two poses, carried and lifted, blended as the lantern rises
   let arm = null;
-  const armRest = new THREE.Vector3();
-  const ARM_RAISED = new THREE.Vector3(0.52, -0.74, 0.43).normalize();
-  const _aq = new THREE.Quaternion();
-  const _av = new THREE.Vector3();
+  const FLAME = new THREE.Vector3(0, -0.041, 0);
   // seeds of light gathered from the three centers: small motes that circle the flame
   const seeds = [];
   return {
@@ -282,11 +282,10 @@ export const buildLantern = (glowTex) => {
       const sp = seeds.shift();
       if (sp) group.remove(sp);
     },
-    /** The modelled arm (arm.js): its meshes are already in this group's space. restDir: the way its forearm runs. */
-    attachArm(root, restDir) {
-      arm = root;
-      armRest.copy(restDir).normalize();
-      group.add(root);
+    /** The modelled arm (what arm.js's loadArm gives): its meshes are already in this group's space. */
+    attachArm(a) {
+      arm = a;
+      group.add(a.root);
     },
     /** Puts the player's hand (from people.js) on the ring. */
     attachHand(h) {
@@ -305,7 +304,9 @@ export const buildLantern = (glowTex) => {
     update(t, presence, raise, stride, moving, aspect) {
       const flick = 0.9 + 0.06 * Math.sin(t * 11.3) + 0.04 * Math.sin(t * 23.7 + 1.3);
       const p = 0.18 + 0.82 * presence;
-      // keep the lantern in the lower right whatever the window shape (fov 70 at 0.72 m: half-height ≈ 0.5 m)
+      // keep the lantern in the lower right whatever the window shape (fov 70 at 0.72 m: half-height ≈ 0.5 m).
+      // (The arm's two poses were modelled for exactly this placement, carried and lifted: POSES in
+      // blender/02_arm.py. Change where the lantern sits or how far it lifts, and rebuild the arm.)
       const s = Math.min(1, Math.max(0.74, aspect / 1.6));
       group.scale.setScalar(s);
       const halfW = 0.504 * aspect;
@@ -315,9 +316,12 @@ export const buildLantern = (glowTex) => {
       flame.scale.set(1, 0.85 + 0.25 * flick, 1).multiplyScalar(0.55 + 0.45 * p);
       flameMat.uniforms.time.value = t;
       if (arm) {
-        _aq.setFromUnitVectors(armRest, _av.copy(armRest).lerp(ARM_RAISED, raise).normalize());
-        arm.quaternion.copy(_aq);
-        arm.position.copy(GRIP).sub(_av.copy(GRIP).applyQuaternion(_aq));
+        arm.setRaise(Math.min(1, Math.max(0, raise)));
+        // the flame's light on the fist and the sleeve (the group hangs from the camera: its own
+        // matrix takes a point of the lantern into view space)
+        group.updateMatrix();
+        arm.uniforms.uLampPos.value.copy(FLAME).applyMatrix4(group.matrix);
+        arm.uniforms.uLampCol.value.setRGB(1.0, 0.56, 0.22).multiplyScalar(0.95 * p * flick);
       }
       if (hand && Math.abs(raise - lastRaise) > 0.002) {
         lastRaise = raise;
