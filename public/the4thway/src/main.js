@@ -554,8 +554,10 @@ const tick = (now) => {
       if (edge) look(edge * 2.2 * dt, 0);
     }
   }
-  if (finale.locked) wish.set(0, 0, 0); // the diamond and the gate: watch (you can still look round)
+  if (finale.locked) wish.set(0, 0, 0); // the spiral and the star: watch (you can still look round)
   if (finale.tiltUp) player.pitch += (0.5 - player.pitch) * Math.min(1, dt * 0.7);
+  // as the lights leave the lantern the view is turned, gently, to where they go: the lotus (north)
+  if (finale.turn) player.yaw += Math.atan2(Math.sin(-player.yaw), Math.cos(-player.yaw)) * Math.min(1, dt * 1.4);
   if (controlled) {
     // an "I" has taken over: it walks you on in a slow curve, like the sleepers
     player.yaw += dt * 0.22;
@@ -614,7 +616,8 @@ const tick = (now) => {
   const inside = world.interior.contains(player.pos);
   const inLotus = world.lotusIn.contains(player.pos);
   // on the plain you walk on the still water's surface, like the sleepers
-  const ground = inLotus ? 0 : inside ? world.interior.groundAt(player.pos) : Math.max(heightAt(player.pos.x, player.pos.z), 0);
+  // (and in the forest, on its banks)
+  const ground = inLotus ? 0 : inside ? world.interior.groundAt(player.pos) : Math.max(heightAt(player.pos.x, player.pos.z), world.forest.groundAt(player.pos.x, player.pos.z), 0);
   player.stride += speed * dt * 1.9;
   const bob = Math.sin(player.stride * 2) * 0.025 * moving;
   camera.position.set(player.pos.x, ground + 1.66 + bob + Math.sin(t * 1.3) * 0.006, player.pos.z);
@@ -755,7 +758,7 @@ const tick = (now) => {
     player.lastStep = Math.floor(player.stride / Math.PI);
     sound.step(0.6 + moving * 0.5);
     // each of your steps touches the water too
-    if (!inside) {
+    if (!inside && ground < 0.03) {
       const side = player.lastStep % 2 ? 0.13 : -0.13;
       (inLotus ? world.lotusIn.waterObj : world.waterObj).drop(player.pos.x + right.x * side + forward.x * 0.25, player.pos.z + right.z * side + forward.z * 0.25, 0.24, 1.2);
     }
@@ -910,7 +913,7 @@ const tick = (now) => {
   }
   sleepers.update(t, dt, player.pos);
   for (const st of sleepers.steps) world.waterObj.drop(st[0], st[1], 0.22, 1);
-  // the far crowd's pictures take the air's light (and the diamond's, in the ending)
+  // the far crowd's pictures take the air's light (and the spiral's, in the ending)
   _crowdCol.copy(world.crowdLight);
   if (finale.phase >= 3) _crowdCol.r += 0.5 * finale.glow, _crowdCol.g += 0.4 * finale.glow, _crowdCol.b += 0.27 * finale.glow;
   sleepers.setCrowdLight(_crowdCol);
@@ -922,6 +925,7 @@ const tick = (now) => {
     _lp.set(camera.position.x + forward.x * 0.55 + right.x * 0.3, camera.position.y - 0.42 + state.raise * 0.4, camera.position.z + forward.z * 0.55 + right.z * 0.3);
     _lampCol.setRGB(0.085 * k, 0.045 * k, 0.016 * k);
     (inLotus ? world.lotusIn.waterObj : world.waterObj).setLamp(_lp, _lampCol);
+    world.forest.setLamp(_lp, k * (0.55 + 0.45 * state.raise));
   }
   people?.update(t, dt, sleepers, player.pos);
   lantern.update(t, state.presence * (1 - state.sleep * 0.7), state.raise, player.stride, moving, camera.aspect);
@@ -1088,7 +1092,7 @@ const tick = (now) => {
   /* the completion of the game */
   if (finale.phase) {
     _lp.setFromMatrixPosition(lantern.group.matrixWorld);
-    for (const ev of finale.update(t, dt, { pos: player.pos, raise: state.raise, lanternPos: _lp, companion: sleepers.companion, camPos: camera.position })) {
+    for (const ev of finale.update(t, dt, { pos: player.pos, raise: state.raise, lanternPos: _lp, companion: sleepers.companion, camPos: camera.position, camQuat: camera.quaternion })) {
       if (ev.type === 'arrived') state.goalUntil = t + 30;
       if (ev.type === 'light') {
         // the six diamonds, then the three seeds, leave the lantern; a bell for each, up the octave
@@ -1112,7 +1116,7 @@ const tick = (now) => {
       if (ev.type === 'env') world.refreshEnv();
       if (ev.type === 'free') state.goalUntil = t + 30;
       if (ev.type === 'through') {
-        // through the gate: white-gold, then the end
+        // into the avenue, toward the lotus: white-gold, then the end
         $('fade').style.background = '#fff4dc';
         $('fade').style.transition = 'opacity 3s';
         $('fade').style.opacity = '1';
@@ -1129,19 +1133,20 @@ const tick = (now) => {
         });
       }
     }
-    // the chord is struck again quietly while the diamond hangs there
+    // the chord is struck again quietly while the ribbon climbs and the star burns
     if (state.chordAt && finale.phase >= 3 && finale.phase <= 4 && t - state.chordAt > 2) {
       state.chordAt = t;
       for (const f of [261.63, 392.0, 523.25]) sound.bell(f, 0.035, 10);
     }
-    // the slow heartbeat returns with the gate, and keeps going to the end
+    // the slow heartbeat returns with the star, and keeps going to the end
     if (finale.phase >= 4 && Math.floor(t / 1.15) !== state.finaleBeat) {
       state.finaleBeat = Math.floor(t / 1.15);
       sound.thump(0.16);
     }
-    world.dawn = finale.dawn;
-    post.finish.uniforms.dawn.value = finale.dawn;
-    // light shafts from the diamond, faded as it leaves the frame
+    // (the ending stays night now; it used to turn to dawn)
+    world.vigil = finale.night;
+    sleepers.setThreadQuiet(finale.night);
+    // light shafts (the old ending's diamond had them; finale.shafts is 0 now, so this pass stays off)
     const sh = finale.shafts;
     _sp.copy(finale.diamondPos).project(camera);
     const behind = _sp.z > 1;
@@ -1157,10 +1162,14 @@ const tick = (now) => {
   autofocus(dt);
   // over the lotus's lake the light blooms wider (the pillar, the rings of fire)
   {
-    const k = world.lotusInAmt;
-    post.bloom.strength = 0.36 + (0.5 - 0.36) * k;
-    post.bloom.threshold = 0.92 - (0.92 - 0.85) * k;
+    // (and the same in the ending's night, which is that lake's picture brought out onto the plain)
+    const k = Math.max(world.lotusInAmt, world.vigil);
+    // (less bloom on the plain than over the lake: there are many more lights out here)
+    const kb = Math.max(world.lotusInAmt, world.vigil * 0.45);
+    post.bloom.strength = 0.36 + (0.5 - 0.36) * kb;
+    post.bloom.threshold = 0.92 - (0.92 - 0.85) * kb;
     post.finish.uniforms.lake.value = k;
+    post.finish.uniforms.forest.value = world.forestAmt;
     // a shallower depth of field over the lake, so the rings at your feet stay crisp
     post.dof.uniforms.aperture.value = (11 - 9.5 * k) * (innerHeight * renderer.getPixelRatio()) / 1080;
   }

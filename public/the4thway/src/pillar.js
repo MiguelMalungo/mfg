@@ -55,7 +55,7 @@ const FAN_FRAG = /* glsl */ `
     gl_FragColor = vec4(color * rays * fade * vEdge * power, 1.0);
   }`;
 
-export const buildPillar = ({ height = 700, coreWidth = 0.5, sheathWidth = 7, fanAngles = [18, 26] } = {}) => {
+export const buildPillar = ({ height = 700, coreWidth = 0.5, sheathWidth = 7, fanAngles = [18, 26], coreTopFade = 0.6, sheathTopFade = 1.4 } = {}) => {
   const g = new THREE.Group();
   const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false };
 
@@ -76,8 +76,9 @@ export const buildPillar = ({ height = 700, coreWidth = 0.5, sheathWidth = 7, fa
     g.add(m);
     return m;
   };
-  const core = beam(coreWidth, new THREE.Color(1.0, 0.9, 0.75).multiplyScalar(8), 9, 0.6);
-  const sheath = beam(sheathWidth, new THREE.Color(1.0, 0.55, 0.3).multiplyScalar(0.8), 4, 1.4);
+  // (topFade: how soon each dims on its way up; near 0 keeps it bright to the top)
+  const core = beam(coreWidth, new THREE.Color(1.0, 0.9, 0.75).multiplyScalar(8), 9, coreTopFade);
+  const sheath = beam(sheathWidth, new THREE.Color(1.0, 0.55, 0.3).multiplyScalar(0.8), 4, sheathTopFade);
 
   const fans = fanAngles.map((deg, k) => {
     const rTop = height * Math.tan((deg * Math.PI) / 180);

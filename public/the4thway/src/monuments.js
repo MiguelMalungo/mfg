@@ -6,7 +6,7 @@ import { applyStone } from './stone.js';
  * The three monuments, modelled on the key art and the trailer frames:
  *  - the spire (mind): a carved octagonal obelisk, thin rings of light, floating glyph tablets
  *  - the lotus (heart): thick stone petals around a glowing heart, on a stepped dais
- *  - the root tree (body): a massive broken trunk on buttress roots, green light in its cracks
+ *  - the root tree (body) and its forest are in forest.js
  * Everything is generated in code.
  */
 
@@ -309,7 +309,7 @@ const monolithGeometry = (w0, w1, H, seed, seg = 40) => {
  * lower half; a vast white halo standing behind it; two lesser stones beside it; stepping stones
  * across the water to its dais.
  */
-export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, updaters, colliders }) => {
+export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, updaters, colliders, farDim = { value: 1 }, hush = { value: 1 } }) => {
   const g = new THREE.Group();
   g.position.copy(pos);
   g.rotation.y = Math.atan2(PLAIN.x - pos.x, PLAIN.z - pos.z); // local +z faces the plain
@@ -333,10 +333,10 @@ export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    uniforms: { time: { value: 0 } },
+    uniforms: { time: { value: 0 }, dim: farDim },
     vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: /* glsl */ `
-      varying vec2 vUv; uniform float time;
+      varying vec2 vUv; uniform float time; uniform float dim;
       ${NOISE3}
       void main() {
         // a jagged line: it wanders and steps sideways as it runs down the stone
@@ -348,7 +348,7 @@ export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
         float flicker = 0.85 + 0.15 * mn(vec3(y * 30.0, time * 2.0, 3.0));
         float foot = 1.0 + 2.5 * exp(-y * 14.0); // it burns brightest where it meets the ground
         vec3 col = vec3(1.0, 0.68, 0.3) * (core * 4.0 + glow) * flicker * foot;
-        gl_FragColor = vec4(col, 1.0);
+        gl_FragColor = vec4(col * dim, 1.0);
       }`,
   });
   const crack = new THREE.Mesh(crackGeo, crackMat);
@@ -363,7 +363,8 @@ export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
   g.add(gold);
 
   // thin rings of blue light around its lower half: three pairs
-  const ringMat = new THREE.MeshBasicMaterial({ color: hdr(0.45, 0.72, 1, 2.0), fog: false });
+  const RING_COL = hdr(0.45, 0.72, 1, 2.0);
+  const ringMat = new THREE.MeshBasicMaterial({ color: RING_COL.clone(), fog: false });
   const rings = [];
   for (let i = 0; i < 3; i++) {
     const ry = 18 + i * 8;
@@ -440,7 +441,13 @@ export const buildSpire = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
     burst.material.opacity = 0.45 * b;
     gold.intensity = 220 * b * (1 + spireOpen * 1.5);
     burst.scale.set(16 + spireOpen * 10, 7 + spireOpen * 5, 1);
-    haloMat.color.copy(hdr(0.85, 0.95, 1, 1.9 + 0.3 * Math.sin(t * 0.25)));
+    // (these are not touched by the fog, so where the air is thick, in the forest, they are dimmed by hand)
+    // (and in the ending its cold lights are hushed: `hush`. The gold at its foot stays.)
+    const cold = farDim.value * hush.value;
+    haloMat.color.copy(hdr(0.85, 0.95, 1, 1.9 + 0.3 * Math.sin(t * 0.25))).multiplyScalar(cold);
+    ringMat.color.copy(RING_COL).multiplyScalar(cold);
+    haloGlow.material.opacity = 0.035 * cold;
+    blue.intensity = 160 * hush.value;
   });
   // the way in: the crack of light at the stone's foot
   const facing = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y));
@@ -474,9 +481,12 @@ export const petalGeometry = (curlOut = 0.3) => {
   return geo;
 };
 
-export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, updaters, colliders }) => {
-  const state = { pulse: 0, open: 0, openTarget: 0 };
+export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, updaters, colliders, farDim = { value: 1 } }) => {
+  const state = { pulse: 0, open: 0, openTarget: 0, lit: 0 };
   state.doOpen = () => (state.openTarget = 1);
+  /** The ending: the whole flower alight, 0..1 (gold within, ember without). */
+  state.setLit = (k) => (state.lit = k);
+  const lit = { value: 0 };
   const g = new THREE.Group();
   g.position.copy(pos);
   const stone = stoneMaterial(normalMap, 0x77726e, 6, { scale: 0.26, bump: 0.06 });
@@ -500,11 +510,12 @@ export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
   petalMat.onBeforeCompile = (sh) => {
     applyStone(sh, { scale: 0.2, bump: 0.07, contrast: 0.85 });
     sh.uniforms.pulse = pulse;
+    sh.uniforms.lotusLit = lit;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying float vT; varying float vIn; varying vec3 vOP;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n vT = position.y; vIn = -normal.z; vOP = position;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>\nvarying float vT; varying float vIn; varying vec3 vOP; uniform float pulse;${NOISE3}`)
+      .replace('#include <common>', `#include <common>\nvarying float vT; varying float vIn; varying vec3 vOP; uniform float pulse; uniform float lotusLit;${NOISE3}`)
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
@@ -524,10 +535,13 @@ export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
         float inner = smoothstep(0.05, 0.55, vIn);
         float low = pow(1.0 - vT, 1.8);
         // the heart's light on the inner faces, and a little passing through the thin stone
-        totalEmissiveRadiance += vec3(1.0, 0.3, 0.2) * (inner * (0.1 + 1.5 * low) + (1.0 - inner) * 0.14 * low * low) * (0.55 + pulse * 0.9);`,
+        totalEmissiveRadiance += vec3(1.0, 0.3, 0.2) * (inner * (0.1 + 1.5 * low) + (1.0 - inner) * 0.14 * low * low) * (0.55 + pulse * 0.9);
+        // the ending: the whole flower alight, as thin petals are with a great light inside them
+        float lotusRim = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 1.5);
+        totalEmissiveRadiance += lotusLit * (mix(vec3(0.9, 0.27, 0.08) * 0.3, vec3(1.0, 0.5, 0.2) * 0.8, inner) * (0.5 + 0.5 * (1.0 - vT)) + vec3(1.0, 0.58, 0.3) * lotusRim * 0.28);`,
       );
   };
-  petalMat.customProgramCacheKey = () => 'lotus-petal-v3';
+  petalMat.customProgramCacheKey = () => 'lotus-petal-v5';
   const layers = [
     { n: 5, s: 23, tilt: 0.2, r: 3.6, curl: 0.12, off: Math.PI / 5 },
     { n: 7, s: 25, tilt: 0.42, r: 5.8, curl: 0.2, off: 0 },
@@ -607,12 +621,16 @@ export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
     state.pulse = beat;
     state.open += (state.openTarget - state.open) * 0.02;
     pulse.value = beat;
-    coreMat.uniforms.power.value = 1.4 + beat * 1.8;
+    lit.value = state.lit;
+    // (alight, its heart burns gold rather than red)
+    light.color.setRGB(1, 0.1 + 0.26 * state.lit, 0.045 + 0.06 * state.lit);
+    coreMat.uniforms.power.value = (1.4 + beat * 1.8) * farDim.value;
     coreMat.uniforms.time.value = t;
     core.scale.setScalar(1 + beat * 0.06);
     light.intensity = 360 + beat * 520;
-    spill.intensity = (240 + beat * 340) * (1 + state.open * 1.4);
-    glow.material.opacity = (0.14 + beat * 0.14) * (1 + state.open);
+    spill.intensity = (240 + beat * 340) * (1 + state.open * 1.4) * (1 - 0.45 * state.lit);
+    // (alight, the flower is its own light: the soft glow in front of it would only hide it)
+    glow.material.opacity = (0.14 + beat * 0.14) * (1 + state.open) * farDim.value * (1 - 0.75 * state.lit);
     ripples.forEach((m, i) => {
       const k = ((t / (BEAT * 5) + i / 5) % 1 + 1) % 1;
       m.scale.setScalar(30 + k * 42);
@@ -622,489 +640,7 @@ export const buildLotus = ({ scene, pos, glowTex, stoneMaterial, normalMap, upda
   return state;
 };
 
-/* ───────────────────────── the root tree and its forest ───────────────────────── */
-
-/** A curve as a tapered, knotted tube geometry (no mesh), for merging. */
-const tubeGeo = (pts, radius, taper, seg = 28, radial = 9, lumpy = 0.18) => {
-  const curve = new THREE.CatmullRomCurve3(pts);
-  const geo = new THREE.TubeGeometry(curve, seg, radius, radial, false);
-  const pp = geo.attributes.position;
-  const c = new THREE.Vector3();
-  const v = new THREE.Vector3();
-  const sx = pts[0].x * 0.37, sz = pts[0].z * 0.29;
-  for (let i = 0; i <= seg; i++) {
-    curve.getPointAt(i / seg, c);
-    const k = taper(i / seg);
-    for (let j = 0; j <= radial; j++) {
-      const idx = i * (radial + 1) + j;
-      const jj = j % radial;
-      const lump = 1 + lumpy * Math.sin(jj * ((Math.PI * 2) / radial) * 3 + i * 0.45) + (noise2(jj * 1.7 + sx, i * 0.4 + sz) - 0.5) * lumpy * 2.4;
-      v.fromBufferAttribute(pp, idx).sub(c).multiplyScalar(k * lump).add(c);
-      pp.setXYZ(idx, v.x, v.y, v.z);
-    }
-  }
-  geo.computeVertexNormals();
-  // uv in "crack tiles": along the length every 6 m, a whole number of tiles round the girth
-  const along = curve.getLength() / 6;
-  const round = Math.max(1, Math.round((Math.PI * 2 * radius) / 3));
-  const uv = geo.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * along, uv.getY(i) * round);
-  return geo;
-};
-
-/**
- * The vein network as a tiling texture, computed once: a Voronoi pattern whose cells are stretched
- * along u (the length of the wood), at two scales, as the brightness of a thin glowing line.
- */
-const crackTexture = () => {
-  const S = 512;
-  const r = rng(404);
-  const layer = (nx, ny, width) => {
-    const pts = [];
-    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) pts.push([(i + r()) / nx, (j + r()) / ny]);
-    const out = new Float32Array(S * S);
-    const sx = nx, sy = ny; // measure in cell units so stretched cells stay stretched
-    for (let y = 0; y < S; y++)
-      for (let x = 0; x < S; x++) {
-        const u = x / S, v = y / S;
-        const ci = Math.floor(u * nx), cj = Math.floor(v * ny);
-        let d1 = 9, d2 = 9;
-        for (let dj = -2; dj <= 2; dj++)
-          for (let di = -2; di <= 2; di++) {
-            const i = (ci + di + nx) % nx, j = (cj + dj + ny) % ny;
-            const p = pts[j * nx + i];
-            let dx = (p[0] - u) * sx, dy = (p[1] - v) * sy;
-            dx -= Math.round(dx / sx) * sx;
-            dy -= Math.round(dy / sy) * sy;
-            const d = Math.hypot(dx * 0.45, dy); // cells long in u
-            if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
-          }
-        const e = d2 - d1;
-        out[y * S + x] = Math.max(0, 1 - e / width);
-      }
-    return out;
-  };
-  const a = layer(5, 12, 0.07);
-  const b = layer(11, 26, 0.09);
-  const data = new Uint8Array(S * S * 4);
-  for (let i = 0; i < S * S; i++) {
-    const v = Math.min(1, Math.pow(a[i], 2.2) + 0.6 * Math.pow(b[i], 2.6));
-    data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = v * 255;
-    data[i * 4 + 3] = 255;
-  }
-  const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.magFilter = THREE.LinearFilter;
-  t.minFilter = THREE.LinearMipmapLinearFilter;
-  t.generateMipmaps = true;
-  t.anisotropy = 8;
-  t.needsUpdate = true;
-  return t;
-};
-
-/**
- * Bark for the whole forest: black, wet, deeply furrowed wood with moss on what faces the sky.
- * Light lives inside it: here and there a furrow glows emerald, in thin veins that gather near the
- * roots and the water, and a slow pulse of that light travels outward from the root tree with each
- * of its breaths. (An earlier version lit every furrow, and the wood read as neon wire.)
- */
-const forestBark = (stoneMaterial, normalMap, breath, centre) => {
-  const bark = stoneMaterial(normalMap, 0xffffff, 5);
-  bark.roughness = 0.86;
-  bark.side = THREE.DoubleSide;
-  bark.normalScale.set(0.8, 0.8);
-  const crackTex = crackTexture();
-  const cracks = { value: crackTex };
-  // the same network, finer, cuts the furrows of the bark itself
-  const furrows = crackTex.clone();
-  furrows.repeat.set(2.3, 3.1);
-  furrows.offset.set(0.37, 0.11);
-  furrows.needsUpdate = true;
-  bark.bumpMap = furrows;
-  bark.bumpScale = -4.5;
-  const time = { value: 0 };
-  bark.userData.time = time;
-  bark.onBeforeCompile = (sh) => {
-    sh.uniforms.breath = breath;
-    sh.uniforms.cracks = cracks;
-    sh.uniforms.barkTime = time;
-    sh.uniforms.treeAt = { value: centre };
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec2 vCu; varying vec3 vNw;')
-      .replace('#include <project_vertex>', '#include <project_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;\n vCu = uv;\n vNw = normalize(mat3(modelMatrix) * objectNormal);');
-    sh.fragmentShader = sh.fragmentShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-        varying vec3 vWP; varying vec2 vCu; varying vec3 vNw; uniform float breath; uniform float barkTime; uniform vec3 treeAt; uniform sampler2D cracks;
-        ${NOISE3}
-        float glowCrack; float wetBark;`,
-      )
-      .replace(
-        '#include <color_fragment>',
-        `#include <color_fragment>
-        {
-          // wood: long fibres, dark furrows, a little warmth on the ridges
-          float fibre = mn(vWP * vec3(3.0, 0.35, 3.0)) * 0.6 + mn(vWP * vec3(8.0, 0.8, 8.0)) * 0.4;
-          float furrow = texture2D(cracks, vCu * vec2(2.3, 3.1) + vec2(0.37, 0.11)).r;
-          vec3 wood = mix(vec3(0.028, 0.024, 0.02), vec3(0.15, 0.125, 0.1), fibre * fibre);
-          wood *= 1.0 - 0.75 * furrow;
-          // moss and lichen where the wood faces the sky, in patches; none underwater
-          float up = smoothstep(0.25, 0.85, vNw.y * (gl_FrontFacing ? 1.0 : -1.0));
-          float mossy = up * smoothstep(0.38, 0.62, mn(vWP * 0.55 + 11.0)) * smoothstep(0.0, 0.6, vWP.y);
-          wood = mix(wood, vec3(0.035, 0.07, 0.045) * (0.6 + 0.8 * mn(vWP * 6.0)), mossy * 0.85);
-          // wet and dark near the water
-          wetBark = 1.0 - smoothstep(0.0, 1.6, vWP.y);
-          wood *= 1.0 - 0.45 * wetBark;
-          diffuseColor.rgb = wood;
-          // the veins: thin, in patches, gathering low on the wood; a wave of light runs out from the tree
-          float line = texture2D(cracks, vCu).r;
-          float vein = pow(line, 3.2);
-          float patchy = smoothstep(0.5, 0.72, mn(vWP * vec3(0.17, 0.08, 0.17) + 3.0));
-          float low = 1.0 - smoothstep(0.6, 9.0, vWP.y);
-          float far = length(vWP.xz - treeAt.xz);
-          float wave = 0.55 + 0.45 * sin(far * 0.16 - barkTime * 0.9);
-          glowCrack = vein * patchy * (0.12 + 0.88 * low) * (0.35 + 0.65 * wave);
-          diffuseColor.rgb *= 1.0 - 0.5 * line * patchy;
-        }`,
-      )
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.42, wetBark * 0.8);')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vec3(0.1, 0.95, 0.62) * glowCrack * (0.55 + 0.9 * breath);');
-  };
-  bark.customProgramCacheKey = () => 'forest-bark-v4';
-  return bark;
-};
-
-export const buildTree = ({ scene, pos, glowTex, stoneMaterial, normalMap, updaters, colliders }) => {
-  const g = new THREE.Group();
-  g.position.copy(pos);
-  const r = rng(23);
-  const breath = { value: 0.5 };
-  const bark = forestBark(stoneMaterial, normalMap, breath, pos);
-  const geos = [];
-  const UP = new THREE.Vector3(0, 1, 0);
-  // the path through the forest runs from the tree toward the plain
-  const out = new THREE.Vector3(PLAIN.x - pos.x, 0, PLAIN.z - pos.z).normalize();
-  const across = new THREE.Vector3().crossVectors(UP, out);
-
-  /* the root tree itself: flared buttresses, twisting ridges, a hollow broken crown */
-  const H = 46;
-  const HOLLOW_A = Math.atan2(out.x, out.z);
-  const trunkGeo = new THREE.CylinderGeometry(1, 1, 1, 96, 72, true);
-  {
-    const pp = trunkGeo.attributes.position;
-    for (let i = 0; i < pp.count; i++) {
-      const a = Math.atan2(pp.getX(i), pp.getZ(i));
-      // more rows of the mesh low on the trunk, where the buttresses flare and you stand
-      const h = Math.pow(pp.getY(i) + 0.5, 1.6);
-      const ca = Math.cos(a), sa = Math.sin(a);
-      let R = 3.9 + 6.2 * Math.exp(-h * 7.0) + 1.4 * (1 - h);
-      // the hollow: a deep niche in the foot of the trunk, facing the path
-      let da = a - HOLLOW_A;
-      da = Math.atan2(Math.sin(da), Math.cos(da));
-      const niche = Math.exp(-Math.pow(da / 0.4, 2)) * (1 - smooth01((h - 0.13) / 0.09));
-      const twist = a * 9 + h * 2.6 + fbm(ca * 1.5 + 3, sa * 1.5 + h * 2.2, 3) * 5;
-      R *= 1 + (0.22 * Math.sin(twist) * (1 - h * 0.45) + (fbm(ca * 3.1 + 7, sa * 3.1 + h * 8, 4) - 0.5) * 0.4) * (1 - niche);
-      R *= 1 - 0.3 * niche;
-      let y = h * H;
-      if (h > 0.8) {
-        const k = (h - 0.8) / 0.2;
-        const spike = Math.pow(noise2(ca * 2.4 + 5, sa * 2.4 + 1.3), 2);
-        y += k * k * spike * 20 - k * 3;
-        R *= 1 - k * 0.5 * (1 - spike * 0.6);
-      }
-      pp.setXYZ(i, sa * R + h * h * 3.2, y - 0.8, ca * R - h * h * 1.2);
-    }
-    trunkGeo.computeVertexNormals();
-    const uv = trunkGeo.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, Math.pow(uv.getY(i), 1.6) * (H / 6), uv.getX(i) * 9);
-  }
-  geos.push(trunkGeo);
-  const root = (a, len, h0, rad, lift) => {
-    const pts = [];
-    const wobA = (r() - 0.5) * 0.9;
-    for (let k = 0; k <= 6; k++) {
-      const u = k / 6;
-      const side = Math.sin(u * Math.PI * 1.3 + wobA * 3) * len * 0.09 * u;
-      const d = 2.5 + u * len;
-      pts.push(new THREE.Vector3(Math.sin(a) * d + Math.cos(a) * side, h0 * Math.pow(1 - u, 1.7) + Math.sin(u * Math.PI) * lift - u * 1.1 - 0.3, Math.cos(a) * d - Math.sin(a) * side));
-    }
-    geos.push(tubeGeo(pts, rad, (u) => 0.1 + 0.9 * Math.pow(1 - u, 0.75), 36, 12, 0.2));
-  };
-  const pathA = Math.atan2(out.x, out.z);
-  for (let i = 0; i < 12; i++) {
-    let a = (i / 12) * Math.PI * 2 + r() * 0.3;
-    // keep the roots off the path, so you can walk up to the hollow
-    if (Math.abs(((a - pathA + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.5) continue;
-    root(a, 13 + r() * 12, 6 + r() * 4, 2.0 + r() * 0.7, 1.5 + r() * 2);
-  }
-
-  /* the forest: twisted trees lining the path, leaning over it so their branches meet overhead */
-  const trees = [];
-  for (let i = 0; i < 9; i++) {
-    const along = 22 + i * 7.5 + r() * 2;
-    for (const side of [-1, 1]) {
-      const off = side * (6.5 + r() * 3 + i * 0.25);
-      trees.push({ p: out.clone().multiplyScalar(along).addScaledVector(across, off), lean: -side, h: 15 + r() * 9 });
-    }
-  }
-  // and a looser ring all round, so the tree stands in a wood
-  for (let i = 0; i < 26; i++) {
-    const a = r() * Math.PI * 2;
-    if (Math.abs(((a - pathA + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.45) continue;
-    const d = 30 + r() * 30;
-    trees.push({ p: new THREE.Vector3(Math.sin(a) * d, 0, Math.cos(a) * d), lean: 0, h: 13 + r() * 10 });
-  }
-  const mossPts = []; // points along branches where moss hangs
-  for (const T of trees) {
-    // lean toward the path's centre line (or a random way, in the ring)
-    const leanDir = T.lean ? across.clone().multiplyScalar(T.lean) : new THREE.Vector3(r() - 0.5, 0, r() - 0.5).normalize();
-    const base = T.p.clone();
-    const pts = [];
-    const wob = r() * 6;
-    for (let k = 0; k <= 6; k++) {
-      const u = k / 6;
-      const p = base.clone().addScaledVector(UP, u * T.h - 0.6).addScaledVector(leanDir, Math.pow(u, 1.8) * T.h * 0.35);
-      p.x += Math.sin(u * 4 + wob) * 0.9 * u;
-      p.z += Math.cos(u * 3.3 + wob) * 0.9 * u;
-      pts.push(p);
-    }
-    const rad = 1.2 + r() * 0.6;
-    geos.push(tubeGeo(pts, rad, (u) => (1 + 1.6 * Math.exp(-u * 10)) * (1 - u * 0.72), 30, 10, 0.24));
-    // buttress roots at the foot
-    for (let k = 0; k < 4; k++) {
-      const a = r() * Math.PI * 2;
-      const rp = [];
-      for (let m = 0; m <= 4; m++) {
-        const u = m / 4;
-        rp.push(base.clone().add(new THREE.Vector3(Math.sin(a) * (0.5 + u * 4.5), 2.2 * Math.pow(1 - u, 2) - 0.5, Math.cos(a) * (0.5 + u * 4.5))));
-      }
-      geos.push(tubeGeo(rp, rad * 0.6, (u) => 1 - u * 0.85, 10, 7, 0.15));
-    }
-    // branches: they rise, twist, and arch over toward the path; twigs fork from them
-    const curve = new THREE.CatmullRomCurve3(pts);
-    const nb = 3 + Math.floor(r() * 3);
-    for (let b = 0; b < nb; b++) {
-      const u0 = 0.45 + r() * 0.5;
-      const p0 = curve.getPointAt(u0);
-      const ang = Math.atan2(leanDir.x, leanDir.z) + (r() - 0.5) * 2.2;
-      const dir = new THREE.Vector3(Math.sin(ang), 0, Math.cos(ang));
-      const len = 6 + r() * 9;
-      const bp = [];
-      for (let m = 0; m <= 5; m++) {
-        const u = m / 5;
-        const p = p0.clone().addScaledVector(dir, u * len).addScaledVector(UP, Math.sin(u * Math.PI * 0.85) * len * 0.35 - u * u * len * 0.18);
-        p.addScaledVector(across, Math.sin(u * 5 + b) * 0.8 * u);
-        bp.push(p);
-      }
-      geos.push(tubeGeo(bp, rad * 0.42, (u) => 1 - u * 0.85, 18, 7, 0.2));
-      const bc = new THREE.CatmullRomCurve3(bp);
-      for (let tw = 0; tw < 3; tw++) {
-        const q0 = bc.getPointAt(0.4 + r() * 0.55);
-        const td = dir.clone().applyAxisAngle(UP, (r() - 0.5) * 2.4);
-        const tl = 2.5 + r() * 4;
-        const tp = [q0, q0.clone().addScaledVector(td, tl * 0.5).addScaledVector(UP, tl * 0.25), q0.clone().addScaledVector(td, tl).addScaledVector(UP, tl * 0.05 - 0.6)];
-        geos.push(tubeGeo(tp, rad * 0.15, (u) => 1 - u * 0.9, 8, 5, 0.1));
-        mossPts.push(tp[1], tp[2]);
-      }
-      for (let m = 0; m < 4; m++) mossPts.push(bc.getPointAt(0.3 + r() * 0.7));
-    }
-    const wp = T.p.clone().add(pos);
-    colliders.push({ x: wp.x, z: wp.z, r: rad + 0.6 });
-  }
-  const forest = new THREE.Mesh(mergeGeos(geos), bark);
-  forest.castShadow = forest.receiveShadow = true;
-  g.add(forest);
-
-  /* hanging moss: thin dark strands that sway */
-  {
-    const strand = new THREE.PlaneGeometry(0.22, 1, 1, 6);
-    strand.translate(0, -0.5, 0);
-    const N = mossPts.length * 3;
-    const moss = new THREE.InstancedMesh(
-      strand,
-      new THREE.MeshStandardMaterial({ color: 0x1d2a26, roughness: 1, side: THREE.DoubleSide, transparent: true, depthWrite: false }),
-      N,
-    );
-    const sway = { value: 0 };
-    moss.material.onBeforeCompile = (sh) => {
-      sh.uniforms.sway = sway;
-      sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float sway; varying float vDown;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n vDown = -position.y;\n transformed.x += sin(sway + instanceMatrix[3].x * 0.7 + instanceMatrix[3].z * 0.4) * 0.25 * vDown * vDown;');
-      sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying float vDown;')
-        .replace('#include <alphamap_fragment>', '#include <alphamap_fragment>\n diffuseColor.a *= (1.0 - smoothstep(0.55, 1.0, vDown)) * 0.9;');
-    };
-    const d = new THREE.Object3D();
-    let k = 0;
-    for (const p of mossPts)
-      for (let m = 0; m < 3; m++) {
-        d.position.set(p.x + (r() - 0.5) * 1.2, p.y, p.z + (r() - 0.5) * 1.2);
-        d.rotation.set(0, r() * Math.PI, 0);
-        d.scale.set(0.7 + r(), 1.5 + r() * 4.5, 1);
-        d.updateMatrix();
-        moss.setMatrixAt(k++, d.matrix);
-      }
-    g.add(moss);
-    updaters.push((t) => (sway.value = t * 0.6));
-  }
-
-  /* the hollow at the root tree's foot, facing the path: a doorway of teal-white light */
-  const doorPower = { value: 0.55 }; // dim until the companion wakes; full when the doors open
-  const doorWorld = new THREE.Vector3();
-  let doorHalo = null;
-  {
-    const door = new THREE.Group();
-    door.position.copy(out.clone().multiplyScalar(7.6)).setY(3.2);
-    door.rotation.y = pathA;
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.07, 8, 64), new THREE.MeshBasicMaterial({ color: hdr(0.35, 1, 0.75, 1.5), fog: false }));
-    rim.scale.set(1, 1.45, 1);
-    door.add(rim);
-    const inner = new THREE.Mesh(
-      new THREE.CircleGeometry(2.55, 48),
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: { time: { value: 0 }, power: doorPower },
-        vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-        fragmentShader: /* glsl */ `varying vec2 vUv; uniform float time; uniform float power;
-          void main() {
-            vec2 p = vUv - 0.5;
-            float r = length(p) * 2.0;
-            // a tunnel of light receding into the tree
-            float rings = 0.5 + 0.5 * sin(r * 18.0 - time * 1.5);
-            // deep emerald at the rim, paler toward the heart of it; never burnt out
-            vec3 col = mix(vec3(0.08, 0.75, 0.5), vec3(0.6, 1.0, 0.88), pow(1.0 - r, 2.5)) * (pow(1.0 - r, 1.3) * 0.95 + rings * 0.16 * (1.0 - r));
-            gl_FragColor = vec4(col * power, 1.0);
-          }`,
-      }),
-    );
-    inner.scale.set(1, 1.45, 1);
-    door.add(inner);
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(0.2, 0.9, 0.62), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
-    halo.scale.set(13, 15, 1);
-    halo.position.z = 0.5;
-    door.add(halo);
-    doorHalo = halo;
-    g.add(door);
-    doorWorld.copy(door.position).add(pos).setY(0);
-    updaters.push((t) => (inner.material.uniforms.time.value = t));
-  }
-
-  /* teal light through the trees */
-  const light = new THREE.PointLight(0x4af0c8, 220, 90, 1.5);
-  light.position.copy(out.clone().multiplyScalar(14)).setY(6);
-  g.add(light);
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x3fd8b0, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-  glow.position.y = 18;
-  glow.scale.set(130, 90, 1);
-  g.add(glow);
-  // drifting motes of teal light
-  const N = 420;
-  const mp = new Float32Array(N * 3);
-  const seeds = [];
-  for (let i = 0; i < N; i++) seeds.push([r() * Math.PI * 2, 4 + r() * 55, r() * 30, r()]);
-  const motes = new THREE.Points(
-    new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(mp, 3)),
-    new THREE.PointsMaterial({ map: glowTex, color: hdr(0.35, 1, 0.85, 2), size: 0.55, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
-  );
-  motes.frustumCulled = false;
-  g.add(motes);
-  /*
-   * The forest chapter's puzzle (body: timing and movement): walls of roots across the path that
-   * rise on the tree's in-breath and sink into the water on its out-breath, in a wave that runs
-   * toward the tree. Sunk until the doors open; sunk for good once the tree has woken.
-   */
-  const GATE_ALONG = [74, 62, 50, 38];
-  const gateYaw = Math.atan2(-across.z, across.x); // local x = across the path, local z = out of the forest
-  const gates = GATE_ALONG.map((along, k) => {
-    const gg = new THREE.Group();
-    gg.position.copy(out).multiplyScalar(along);
-    gg.rotation.y = gateYaw;
-    const parts = [];
-    const glowParts = [];
-    for (let j = 0; j < 5; j++) {
-      const pts = [];
-      for (let m = 0; m <= 8; m++) {
-        const u = m / 8;
-        const x = -9.5 + u * 19;
-        pts.push(new THREE.Vector3(x, 0.35 + j * 0.5 + Math.sin(u * Math.PI * 2 + j * 1.7) * 0.28 + Math.pow(Math.abs(x) / 9.5, 2) * 1.6, Math.sin(u * 5 + j * 2.1) * 0.55));
-      }
-      parts.push(tubeGeo(pts, 0.42 - j * 0.04, () => 1, 40, 8, 0.25));
-      if (j % 2 === 0) glowParts.push(tubeGeo(pts.map((p) => p.clone().add(new THREE.Vector3(0, 0.05, 0.3))), 0.06, () => 1, 40, 5, 0));
-    }
-    for (let v = 0; v < 7; v++) {
-      const x = -7.5 + v * 2.5 + (r() - 0.5);
-      const pts = [new THREE.Vector3(x, -0.6, 0), new THREE.Vector3(x + (r() - 0.5) * 1.2, 1.4, (r() - 0.5) * 0.8), new THREE.Vector3(x + (r() - 0.5) * 1.6, 3.0 + r() * 0.8, (r() - 0.5) * 0.8)];
-      parts.push(tubeGeo(pts, 0.32, (u) => 1 - u * 0.8, 14, 7, 0.2));
-    }
-    const mesh = new THREE.Mesh(mergeGeos(parts), bark);
-    mesh.castShadow = true;
-    gg.add(mesh);
-    const glowMat = new THREE.MeshBasicMaterial({ color: hdr(0.15, 1, 0.65, 0.9), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-    gg.add(new THREE.Mesh(mergeGeos(glowParts), glowMat));
-    gg.position.y = -3.4;
-    g.add(gg);
-    return { along, g: gg, glowMat, up: 0, k };
-  });
-  let gatesActive = false;
-  let solved = false;
-  let surge = 0;
-  const api = {
-    out,
-    across,
-    pos: pos.clone(),
-    doorPos: doorWorld,
-    entrance: pos.clone().addScaledVector(out, 88),
-    gates,
-    gateHalfWidth: 8.5,
-    /** The doors of the three places open: the hollow brightens and the roots start to breathe. */
-    open() {
-      gatesActive = true;
-    },
-    /** The tree wakes: a surge of light, and the roots sink for good. */
-    wake() {
-      solved = true;
-      surge = 1;
-    },
-    get solved() {
-      return solved;
-    },
-  };
-
-  scene.add(g);
-  // (the buttresses reach about 13 m from the heart of the trunk at the waterline)
-  colliders.push({ x: pos.x, z: pos.z, r: 13.2 });
-  updaters.push((t, dt = 0.016) => {
-    bark.userData.time.value = t;
-    // gates: up on the in-breath, the wave reaching each gate 1.6 s after the one before
-    for (const G of gates) {
-      const target = gatesActive && !solved ? smooth01((Math.sin(0.9 * (t - G.k * 1.6)) + 0.3) / 0.6) : 0;
-      G.up += (target - G.up) * (1 - Math.exp(-dt * 3));
-      G.g.position.y = -3.4 * (1 - G.up);
-      G.glowMat.opacity = G.up * (0.5 + 0.5 * Math.sin(t * 3 + G.k));
-    }
-    surge = Math.max(0, surge - dt * 0.25);
-    doorPower.value += ((gatesActive ? (solved ? 1.6 : 1.15) : 0.55) + surge * 2 - doorPower.value) * (1 - Math.exp(-dt * 2));
-    if (doorHalo) doorHalo.material.opacity = 0.1 + doorPower.value * 0.16;
-  });
-  updaters.push((t) => {
-    const b = 0.5 + 0.5 * Math.sin(t * 0.9) + surge * 1.1;
-    breath.value = b;
-    light.intensity = 160 + b * 120;
-    for (let i = 0; i < N; i++) {
-      const [a, rad, y0, s] = seeds[i];
-      const aa = a + t * 0.04 * (s - 0.5);
-      mp[i * 3] = Math.cos(aa) * rad;
-      mp[i * 3 + 1] = ((y0 + t * (0.2 + s * 0.4)) % 30) + 0.4;
-      mp[i * 3 + 2] = Math.sin(aa) * rad;
-    }
-    motes.geometry.attributes.position.needsUpdate = true;
-  });
-  return api;
-};
+/* (The root tree and its forest live in forest.js.) */
 
 /* ───────────────────────── the way to the lotus ───────────────────────── */
 
@@ -1183,7 +719,7 @@ export const needleTower = (r, geos, lightPts, x, z, h, w, keep = 1, detail = fa
     for (let k = 0; k < 10; k++) push([x + (r() - 0.5) * ww * 0.6, y + (k / 10) * sh * 0.8, z + (r() - 0.5) * ww * 0.6, r()]);
 };
 
-export const buildLotusAvenue = ({ scene, glowTex, stoneMaterial, normalMap, updaters, colliders, lotusPos }) => {
+export const buildLotusAvenue = ({ scene, glowTex, stoneMaterial, normalMap, updaters, colliders, lotusPos, farDim = { value: 1 } }) => {
   const g = new THREE.Group();
   const r = rng(808);
   const stone = stoneMaterial(normalMap, 0x3a332e, 4, { scale: 0.3, bump: 0.05 });
@@ -1209,12 +745,13 @@ export const buildLotusAvenue = ({ scene, glowTex, stoneMaterial, normalMap, upd
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    uniforms: { time: { value: 0 }, tex: { value: glowTex }, scale: { value: 600 } },
+    uniforms: { time: { value: 0 }, tex: { value: glowTex }, scale: { value: 600 }, dim: farDim, low: { value: 0 }, quiet: { value: 0 } },
     vertexShader: /* glsl */ `
-      attribute float seed; uniform float time; uniform float scale; varying float vA;
+      attribute float seed; uniform float time; uniform float scale; uniform float dim; uniform float low; uniform float quiet; varying float vA;
       void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vA = 0.65 + 0.35 * sin(time * (1.5 + seed * 3.0) + seed * 40.0);
+        // (low: in the ending only the lamps near the water burn, as in the owner's film)
+        vA = (0.65 + 0.35 * sin(time * (1.5 + seed * 3.0) + seed * 40.0)) * dim * mix(1.0, 0.02 + 0.98 * smoothstep(16.0, 3.0, position.y), low) * (1.0 - quiet);
         gl_PointSize = clamp(scale * (0.9 + seed * 0.6) / -mv.z, 2.0, 30.0);
         gl_Position = projectionMatrix * mv;
       }`,
@@ -1254,6 +791,7 @@ export const buildLotusAvenue = ({ scene, glowTex, stoneMaterial, normalMap, upd
   candleGeo.setAttribute('seed', new THREE.BufferAttribute(cs, 1));
   const candleMat = lightMat.clone();
   candleMat.uniforms.tex.value = glowTex;
+  candleMat.uniforms.dim = farDim;
   candleMat.vertexShader = candleMat.vertexShader.replace('gl_PointSize = clamp(scale * (0.55 + seed * 0.35) / -mv.z, 1.5, 22.0);', 'gl_PointSize = clamp(scale * (0.45 + seed * 0.3) / -mv.z, 1.6, 20.0);');
   candleMat.vertexShader = candleMat.vertexShader.replace('vec4 mv = modelViewMatrix * vec4(position, 1.0);', 'vec3 p = position; p.y += sin(time * 0.8 + seed * 30.0) * 0.03; p.x += sin(time * 0.1 + seed * 9.0) * 0.4;\n        vec4 mv = modelViewMatrix * vec4(p, 1.0);');
   const candles = new THREE.Points(candleGeo, candleMat);
@@ -1277,5 +815,14 @@ export const buildLotusAvenue = ({ scene, glowTex, stoneMaterial, normalMap, upd
     lightMat.uniforms.time.value = t;
     candleMat.uniforms.time.value = t;
   });
-  return { zNear: Z_NEAR, zFar: lotusPos.z };
+  return {
+    zNear: Z_NEAR,
+    zFar: lotusPos.z,
+    /** 0: every ledge and window lit; 1: only the lamps near the water. */
+    setLow(k) {
+      lightMat.uniforms.low.value = k;
+      // (and the candles on the water burn lower: seen from the plain, thousands of them in one line were a white bar)
+      candleMat.uniforms.quiet.value = 0.93 * k;
+    },
+  };
 };

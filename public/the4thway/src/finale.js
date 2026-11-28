@@ -2,25 +2,31 @@ import * as THREE from 'three';
 import { buildPillar } from './pillar.js';
 
 /*
- * The completion of the game (refs/finale-diamond.webp, refs/finale-gate.webp).
+ * The completion of the game, after the owner's film of 2026-11-28 (refs/ending-film-*.jpg; the
+ * version before it, with the diamond and the triangular gate at dawn, is in
+ * backups/2026-11-28-before-forest-ending/).
  *
- * The player has gathered six diamonds from the teaching stones (knowledge) and three seeds from
- * the forest, the tower and the lotus (the body, the essence, the heart's rhythm). They bring them
- * back to the plain, where the sleepers walk, and give them all back at once: the nine lights fuse
- * into one great diamond over the crowd; its light cuts every thread and the sleepers wake and look
- * up. The diamond unfolds into the enneagram and draws a gate of light on the water; the sky turns
- * to dawn; everyone walks through.
+ * It is night. The lotus on the plain stands alight between the dark spires of its avenue; from a
+ * star high above it a cone of fine rays falls round a white pillar; orange haze hangs low behind
+ * the spires. The player has gathered six diamonds from the teaching stones (knowledge) and three
+ * seeds from the forest, the tower and the lotus (body, essence, the heart's rhythm). They bring them
+ * back to the middle of the plain, where rings of light burn on the water among the sleepers, and
+ * give them all back at once: the nine lights cross the water to the lotus, lighting two more fields
+ * of rings on the way, and become one ribbon of light that winds up round the pillar (the ascending
+ * spiral). As it climbs, a wave of waking crosses the plain: every thread is cut, and the sleepers
+ * wake and look up. When the ribbon reaches the star, the star opens into rays and the enneagram is
+ * drawn round it; the crowd gathers before the avenue; everyone walks into the light.
  *
- * The figure above the gate is the enneagram (the owner's decision, 2026-11-12): the Fourth Way's
+ * The figure round the star is the enneagram (the owner's decision, 2026-11-12): the Fourth Way's
  * own symbol. Its triangle is the Law of Three, its six-pointed figure the Law of Seven (the octave
- * the player has just completed in the lotus), and the gate below repeats its inner triangle.
+ * the player has just completed in the lotus). The cone of rays below it is the gate.
  *
  * Phases:
- *   1 return    walk back to the middle of the plain
- *   2 offering  raise the lantern inside the burning mark and hold it 3 s
- *   3 diamond   the nine lights rise and fuse; the waking wave; the sky begins to turn (watch)
- *   4 gate      the diamond unfolds into the symbol and draws the gate; the crowd walks to it (watch)
- *   5 walk      walk through the gate
+ *   1 return    walk back to the rings in the middle of the plain
+ *   2 offering  raise the lantern inside the rings and hold it 3 s
+ *   3 spiral    the nine lights cross to the lotus and rise as the ribbon; the waking wave (watch)
+ *   4 star      the star opens, the enneagram is drawn, the crowd gathers before the avenue (watch)
+ *   5 walk      walk into the avenue, toward the lotus
  *   6 through   white-gold, then the end card
  *
  * Everything is built at load and kept hidden, so nothing compiles mid-scene.
@@ -29,20 +35,27 @@ import { buildPillar } from './pillar.js';
 export const FINALE_SYMBOL = 'enneagram'; // or 'hexagram': two plain interlocked triangles
 
 const MARK = new THREE.Vector3(0, 0, 0); // the offering, in the middle of the sleepers' circles
-const DIAMOND_A = new THREE.Vector3(0, 48, -40); // where the nine lights fuse
-const GATE_Z = -90;
-const GATE_HALF = 40; // half the base
-const GATE_H = 70;
-const SYMBOL_R = 20;
-const DIAMOND_B = new THREE.Vector3(0, GATE_H + 5 + SYMBOL_R, GATE_Z); // the symbol's centre, above the apex
-const PLAIN_LOTUS_HEART = new THREE.Vector3(0, 9, -175);
-const HOLD = 3; // seconds the lantern must stay raised in the mark
+const LOTUS = new THREE.Vector3(0, 0, -175);
+const HEART_Y = 9; // the plain lotus's heart
+const APEX_Y = 250; // the star
+const APEX = new THREE.Vector3(LOTUS.x, APEX_Y, LOTUS.z);
+const GATE_Z = -90; // the mouth of the avenue: walking past it ends the game
+const GATE_HALF = 40;
+const SYMBOL_R = 24;
+const HOLD = 3; // seconds the lantern must stay raised in the rings
 const WAVE_V = 14; // m/s, the waking wave
+// the fields of rings on the water: [x, z, radius]; the first is where the offering is made
+const FIELDS = [
+  [0, 0, 22],
+  [0, -52, 12],
+  [0, -80, 8],
+];
+const TURNS = 3; // the ribbon's turns round the pillar
 
 // the phase-3 timeline, in seconds from the offering
-const T3 = { fly: 0, gather: 4.6, grow: 7, rays: 8, wave: 9, dawn: 9, end: 18 };
+const T3 = { fly: 0, field1: 0.9, field2: 2.0, gather: 4.6, rise: 7, rays: 7.5, wave: 9, top: 16.5, end: 18 };
 // the phase-4 timeline, in seconds from its start
-const T4 = { move: 5, unfold0: 2, unfold1: 5, symbol0: 3, symbol1: 8, draw0: 4, draw1: 9, fill0: 6, fill1: 12, send: 2, free: 12 };
+const T4 = { burst0: 0, burst1: 3.5, symbol0: 3, symbol1: 8, send: 2, look: 7, free: 12 };
 
 const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 const span = (t, a, b) => ease((t - a) / (b - a));
@@ -50,7 +63,7 @@ const hdr = (r, g, b, k) => new THREE.Color(r * k, g * k, b * k);
 
 const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false };
 
-/** A flat ribbon from a to b (in the gate's plane, facing +z), with an 'ord' value at each end for drawing it on. */
+/** A flat ribbon from a to b (in a plane facing +z), with an 'ord' value at each end for drawing it on. */
 const ribbon = (out, a, b, w, ordA, ordB) => {
   const dx = b.x - a.x, dy = b.y - a.y;
   const l = Math.hypot(dx, dy) || 1;
@@ -88,130 +101,132 @@ const lineMaterial = (color) =>
       }`,
   });
 
+/**
+ * A field of rings on the water (refs/ending-film-0.jpg): a dozen rings of ember light, each a thin
+ * bright line with a glitter of sparks round it, and dark water between. power: how brightly it
+ * burns; charge: 0..1, the offering being made (the rings quicken and whiten); wave: the radius of a
+ * front of light that crosses it (0: none).
+ */
+const ringsMaterial = (radius) =>
+  new THREE.ShaderMaterial({
+    ...additive,
+    uniforms: { time: { value: 0 }, power: { value: 0 }, charge: { value: 0 }, radius: { value: radius }, wave: { value: 0 } },
+    vertexShader: /* glsl */ `varying vec2 vXZ; void main() { vXZ = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `uniform float time; uniform float power; uniform float charge; uniform float radius; uniform float wave; varying vec2 vXZ;
+      float hh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      void main() {
+        float r = length(vXZ);
+        float spacing = radius / 11.5;
+        // the rings draw slowly inward, toward the middle (faster while the lantern is held up)
+        float k = r / spacing + time * (0.1 + 0.45 * charge);
+        float w = abs(fract(k) - 0.5) * 2.0; // 0 on a ring's own line, 1 midway between two rings
+        float core = exp(-pow(w / 0.24, 2.0));
+        float skirt = smoothstep(0.74, 0.12, w);
+        // sparks: small cells, about half of them alight, each flickering to itself
+        vec2 cu = vec2(atan(vXZ.y, vXZ.x) * max(r, 0.3) / 0.075, k * 22.0);
+        float h = hh(floor(cu));
+        float tw = 0.5 + 0.5 * sin(time * (2.0 + h * 6.0) + h * 40.0);
+        float spark = step(0.5, h) * tw * smoothstep(0.5, 0.12, length(fract(cu) - 0.5));
+        float a = core * (0.62 + 0.8 * spark) + skirt * spark * 1.15 + 0.1 * (1.0 - w);
+        vec3 col = mix(vec3(1.0, 0.3, 0.075), vec3(1.0, 0.56, 0.26), clamp(core * 0.55 + spark * 0.6 + charge * 0.4, 0.0, 1.0));
+        float edge = smoothstep(radius, radius - 1.6, r);
+        // a front of light crossing the water (the waking wave)
+        float fr = wave > 0.5 ? exp(-pow((r - wave) / 1.6, 2.0)) : 0.0;
+        gl_FragColor = vec4(col * a * edge * power * 1.2 + vec3(1.0, 0.78, 0.5) * fr * 1.6, 1.0);
+      }`,
+  });
+
 export const buildFinale = ({ scene, glowTex, sleepers }) => {
   const g = new THREE.Group();
   g.visible = false;
   scene.add(g);
   const add = (m) => (g.add(m), m);
 
-  /* ── the lotus on the plain carries its pillar now ── */
-  const pillar = buildPillar({ height: 700, fanAngles: [9, 14] });
-  pillar.group.position.copy(PLAIN_LOTUS_HEART);
+  /* ── the pillar: a white core from the lotus's heart to the star ── */
+  const pillar = buildPillar({ height: APEX_Y - HEART_Y, fanAngles: [], coreTopFade: 0.1, sheathWidth: 9 });
+  pillar.group.position.set(LOTUS.x, HEART_Y, LOTUS.z);
   add(pillar.group);
 
-  /* ── the offering mark: rings of fire on the water, as in the lotus ── */
-  const markMat = new THREE.ShaderMaterial({
-    ...additive,
-    uniforms: { time: { value: 0 }, charge: { value: 0 }, power: { value: 1 } },
-    vertexShader: /* glsl */ `varying vec2 vXZ; void main() { vXZ = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: /* glsl */ `uniform float time; uniform float charge; uniform float power; varying vec2 vXZ;
-      float hh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-      float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hh(i), hh(i + vec2(1, 0)), f.x), mix(hh(i + vec2(0, 1)), hh(i + vec2(1, 1)), f.x), f.y); }
-      void main() {
-        float r = length(vXZ);
-        float ripple = pow(0.5 + 0.5 * sin(r * 4.8 - time * 1.2), 18.0);
-        // one slow front every 2.3 s, faster and brighter as the lantern is held up
-        float age = mod(time, 2.3 - charge * 1.2);
-        float behind = age * 6.5 - r;
-        float front = exp(-behind * behind * 10.0);
-        float gr = vn(vXZ * 4.0) * 0.5 + vn(vXZ * 13.0 + time * 0.1) * 0.5;
-        float grain = 0.25 + 0.75 * smoothstep(0.25, 0.8, gr);
-        float edge = smoothstep(12.0, 8.0, r);
-        float a = (ripple * (0.35 + charge * 1.2) + front * (1.2 + charge * 2.0)) * grain * edge * power;
-        gl_FragColor = vec4(mix(vec3(1.0, 0.3, 0.1), vec3(1.0, 0.75, 0.45), charge) * a * 1.4, 1.0);
-      }`,
-  });
-  const mark = add(new THREE.Mesh(new THREE.CircleGeometry(12, 96), markMat));
-  mark.rotation.x = -Math.PI / 2;
-  mark.position.copy(MARK).setY(0.03);
+  /* ── the cone of rays that falls from the star round it (refs/ending-film-*.jpg) ── */
+  const coneMat = (deg, k, seed) => {
+    const geo = new THREE.ConeGeometry(APEX_Y * Math.tan((deg * Math.PI) / 180), APEX_Y, 256, 8, true);
+    geo.translate(0, APEX_Y / 2, 0); // its foot on the water, its point at the star
+    const m = new THREE.Mesh(
+      geo,
+      new THREE.ShaderMaterial({
+        ...additive,
+        // only its far side is drawn: the spires that stand inside it stay dark against the rays
+        side: THREE.BackSide,
+        uniforms: { power: { value: 0 }, drift: { value: 0 }, seed: { value: seed }, height: { value: APEX_Y }, color: { value: new THREE.Color(1.0, 0.72, 0.5).multiplyScalar(k) } },
+        vertexShader: /* glsl */ `uniform float height; varying float vA; varying float vH; varying float vEdge;
+          void main() {
+            vA = atan(position.z, position.x) / 6.2831853 + 0.5;
+            vH = position.y / height;
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vec3 n = normalize(normalMatrix * normal);
+            // dimmer where the cone is seen edge-on: there the rays crowd together into a smear
+            vEdge = pow(abs(dot(n, normalize(-mv.xyz))), 0.6);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: /* glsl */ `uniform float power; uniform float drift; uniform float seed; uniform vec3 color;
+          varying float vA; varying float vH; varying float vEdge;
+          float streak(float a, float f, float s) {
+            float i = floor(a * f), fr = fract(a * f);
+            float h = fract(sin(i * 91.7 + s) * 43758.5);
+            return smoothstep(0.5, 0.0, abs(fr - 0.5)) * step(0.4, h) * h;
+          }
+          void main() {
+            // (the finer rays fade out where they would be narrower than a pixel, instead of crawling)
+            float fine = clamp(1.3 - fwidth(vA * 380.0) * 1.6, 0.0, 1.0);
+            float rays = streak(vA, 150.0, seed) + 0.6 * fine * streak(fract(vA + drift), 380.0, seed + 6.0);
+            // strongest high up, dying into the haze over the water; nothing at the very point (the star is there)
+            float fade = smoothstep(0.0, 0.14, vH) * (0.22 + 0.78 * pow(vH, 0.7)) * (1.0 - smoothstep(0.97, 1.0, vH));
+            // (a faint veil between the rays: the air inside the cone is lit)
+            gl_FragColor = vec4(color * (rays + 0.16) * fade * vEdge * power, 1.0);
+          }`,
+      }),
+    );
+    m.position.set(LOTUS.x, 0, LOTUS.z);
+    m.frustumCulled = false;
+    return add(m);
+  };
+  const cones = [coneMat(4.5, 1.4, 1), coneMat(8.5, 1.0, 14), coneMat(13.5, 0.62, 27)];
 
-  /* ── the nine lights: six diamonds and three seeds, leaving the lantern ── */
-  const LIGHT_COLORS = [...Array(6)].map(() => new THREE.Color(1.8, 1.9, 2.2)).concat([new THREE.Color(0.5, 2.2, 1.4), new THREE.Color(0.6, 1.0, 2.4), new THREE.Color(2.4, 0.6, 0.45)]);
-  const lights = LIGHT_COLORS.map((c) => {
-    const s = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: c, ...additive, depthTest: true, opacity: 0 })));
-    s.userData = { from: new THREE.Vector3() };
-    return s;
-  });
-
-  /* ── the diamond ── */
-  const octa = new THREE.OctahedronGeometry(1, 0);
-  {
-    const n = octa.attributes.position.count;
-    const b = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) b[i * 3 + (i % 3)] = 1;
-    octa.setAttribute('bary', new THREE.BufferAttribute(b, 3));
-  }
-  const shellMat = new THREE.ShaderMaterial({
+  /* ── the star at the top: a point of light that opens into rays ── */
+  const starMat = new THREE.ShaderMaterial({
     ...additive,
     side: THREE.DoubleSide,
-    uniforms: { time: { value: 0 }, power: { value: 0 }, faces: { value: 1 } },
-    vertexShader: /* glsl */ `attribute vec3 bary; varying vec3 vB; varying vec3 vN; varying vec3 vV;
-      void main() { vB = bary; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: /* glsl */ `uniform float time; uniform float power; uniform float faces; varying vec3 vB; varying vec3 vN; varying vec3 vV;
+    uniforms: { power: { value: 0 }, burst: { value: 0 }, time: { value: 0 } },
+    vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `uniform float power; uniform float burst; uniform float time; varying vec2 vUv;
+      float hs(float x) { return fract(sin(x * 91.7) * 43758.5453); }
       void main() {
-        // a fine lattice of small cells across each face (lines every ~1.2 m), as in the reference
-        const float N = 26.0;
-        vec3 q = vB * N;
-        vec3 fw = fwidth(q);
-        vec3 dl = abs(fract(q - 0.5) - 0.5) / max(fw, 1e-4);
-        float line = 1.0 - clamp(min(min(dl.x, dl.y), dl.z), 0.0, 1.0);
-        float edge = 1.0 - smoothstep(0.0, 0.02, min(min(vB.x, vB.y), vB.z));
-        float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.0);
-        // a few cells flash white for an instant
-        vec3 cell = floor(q);
-        float h = fract(sin(dot(cell, vec3(12.9898, 78.233, 37.719)) + floor(time * 4.0) * 7.13) * 43758.5453);
-        float spark = step(0.988, h);
-        float a = (line * 0.7 * (0.35 + 0.65 * rim) + rim * 0.45 + spark * 1.6 + 0.08) * faces + edge * 2.2;
-        gl_FragColor = vec4(vec3(1.0, 0.85, 0.6) * a * power, 1.0);
+        vec2 p = (vUv - 0.5) * 2.0;
+        float r = length(p);
+        float a = atan(p.y, p.x) / 6.2831853 + 0.5;
+        // many thin rays of different lengths; a second, finer set between them
+        float i1 = floor(a * 72.0), f1 = fract(a * 72.0);
+        float i2 = floor(a * 190.0 + 0.3), f2 = fract(a * 190.0 + 0.3);
+        float len1 = (0.3 + 0.7 * hs(i1)) * burst, len2 = (0.15 + 0.45 * hs(i2 + 7.0)) * burst;
+        float ray = smoothstep(0.5, 0.0, abs(f1 - 0.5) * (1.0 + r * 5.0)) * step(0.35, hs(i1 + 3.0)) * smoothstep(len1, len1 * 0.15, r)
+                  + 0.5 * smoothstep(0.5, 0.0, abs(f2 - 0.5) * (1.0 + r * 5.0)) * step(0.5, hs(i2 + 11.0)) * smoothstep(len2, len2 * 0.15, r);
+        float core = exp(-r * r * 1400.0) * 3.0 + exp(-r * 34.0) * 0.5;
+        vec3 col = vec3(1.0, 0.8, 0.6) * (ray * 0.5 * smoothstep(0.0, 0.05, burst) * (0.9 + 0.1 * sin(time * 2.0 + a * 60.0)) + core * (0.25 + 0.75 * burst));
+        gl_FragColor = vec4(col * power, 1.0);
       }`,
   });
-  const diamond = add(new THREE.Mesh(octa, shellMat));
-  diamond.position.copy(DIAMOND_A);
-  diamond.scale.set(18, 25, 18);
-  const core = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: hdr(1.0, 0.88, 0.66, 2.6), ...additive, depthTest: true, opacity: 0 })));
-  core.position.copy(DIAMOND_A);
-  core.scale.setScalar(30);
-  const coreLight = add(new THREE.PointLight(0xffd9a0, 0, 260, 1.4));
-  coreLight.position.copy(DIAMOND_A);
+  const star = add(new THREE.Mesh(new THREE.PlaneGeometry(340, 340), starMat));
+  star.position.copy(APEX);
+  star.frustumCulled = false;
 
-  /* ── dust in the shafts under the diamond ── */
-  const ND = 600;
-  const dp = new Float32Array(ND * 3);
-  const ds = new Float32Array(ND);
-  for (let i = 0; i < ND; i++) {
-    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 30;
-    dp.set([Math.cos(a) * r, Math.random() * 60, Math.sin(a) * r - 20], i * 3);
-    ds[i] = Math.random();
-  }
-  const dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute('position', new THREE.BufferAttribute(dp, 3));
-  dustGeo.setAttribute('seed', new THREE.BufferAttribute(ds, 1));
-  const dustMat = new THREE.ShaderMaterial({
-    ...additive,
-    uniforms: { time: { value: 0 }, power: { value: 0 }, tex: { value: glowTex }, scale: { value: 600 } },
-    vertexShader: /* glsl */ `attribute float seed; uniform float time; uniform float scale; varying float vA;
-      void main() {
-        vec3 p = position;
-        p.y = mod(p.y + time * (0.3 + seed * 0.5), 60.0);
-        p.x += sin(time * 0.2 + seed * 30.0) * 1.5;
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        vA = (0.4 + 0.6 * sin(time * 1.5 + seed * 50.0)) * (1.0 - length(position.xz + vec2(0.0, 20.0)) / 30.0);
-        gl_PointSize = clamp(scale * 0.12 / -mv.z, 1.0, 6.0);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `uniform sampler2D tex; uniform float power; varying float vA;
-      void main() { float a = texture2D(tex, gl_PointCoord).a; gl_FragColor = vec4(vec3(1.0, 0.85, 0.6) * vA * a * power, a); }`,
-  });
-  const dust = add(new THREE.Points(dustGeo, dustMat));
-  dust.frustumCulled = false;
-
-  /* ── the symbol above the gate ── */
+  /* ── the symbol round the star, turned toward the plain ── */
+  const symGroup = add(new THREE.Group());
+  symGroup.position.copy(APEX);
+  symGroup.lookAt(MARK.x, 1.7, MARK.z);
   const symOut = { pos: [], ord: [], across: [], idx: [] };
   {
-    const C = DIAMOND_B;
-    const at = (deg, R = SYMBOL_R) => new THREE.Vector3(C.x + Math.cos((deg * Math.PI) / 180) * R, C.y + Math.sin((deg * Math.PI) / 180) * R, C.z);
-    const W = 0.55;
+    const at = (deg, R = SYMBOL_R) => new THREE.Vector3(Math.cos((deg * Math.PI) / 180) * R, Math.sin((deg * Math.PI) / 180) * R, 0);
+    const W = 0.85;
     const seg = (pts, o0, o1) => {
       for (let k = 0; k < pts.length - 1; k++) ribbon(symOut, pts[k], pts[k + 1], W, o0 + ((o1 - o0) * k) / (pts.length - 1), o0 + ((o1 - o0) * (k + 1)) / (pts.length - 1));
     };
@@ -228,104 +243,119 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
       seg([at(270), at(30), at(150), at(270)], 0.5, 1);
     }
   }
-  const symMat = lineMaterial(hdr(1.0, 0.75, 0.4, 5));
-  const symbol = add(new THREE.Mesh(ribbonGeo(symOut), symMat));
+  const symMat = lineMaterial(hdr(1.0, 0.76, 0.46, 4.5));
+  const symbol = new THREE.Mesh(ribbonGeo(symOut), symMat);
   symbol.frustumCulled = false;
-  const symGlow = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: hdr(1.0, 0.8, 0.5, 2.5), ...additive, depthTest: true, opacity: 0 })));
-  symGlow.position.copy(DIAMOND_B);
-  symGlow.scale.setScalar(16);
-  // a four-pointed star flare at its heart
-  const flareMat = new THREE.ShaderMaterial({
-    ...additive,
-    side: THREE.DoubleSide,
-    uniforms: { power: { value: 0 } },
-    vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: /* glsl */ `uniform float power; varying vec2 vUv;
-      void main() {
-        vec2 p = (vUv - 0.5) * 2.0;
-        float a = exp(-abs(p.y) * 90.0) * (1.0 - abs(p.x)) + exp(-abs(p.x) * 90.0) * (1.0 - abs(p.y));
-        a += exp(-dot(p, p) * 30.0) * 0.8;
-        gl_FragColor = vec4(vec3(1.0, 0.85, 0.6) * a * power * 3.0, 1.0);
-      }`,
-  });
-  const flare = add(new THREE.Mesh(new THREE.PlaneGeometry(70, 70), flareMat));
-  flare.position.copy(DIAMOND_B).add(new THREE.Vector3(0, 0, 0.5));
+  symGroup.add(symbol);
 
-  /* ── the gate ── */
-  const apex = new THREE.Vector3(0, GATE_H, GATE_Z);
-  const left = new THREE.Vector3(-GATE_HALF, 0.1, GATE_Z);
-  const right = new THREE.Vector3(GATE_HALF, 0.1, GATE_Z);
-  const mid = new THREE.Vector3(0, 0.1, GATE_Z);
-  // its inside: a window onto the starry sky, the colour computed from the view direction (not painted on)
-  const winGeo = new THREE.BufferGeometry();
-  winGeo.setAttribute('position', new THREE.Float32BufferAttribute([left.x, 0, GATE_Z, right.x, 0, GATE_Z, apex.x, apex.y, GATE_Z], 3));
-  winGeo.setIndex([0, 1, 2]);
-  const winMat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    fog: false,
-    side: THREE.DoubleSide,
-    uniforms: { fill: { value: 0 }, time: { value: 0 } },
-    vertexShader: /* glsl */ `varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: /* glsl */ `uniform float fill; uniform float time; varying vec3 vW;
-      float h3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
-      float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-      float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-        return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
-      void main() {
-        vec3 dir = normalize(vW - cameraPosition);
-        vec3 col = mix(vec3(0.02, 0.025, 0.07), vec3(0.06, 0.04, 0.12), smoothstep(-0.1, 0.6, dir.y));
-        // stars, fixed on the sky behind the door, in two sizes
-        for (int k = 0; k < 2; k++) {
-          vec3 sp = dir * (k == 0 ? 170.0 : 420.0);
-          vec3 cell = floor(sp);
-          float h = h3(cell + float(k) * 7.0);
-          vec3 jit = vec3(h3(cell + 1.7), h3(cell + 5.3), h3(cell + 9.1)) - 0.5;
-          float dd = length(fract(sp) - 0.5 - jit * 0.5);
-          float mag = fract(h * 37.0);
-          float size = (k == 0 ? 0.2 : 0.3) * (0.4 + 0.8 * mag);
-          float st = step(k == 0 ? 0.97 : 0.975, h) * smoothstep(size, size * 0.2, dd) * (0.3 + 0.7 * mag);
-          col += (k == 0 ? vec3(1.0, 0.95, 0.9) * (0.7 + 0.3 * sin(time * 2.0 + h * 90.0)) * 2.2 : vec3(0.8, 0.85, 1.0) * 0.7) * st;
-        }
-        // the milky band and the column of light up the middle, brightest at the base
-        float x = vW.x;
-        float band = exp(-pow(x / 9.0, 2.0)) * (0.6 + 0.5 * vn(vec2(x * 0.3, vW.y * 0.08))) ;
-        col += vec3(0.5, 0.42, 0.55) * band * 0.25;
-        float column = exp(-pow(x / 1.8, 2.0)) * (0.4 + 0.6 * smoothstep(${GATE_H.toFixed(1)}, 0.0, vW.y));
-        col += vec3(1.0, 0.8, 0.55) * column * 1.6;
-        col += vec3(1.0, 0.55, 0.3) * smoothstep(12.0, 0.0, vW.y) * 0.35;
-        gl_FragColor = vec4(col, fill);
-      }`,
-  });
-  const win = add(new THREE.Mesh(winGeo, winMat));
-  win.renderOrder = 3;
-  const gateOut = { pos: [], ord: [], across: [], idx: [] };
+  /* ── the ribbon: one band of light that winds up round the pillar, from the lotus to the star ── */
+  const SEG = 900;
+  const ribPos = new Float32Array((SEG + 1) * 2 * 3), ribOrd = new Float32Array((SEG + 1) * 2), ribAcross = new Float32Array((SEG + 1) * 2);
+  const ribIdx = [];
+  const ribbonAt = (s, out) => {
+    // wide just above the flower, narrowing to nothing at the star
+    const R = 86 * ease(s / 0.05) * Math.pow(1 - s, 0.9) + 2.5 * (1 - s);
+    const th = -0.5 + s * TURNS * Math.PI * 2;
+    return out.set(LOTUS.x + Math.sin(th) * R, HEART_Y + 4 + (APEX_Y - HEART_Y - 4) * s, LOTUS.z + Math.cos(th) * R);
+  };
   {
-    const W = 0.7;
-    const dropTop = new THREE.Vector3(0, DIAMOND_B.y - SYMBOL_R, GATE_Z);
-    ribbon(gateOut, dropTop, apex, W * 0.6, 0, 0.2); // the beam drops from the symbol to the apex
-    const steps = 20;
-    for (const side of [left, right]) {
-      for (let k = 0; k < steps; k++) {
-        const a = apex.clone().lerp(side, k / steps), b = apex.clone().lerp(side, (k + 1) / steps);
-        ribbon(gateOut, a, b, W, 0.2 + (0.5 * k) / steps, 0.2 + (0.5 * (k + 1)) / steps);
+    const c = new THREE.Vector3(), radial = new THREE.Vector3(), wdir = new THREE.Vector3();
+    for (let i = 0; i <= SEG; i++) {
+      const s = i / SEG;
+      ribbonAt(s, c);
+      radial.set(c.x - LOTUS.x, 0, c.z - LOTUS.z).normalize();
+      // the band stands on edge, leaning out a little, like a banked road
+      wdir.set(radial.x * 0.45, 0.89, radial.z * 0.45).normalize();
+      const w = (6.5 * (1 - 0.6 * s) + 0.6) * Math.min(1, s / 0.03 + 0.15);
+      for (let j = 0; j < 2; j++) {
+        const sgn = j ? -1 : 1;
+        ribPos.set([c.x + wdir.x * w * sgn, c.y + wdir.y * w * sgn, c.z + wdir.z * w * sgn], (i * 2 + j) * 3);
+        ribOrd[i * 2 + j] = s;
+        ribAcross[i * 2 + j] = sgn;
       }
-      for (let k = 0; k < steps; k++) {
-        const a = side.clone().lerp(mid, k / steps), b = side.clone().lerp(mid, (k + 1) / steps);
-        ribbon(gateOut, a, b, W, 0.7 + (0.3 * k) / steps, 0.7 + (0.3 * (k + 1)) / steps);
-      }
+      if (i < SEG) ribIdx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 2, i * 2 + 1, i * 2 + 3);
     }
   }
-  const gateMat = lineMaterial(hdr(1.0, 0.62, 0.3, 7));
-  const gateLines = add(new THREE.Mesh(ribbonGeo(gateOut), gateMat));
-  gateLines.frustumCulled = false;
-  gateLines.position.z = 0.3; // just in front of the window
-  // a pool of light on the water where the crowd will stand
-  const pool = add(new THREE.Mesh(new THREE.PlaneGeometry(110, 50), new THREE.MeshBasicMaterial({ map: glowTex, color: hdr(1.0, 0.55, 0.3, 1.2), ...additive, opacity: 0 })));
-  pool.rotation.x = -Math.PI / 2;
-  pool.position.set(0, 0.04, GATE_Z + 14);
+  const ribGeo = new THREE.BufferGeometry();
+  ribGeo.setAttribute('position', new THREE.BufferAttribute(ribPos, 3));
+  ribGeo.setAttribute('ord', new THREE.BufferAttribute(ribOrd, 1));
+  ribGeo.setAttribute('across', new THREE.BufferAttribute(ribAcross, 1));
+  ribGeo.setIndex(ribIdx);
+  const ribMat = new THREE.ShaderMaterial({
+    ...additive,
+    side: THREE.DoubleSide,
+    uniforms: { draw: { value: 0 }, power: { value: 1 }, time: { value: 0 } },
+    vertexShader: /* glsl */ `attribute float ord; attribute float across; varying float vOrd; varying float vAcross;
+      void main() { vOrd = ord; vAcross = across; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `uniform float draw; uniform float power; uniform float time; varying float vOrd; varying float vAcross;
+      void main() {
+        float on = smoothstep(0.0, 0.006, draw - vOrd);
+        float head = exp(-pow((draw - vOrd) * 45.0, 2.0)) * step(0.0, draw - vOrd) * step(draw, 0.999);
+        float e = abs(vAcross);
+        // brighter along its two edges, soft at the very rim; light runs up it
+        float prof = (0.42 + 0.58 * pow(e, 2.5)) * smoothstep(1.0, 0.84, e);
+        float flow = 0.95 + 0.05 * sin(vOrd * 140.0 - time * 1.6);
+        vec3 col = mix(vec3(1.0, 0.31, 0.085), vec3(1.0, 0.5, 0.2), pow(e, 2.0));
+        gl_FragColor = vec4(col * prof * flow * (on * 0.7 + head * 2.4) * power, 1.0);
+      }`,
+  });
+  const band = add(new THREE.Mesh(ribGeo, ribMat));
+  band.frustumCulled = false;
+  // its head: the nine lights, now one
+  const head = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: hdr(1.0, 0.82, 0.6, 2.6), ...additive, depthTest: true, opacity: 0 })));
+  head.scale.setScalar(26);
+  const headLight = add(new THREE.PointLight(0xffc890, 0, 300, 1.4));
 
-  /* ── the crowd's places before the gate: rows either side of a clear lane down the middle ── */
+  /* ── the fields of rings on the water ── */
+  const fields = FIELDS.map(([x, z, R]) => {
+    const m = add(new THREE.Mesh(new THREE.CircleGeometry(R, 128), ringsMaterial(R)));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, 0.03, z);
+    m.renderOrder = 2;
+    return m;
+  });
+  // the waking wave's front, crossing the whole plain
+  const waveMat = ringsMaterial(100);
+  const waveMesh = add(new THREE.Mesh(new THREE.RingGeometry(1, 100, 160, 1), waveMat));
+  waveMesh.rotation.x = -Math.PI / 2;
+  waveMesh.position.set(MARK.x, 0.035, MARK.z);
+  waveMesh.renderOrder = 2;
+
+  /* ── orange haze low on the horizon behind the lotus and its spires, so they stand dark against it ── */
+  const hazeMat = new THREE.ShaderMaterial({
+    ...additive,
+    side: THREE.DoubleSide,
+    uniforms: { time: { value: 0 }, power: { value: 0 } },
+    vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `uniform float time; uniform float power; varying vec2 vUv;
+      float hh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hh(i), hh(i + vec2(1, 0)), f.x), mix(hh(i + vec2(0, 1)), hh(i + vec2(1, 1)), f.x), f.y); }
+      void main() {
+        // banks of lit smoke: billowing shapes, brightest low down, thinning to nothing above
+        vec2 q = vec2(vUv.x * 26.0 + time * 0.006, vUv.y * 3.2);
+        float n = vn(q) * 0.5 + vn(q * 2.3 + 4.0) * 0.3 + vn(q * 5.1 - time * 0.015) * 0.2;
+        float top = 0.4 + 0.6 * vn(vec2(vUv.x * 9.0 + 3.0, 1.0));
+        float v = (1.0 - smoothstep(0.0, top, vUv.y)) * smoothstep(0.0, 0.03, vUv.y);
+        float ends = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+        gl_FragColor = vec4(vec3(1.0, 0.4, 0.14) * power * v * ends * (0.25 + 1.1 * n * n), 1.0);
+      }`,
+  });
+  // (a wall that curves behind the avenue: open toward the plain)
+  const haze = add(new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 110, 96, 1, true, Math.PI - 1.9, 3.8), hazeMat));
+  haze.position.set(0, 55, -150);
+  haze.frustumCulled = false;
+
+  /* ── the nine lights: six diamonds and three seeds, leaving the lantern ── */
+  const LIGHT_COLORS = [...Array(6)].map(() => new THREE.Color(1.8, 1.9, 2.2)).concat([new THREE.Color(0.5, 2.2, 1.4), new THREE.Color(0.6, 1.0, 2.4), new THREE.Color(2.4, 0.6, 0.45)]);
+  const lights = LIGHT_COLORS.map((c) => {
+    const s = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: c, ...additive, depthTest: true, opacity: 0 })));
+    s.userData = { from: new THREE.Vector3() };
+    return s;
+  });
+  const HEART = new THREE.Vector3(LOTUS.x, HEART_Y + 4, LOTUS.z);
+
+  /* ── the crowd's places before the avenue: rows either side of a clear lane down the middle ── */
   const slots = [];
   for (let z = GATE_Z + 12; z <= GATE_Z + 42; z += 2)
     for (let x = 5; x <= 45; x += 1.6)
@@ -341,16 +371,18 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
     p4At: 0,
     cutsDone: false,
     sent: false,
+    envStart: false,
     envMid: false,
     envEnd: false,
     rang: [false, false, false],
     lightsLaunched: 0,
     waveR: 0,
-    shafts: 0,
-    diamondPos: DIAMOND_A.clone(),
+    lightPos: HEART.clone(),
     locked: false,
     tiltUp: 0,
-    dawn: 0,
+    turn: false,
+    night: 0,
+    glow: 0,
   };
   const cutDone = new Uint8Array(sleepers.count);
   const tmp = new THREE.Vector3();
@@ -362,25 +394,32 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
     get locked() {
       return F.locked;
     },
+    /** (Light shafts were the diamond's; the ending has none now.) */
     get shafts() {
-      return F.shafts;
+      return 0;
     },
-    /** How brightly the diamond (then the symbol) lights the plain, 0..1. */
+    /** How brightly the ending's light falls on the plain, 0..1. */
     get glow() {
-      return F.glow || 0;
+      return F.glow;
     },
+    /** Whether the view is being lifted to follow the light (the player can still look round). */
     get tiltUp() {
       return F.tiltUp;
     },
-    diamondPos: F.diamondPos,
+    /** Whether the view is being turned toward the lotus (briefly, as the lights leave). */
+    get turn() {
+      return F.turn;
+    },
+    /** Where the light is that the crowd looks at: the ribbon's head, then the star. */
+    diamondPos: F.lightPos,
     gate: { z: GATE_Z, half: GATE_HALF },
     mark: MARK,
     pillar,
     start(t) {
       F.phase = 1;
       F.startAt = t;
+      F.night = 1;
       g.visible = true;
-      pillar.power = 1;
     },
     /** Testing: jump to a phase (2..5) with everything before it done. */
     skipTo(phase, t) {
@@ -404,7 +443,7 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
         case 2:
           return F.hold > 0.1 ? 'Hold your light up…' : 'Raise your lantern, and give back what you were given.';
         case 5:
-          return 'Walk through.';
+          return 'Walk into the light.';
         default:
           return null;
       }
@@ -415,25 +454,27 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
       return null;
     },
     /**
-     * ctx: { pos (player), raise (0..1), lanternPos (world), companion }.
+     * ctx: { pos (player), raise (0..1), lanternPos (world), companion, camPos }.
      * Returns events: 'arrived', 'light' {i}, 'fused', 'rays', 'cuts' {n}, 'turn', 'corner' {k}, 'env', 'free', 'through'.
      */
     update(t, dt, ctx) {
       const ev = [];
       if (!F.phase) return ev;
       const P = ctx.pos;
-      markMat.uniforms.time.value = t;
-      for (const m of [shellMat, dustMat, symMat, gateMat, winMat]) m.uniforms.time.value = t;
-      pillar.power = 1 + 0.08 * Math.sin(t * 5.46);
-      pillar.update(t, ctx.camPos);
+      for (const m of [starMat, symMat, ribMat, hazeMat, waveMat]) m.uniforms.time.value = t;
+      for (const f of fields) f.material.uniforms.time.value = t;
+      if (!F.envStart) {
+        F.envStart = true;
+        ev.push({ type: 'env' }); // the night has changed: what the lantern's metal mirrors must change with it
+      }
 
-      // 1 → 2: arrive at the mark
+      // 1 → 2: arrive at the rings
       const dMark = Math.hypot(P.x - MARK.x, P.z - MARK.z);
       if (F.phase === 1 && dMark < 10) {
         F.phase = 2;
         ev.push({ type: 'arrived' });
       }
-      // 2: hold the lantern up inside the mark
+      // 2: hold the lantern up inside the rings
       if (F.phase === 2) {
         F.hold = ctx.raise > 0.6 && dMark < 12 ? F.hold + dt : Math.max(0, F.hold - dt * 2);
         if (F.hold >= HOLD) {
@@ -442,17 +483,15 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
           for (const L of lights) L.userData.from.copy(ctx.lanternPos);
         }
       }
-      markMat.uniforms.charge.value = F.phase === 2 ? Math.min(1, F.hold / HOLD) : F.phase >= 3 ? 1 : 0;
-      markMat.uniforms.power.value = F.phase >= 3 ? 1 - span(t - F.offerAt, T3.end - 4, T3.end) : 1;
 
-      // 3: the diamond
+      // 3: the lights cross the water and rise
       const s3 = F.phase >= 3 ? t - F.offerAt : -1;
-      let grow = 0, rays = 0;
+      let rise = 0;
       if (F.phase >= 3) {
-        // the nine lights leave the lantern one by one and rise on widening spirals
+        // the nine lights leave the lantern one by one, skim the water down the pillar's reflection, and gather at the flower
         lights.forEach((L, i) => {
           const t0 = T3.fly + i * 0.25;
-          const k = (s3 - t0) / 2.4;
+          const k = (s3 - t0) / 3.2;
           if (s3 >= t0 && F.lightsLaunched <= i) {
             F.lightsLaunched = i + 1;
             ev.push({ type: 'light', i });
@@ -462,23 +501,23 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
             return;
           }
           const e = ease(Math.min(1, k));
-          // after arriving they circle each other, closing to one point
-          const close = 1 - span(s3, T3.gather, T3.grow);
-          const ang = e * Math.PI * 4 + (i / 9) * Math.PI * 2 + Math.max(0, s3 - T3.gather) * 2.5;
-          const rad = (Math.sin(Math.PI * Math.min(1, e)) * 6 + (k >= 1 ? 4 : 0) * e) * close;
-          L.position.lerpVectors(L.userData.from, DIAMOND_A, e);
+          L.position.lerpVectors(L.userData.from, HEART, e);
+          // low over the water on the way, weaving a little; then circling the heart, closing to one point
+          L.position.y = L.userData.from.y * (1 - e) + HEART.y * e * e * e + Math.sin(e * Math.PI) * 0.6;
+          const close = 1 - span(s3, T3.gather, T3.rise);
+          const ang = e * Math.PI * 3 + (i / 9) * Math.PI * 2 + Math.max(0, s3 - T3.gather) * 2.5;
+          const rad = (Math.sin(Math.PI * Math.min(1, e)) * 2.2 + (k >= 1 ? 5 : 0) * e) * close;
           L.position.x += Math.cos(ang) * rad;
-          L.position.z += Math.sin(ang) * rad;
-          L.material.opacity = s3 < T3.grow + 0.5 ? 1 : Math.max(0, 1 - (s3 - T3.grow - 0.5));
-          L.scale.setScalar(0.4 + e * 3.5);
+          L.position.z += Math.sin(ang) * rad * 0.5;
+          L.material.opacity = s3 < T3.rise + 0.3 ? 1 : Math.max(0, 1 - (s3 - T3.rise - 0.3) * 2);
+          L.scale.setScalar(0.5 + e * 5);
         });
-        grow = span(s3, T3.grow, T3.grow + 3);
-        if (grow > 0 && !F.fused) {
+        rise = span(s3, T3.rise, T3.top);
+        if (rise > 0 && !F.fused) {
           F.fused = true;
           ev.push({ type: 'fused' });
         }
-        rays = span(s3, T3.rays, T3.rays + 3);
-        if (rays > 0 && !F.raysOn) {
+        if (s3 >= T3.rays && !F.raysOn) {
           F.raysOn = true;
           ev.push({ type: 'rays' });
         }
@@ -499,10 +538,8 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
           if (n) ev.push({ type: 'cuts', n });
           if (all) F.cutsDone = true;
         }
-        sleepers.crowd.faceTo = F.phase === 3 ? F.diamondPos : tmp.set(0, 30, GATE_Z).clone();
-        sleepers.crowd.lookUp = F.phase === 3 ? span(s3, T3.wave, T3.wave + 4) : F.phase === 4 ? 0.5 : 0.25;
-        F.dawn = F.phase === 3 ? 0.45 * span(s3, T3.dawn, T3.end) : F.dawn;
-        F.tiltUp = F.phase === 3 && s3 > T3.gather && s3 < T3.wave + 2 ? 1 : 0;
+        sleepers.crowd.faceTo = F.lightPos;
+        sleepers.crowd.lookUp = F.phase === 3 ? span(s3, T3.wave, T3.wave + 4) : F.phase === 4 ? 0.6 : 0.3;
         if (F.phase === 3 && s3 >= T3.end) {
           F.phase = 4;
           F.p4At = t;
@@ -514,25 +551,21 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
         }
       }
 
-      // 4: the gate
+      // 4: the star and the symbol
       const s4 = F.phase >= 4 ? t - F.p4At : -1;
-      const move = F.phase >= 4 ? span(s4, 0, T4.move) : 0;
-      const unfold = F.phase >= 4 ? span(s4, T4.unfold0, T4.unfold1) : 0;
+      const burst = F.phase >= 4 ? span(s4, T4.burst0, T4.burst1) : 0;
       const symOn = F.phase >= 4 ? span(s4, T4.symbol0, T4.symbol1) : 0;
-      const draw = F.phase >= 4 ? span(s4, T4.draw0, T4.draw1) : 0;
-      const fill = F.phase >= 4 ? span(s4, T4.fill0, T4.fill1) : 0;
       if (F.phase >= 4) {
-        F.dawn = 0.45 + 0.55 * fill;
-        const marks = [0.2, 0.7, 0.999];
-        marks.forEach((m, k) => {
-          if (draw >= m && !F.rang[k]) {
+        // a bell as each part of the figure closes: the triangle, the six-pointed figure, the circle
+        [0.3, 0.65, 0.999].forEach((m, k) => {
+          if (symOn >= m && !F.rang[k]) {
             F.rang[k] = true;
             ev.push({ type: 'corner', k });
           }
         });
         if (s4 >= T4.send && !F.sent) {
           F.sent = true;
-          // every awake sleeper to a place before the gate, the nearest to the gate taking the front rows
+          // every awake sleeper to a place before the avenue, the nearest to it taking the front rows
           const order = [];
           for (let i = 1; i < sleepers.count; i++) order.push([Math.hypot(sleepers.state[i].x, sleepers.state[i].z - GATE_Z), i]);
           order.sort((a, b) => a[0] - b[0]);
@@ -552,34 +585,55 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
           }
         }
       }
-      F.diamondPos.lerpVectors(DIAMOND_A, DIAMOND_B, move);
       F.locked = F.phase === 3 || F.phase === 4;
+      // the view: turned to the lotus as the lights leave, then lifted to follow the ribbon to the star
+      F.turn = F.phase === 3 && s3 < 3.5;
+      F.tiltUp = (F.phase === 3 && s3 > T3.rise + 1.5) || (F.phase === 4 && s4 < T4.look) ? 1 : 0;
 
-      // the diamond, its core and its light
-      diamond.position.copy(F.diamondPos);
-      core.position.copy(F.diamondPos);
-      coreLight.position.copy(F.diamondPos);
-      diamond.rotation.y += (dt * Math.PI * 2) / 80;
-      const dScale = grow * (1 - unfold * 0.6);
-      diamond.scale.set(18 * dScale + 1e-3, 25 * dScale + 1e-3, 18 * dScale + 1e-3);
-      shellMat.uniforms.power.value = 0.45 * grow * (1 - unfold);
-      shellMat.uniforms.faces.value = 1 - unfold;
-      core.material.opacity = Math.max(grow, symOn) * (1 - 0.6 * unfold) * 0.6;
-      core.scale.setScalar(30 * (0.3 + 0.7 * grow) * (1 - 0.5 * unfold));
-      coreLight.intensity = 900 * grow * (1 - 0.6 * unfold);
-      F.glow = grow * (1 - 0.6 * unfold);
-      F.shafts = rays * (1 - unfold);
-      dustMat.uniforms.power.value = rays * (1 - unfold) * 1.5;
+      // the rings on the water: the first burns from the start; the others catch as the lights pass over
+      const charge = F.phase === 2 ? Math.min(1, F.hold / HOLD) : F.phase >= 3 ? 1 - span(s3, 2, 8) * 0.7 : 0;
+      fields.forEach((f, k) => {
+        // (the second burns low from the start, as in the film; both catch fully when the lights pass over them)
+        const caught = F.phase >= 3 ? span(s3, k === 1 ? T3.field1 : T3.field2, (k === 1 ? T3.field1 : T3.field2) + 1.2) : 0;
+        const lit = k === 0 ? 1 : k === 1 ? 0.5 + 0.5 * caught : caught;
+        f.material.uniforms.power.value = lit * (0.8 + 0.2 * Math.sin(t * 1.3 + k)) * (1 + (k === 0 ? charge * 0.8 : 0));
+        f.material.uniforms.charge.value = k === 0 ? charge : 0;
+      });
+      waveMat.uniforms.power.value = 0;
+      waveMat.uniforms.wave.value = F.waveR > 0.5 && F.waveR < 100 ? F.waveR : 0;
+      waveMesh.visible = waveMat.uniforms.wave.value > 0;
 
-      // the symbol and the gate
+      // the pillar, its cone of rays and its star
+      const flare = burst * (1 - span(s4, T4.burst1, T4.burst1 + 6) * 0.35);
+      pillar.power = 0.95 + 0.07 * Math.sin(t * 5.46) + 0.5 * flare;
+      pillar.update(t, ctx.camPos);
+      cones.forEach((c, k) => {
+        c.material.uniforms.power.value = (0.62 + 0.3 * rise + 0.55 * flare) * (0.94 + 0.06 * Math.sin(t * 0.9 + k * 2));
+        c.material.uniforms.drift.value = t * 0.0016 * (k % 2 ? -1 : 1);
+      });
+      star.quaternion.copy(ctx.camQuat || star.quaternion);
+      starMat.uniforms.power.value = 1;
+      starMat.uniforms.burst.value = burst;
+      hazeMat.uniforms.power.value = 0.7 * (0.9 + 0.1 * Math.sin(t * 0.4)) * (1 + 0.4 * flare);
+
+      // the ribbon and its head
+      ribMat.uniforms.draw.value = rise;
+      ribMat.uniforms.power.value = 1 + 0.25 * flare;
+      if (rise > 0 && rise < 1) ribbonAt(rise, F.lightPos);
+      else if (rise >= 1) F.lightPos.copy(APEX);
+      else F.lightPos.copy(HEART);
+      head.position.copy(F.lightPos);
+      head.material.opacity = rise > 0 && rise < 1 ? 0.9 : rise >= 1 ? Math.max(0, 0.9 - s4 * 0.5) : span(s3, T3.gather, T3.rise) * 0.8;
+      headLight.position.copy(F.lightPos);
+      headLight.intensity = rise > 0 && rise < 1 ? 500 : 0;
+
+      // the symbol
       symMat.uniforms.draw.value = symOn;
-      symGlow.material.opacity = symOn * 0.6;
-      flareMat.uniforms.power.value = symOn * (0.8 + 0.2 * Math.sin(t * 2.0));
-      gateMat.uniforms.draw.value = draw;
-      winMat.uniforms.fill.value = fill;
-      pool.material.opacity = fill * 0.5;
 
-      // 5 → 6: through the gate (inside the triangle, at walking height)
+      // how much of all this falls on the plain (the crowd's faces, the far crowd's pictures)
+      F.glow = Math.min(1, 0.1 * F.night + 0.4 * rise + 0.35 * flare);
+
+      // 5 → 6: into the avenue
       if (F.phase === 5) {
         const c = ctx.companion;
         if (c && Math.hypot(P.x - c.pos.x, P.z - c.pos.z) < 7) c.goal = new THREE.Vector3(1.5, 0, GATE_Z - 20);
@@ -590,9 +644,13 @@ export const buildFinale = ({ scene, glowTex, sleepers }) => {
       }
       return ev;
     },
-    /** The dawn this scene asks of the sky (0..1). */
+    /** (The ending used to turn the sky to dawn. It stays night now: see `night`.) */
     get dawn() {
-      return F.dawn;
+      return 0;
+    },
+    /** The ending's night, 0..1: what this scene asks of the sky, the air and the other places' lights. */
+    get night() {
+      return F.night;
     },
   };
   return api;

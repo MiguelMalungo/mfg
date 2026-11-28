@@ -145,9 +145,9 @@ export const createSleepers = (scene, glowTex) => {
     transparent: true,
     depthWrite: true, // keeps their own depth for the depth of field
     blending: THREE.AdditiveBlending,
-    uniforms: { time: { value: 0 } },
+    uniforms: { time: { value: 0 }, quiet: { value: 0 } },
     vertexShader: /* glsl */ `
-      attribute float u; varying float vA; varying float vGold;
+      attribute float u; uniform float quiet; varying float vA; varying float vGold;
       ${CURVE}
       void main() {
         vGold = cutGold();
@@ -155,7 +155,8 @@ export const createSleepers = (scene, glowTex) => {
         vec4 mv = viewMatrix * vec4(threadAt(u), 1.0);
         // far threads fade into the mist, so only the near ones draw clear lines
         float far = 1.0 - smoothstep(25.0, 110.0, length(head - cameraPosition));
-        vA = talpha * cutFade() * pow(1.0 - u, 2.2) * smoothstep(0.0, 0.01, u) * shimmer * (0.25 + 0.75 * far) * (1.0 + vGold * 2.0);
+        // (quiet: in the ending's dark the threads are fainter, until they are cut and flare)
+        vA = talpha * cutFade() * pow(1.0 - u, 2.2) * smoothstep(0.0, 0.01, u) * shimmer * (0.25 + 0.75 * far) * (1.0 + vGold * 2.0) * mix(1.0, 0.3 + 0.7 * vGold, quiet);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
@@ -183,9 +184,9 @@ export const createSleepers = (scene, glowTex) => {
     transparent: true,
     depthWrite: true, // keeps their own depth for the depth of field
     blending: THREE.AdditiveBlending,
-    uniforms: { time: { value: 0 }, scale: { value: 600 } },
+    uniforms: { time: { value: 0 }, scale: { value: 600 }, quiet: { value: 0 } },
     vertexShader: /* glsl */ `
-      attribute float u; uniform float scale; varying float vA; varying float vGold;
+      attribute float u; uniform float scale; uniform float quiet; varying float vA; varying float vGold;
       ${CURVE}
       void main() {
         vGold = cutGold();
@@ -195,7 +196,7 @@ export const createSleepers = (scene, glowTex) => {
         vec4 mv = viewMatrix * vec4(threadAt(uu), 1.0);
         float glint = pow(0.5 + 0.5 * sin(time * 2.6 + u * 40.0 + tseed.x * 5.0), 6.0);
         float far = 1.0 - smoothstep(25.0, 110.0, length(head - cameraPosition));
-        vA = talpha * cutFade() * pow(1.0 - uu, 1.6) * smoothstep(0.0, 0.02, uu) * (0.6 + 1.6 * glint + vGold * 3.0) * (0.2 + 0.8 * far);
+        vA = talpha * cutFade() * pow(1.0 - uu, 1.6) * smoothstep(0.0, 0.02, uu) * (0.6 + 1.6 * glint + vGold * 3.0) * (0.2 + 0.8 * far) * mix(1.0, 0.3 + 0.7 * vGold, quiet);
         gl_PointSize = clamp(scale * (0.09 + 0.06 * glint) / -mv.z, 1.5, 11.0);
         gl_Position = projectionMatrix * mv;
       }`,
@@ -358,6 +359,10 @@ export const createSleepers = (scene, glowTex) => {
     /** The light the far crowd's pictures are shown in (they are not lit by the scene's lamps). */
     setCrowdLight(c) {
       if (imp) imp.mat.uniforms.light.value.copy(c);
+    },
+    /** How faint the threads are, 0 (as ever) to 1 (the ending's night: faint until cut). */
+    setThreadQuiet(k) {
+      threadMat.uniforms.quiet.value = beadMat.uniforms.quiet.value = k;
     },
     /** The finale: sleeper i wakes from time t (over 2.5 s). */
     wakeAt(i, t) {

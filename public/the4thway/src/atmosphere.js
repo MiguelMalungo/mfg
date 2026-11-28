@@ -70,8 +70,19 @@ THREE.ShaderChunk.fog_fragment = /* glsl */ `
     float mist = 0.008 * bank * dist * avg;
     float fogF = 1.0 - exp(-(tau + mist));
     vec3 fcol = mix(fogColor, fogColor * 1.25, clamp(mist / (tau + mist + 1e-4), 0.0, 1.0));
-    // the mist under the moon is brighter
-    fcol *= 1.0 + 0.25 * pow(max(dot(dir, normalize(vec3(0.0, 400.0, -900.0))), 0.0), 8.0);
+    #ifdef FOG_EXP2
+      // In the forest (known here by how thick the air is) the mist is lit from the hollow: bright low
+      // down and toward it, dark overhead. The sky in world.js is shaped the same way, so far trees
+      // melt into what is behind them.
+      float inForest = smoothstep(0.013, 0.02, fogDensity);
+      float toHollow = pow(max(dot(dir, normalize(vec3(82.2, 4.0, -142.4) - cameraPosition)), 0.0), 5.0);
+      fcol *= mix(1.0, 0.3 + 0.82 * pow(1.0 - max(dir.y, 0.0), 2.0) + 0.3 * toHollow, inForest);
+    #else
+      float inForest = 0.0;
+    #endif
+    // the mist under the moon is brighter (but there is no moon in the forest)
+    fcol *= 1.0 + 0.25 * pow(max(dot(dir, normalize(vec3(0.0, 400.0, -900.0))), 0.0), 8.0) * (1.0 - inForest);
+
     // light scattered in the air near the monuments, gathered at the ray's closest approach
     vec3 glow = vec3(0.0);
     for (int i = 0; i < 3; i++) {
@@ -82,6 +93,7 @@ THREE.ShaderChunk.fog_fragment = /* glsl */ `
       // more air in front of the light → more glow; none if the surface hides the light
       glow += L_COL[i] * k * clamp(t / 60.0, 0.0, 1.0);
     }
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, fcol, fogF) + glow * 0.05 * (0.3 + fogF);
+    // (in the forest the mist already carries the tree's light: the sky there has no such glow to match)
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, fcol, fogF) + glow * 0.05 * (0.3 + fogF) * (1.0 - 0.85 * inForest);
   }
 #endif`;

@@ -312,9 +312,16 @@ IMP.ROWS = IMP.PH * 2 + 1;
 
 export const loadPeople = async (scene, glowTex, renderer = null, crowd = null) => {
   const [nathanFBX, sophiaFBX] = await Promise.all([loadFBX('./assets/people/nathan/model.fbx'), loadFBX('./assets/people/sophia/model.fbx')]);
-  const walkNathan = inPlace(nathanFBX.animations[0], 1);
-  const walkSophia = inPlace(nathanFBX.animations[0], 84.2 / 94.6); // Sophia's hips are lower
-  const idleSophia = inPlace(sophiaFBX.animations[0], 1);
+  // The walk clip's first frame is the scan's rest pose, arms straight out. It is cut off: with it every
+  // walker flashed that pose once a cycle, and the far crowd's standing picture (taken "where the feet
+  // are closest together") was that very frame, so the woken men of the ending stood with their arms out.
+  const walkSrc = THREE.AnimationUtils.subclip(nathanFBX.animations[0], 'walk', 1, 69, 30);
+  const walkNathan = inPlace(walkSrc, 1);
+  const walkSophia = inPlace(walkSrc, 84.2 / 94.6); // Sophia's hips are lower
+  // The scan's own clip is 20 s long, and for six of them (from 9 s to 15 s) she holds her arms out from
+  // her sides. Every standing figure made from her did it at the same moment: the companion waiting at
+  // a door, and half the woken crowd in the ending. Only the first 6.8 s are kept: a person standing.
+  const idleSophia = THREE.AnimationUtils.subclip(inPlace(sophiaFBX.animations[0], 1), 'idle', 0, 205, 30);
 
   const maps = {};
   for (const n of ['nathan', 'sophia']) {
@@ -359,6 +366,7 @@ export const loadPeople = async (scene, glowTex, renderer = null, crowd = null) 
     walk.play();
     const idle = v.idle ? mixer.clipAction(v.idle) : null;
     if (idle) {
+      idle.setLoop(THREE.LoopPingPong, Infinity); // there and back: its two ends are not the same pose
       idle.play();
       idle.weight = 0;
     }

@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { createWater } from './water.js';
 import { applyStone } from './stone.js';
 import { fbm, noise2, smoothstep, rng, tileNormalMap, moonTexture, glowTexture, textTexture, rockTexture, attentionDiagram, stoneSymbol } from './textures.js';
-import { buildSpire, buildLotus, buildTree, buildLotusAvenue } from './monuments.js';
+import { buildSpire, buildLotus, buildLotusAvenue } from './monuments.js';
+import { buildTree } from './forest.js';
 import { buildInterior, buildCutscene } from './tower-interior.js';
 import { buildLotusInterior } from './lotus-interior.js';
 
@@ -19,8 +20,9 @@ export const TREE = new THREE.Vector3(82, 0, -150);
 // The key art's palette: an overcast, moonlit, silver-grey night. Mist is lighter than the stone,
 // so distant things read as dark silhouettes fading into it.
 const FOG = new THREE.Color(0.036, 0.05, 0.058);
-// inside the forest the air and the sky turn teal
-const FOREST_FOG = new THREE.Color(0.018, 0.06, 0.056);
+// inside the forest the air is a bright teal mist, as in the owner's film (refs/forest-film-*.jpg)
+const FOREST_FOG = new THREE.Color(0.04, 0.17, 0.15);
+const FOREST_DENSITY = 0.021; // trunks 25 m away are a little hazed; at 70 m they are shapes in the mist
 // near the tower: a deep blue-teal night, as in the owner's reference
 const SPIRE_FOG = new THREE.Color(0.016, 0.034, 0.042);
 const INSIDE_FOG = new THREE.Color(0.03, 0.027, 0.024);
@@ -30,8 +32,11 @@ const MIST_FILL = new THREE.Color(0xaeb8ca);
 const LOTUS_FOG = new THREE.Color(0.13, 0.075, 0.04);
 // inside the lotus: a dark night over the lake, warm only low on the horizon (refs/lotus-beam.webp)
 const LOTUS_IN_FOG = new THREE.Color(0.035, 0.022, 0.016);
-// the finale's dawn: warm air, the gate and the crowd clear at 90 m
+// the finale's dawn: warm air, the gate and the crowd clear at 90 m (not used since 2026-11-28: the ending stays night)
 const DAWN_FOG = new THREE.Color(0.13, 0.065, 0.06);
+// the ending's night, after the owner's film (refs/ending-film-*.jpg): dark warm air, the spires brown-black in it
+const VIGIL_FOG = new THREE.Color(0.026, 0.019, 0.013);
+const VIGIL_HEMI = new THREE.Color(0.52, 0.4, 0.32);
 
 /** Ground height at a point. The middle is a shallow flooded basin; mountains ring the horizon. */
 export const heightAt = (x, z) => {
@@ -61,6 +66,8 @@ const SKY_FRAG = /* glsl */ `
   uniform float stars;
   uniform float lake;
   uniform float dawn;
+  uniform float vigil;
+  uniform vec3 treeDir;
   varying vec3 vDir;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
@@ -113,9 +120,13 @@ const SKY_FRAG = /* glsl */ `
 
     // the moon's corona in the haze: tight and bright, then a wide soft veil
     col += vec3(0.62, 0.68, 0.78) * (pow(md, 90.0) * 0.45 + pow(md, 14.0) * 0.12 + pow(md, 3.0) * 0.025);
-    // under the forest canopy the night sky is teal
     float lum = dot(col, vec3(0.3, 0.59, 0.11));
-    col = mix(col, vec3(0.012, 0.05, 0.047) + lum * vec3(0.22, 0.62, 0.56), teal * 0.9);
+    // in the forest there is no sky, only the mist: brightest low down and toward the hollow, dark overhead
+    if (teal > 0.0) {
+      float toTree = pow(max(dot(d, treeDir), 0.0), 5.0);
+      vec3 mist = horizon * (0.3 + 0.82 * pow(1.0 - up, 2.0) + 0.3 * toTree); // (the fog in atmosphere.js uses the same shape)
+      col = mix(col, mist, smoothstep(0.0, 0.7, teal));
+    }
     // near the tower: dark teal-blue, the clouds only faintly silvered
     col = mix(col, vec3(0.012, 0.03, 0.038) + pow(lum, 1.4) * vec3(0.3, 0.5, 0.56), dusk * 0.88);
     // on the way to the lotus: a warm, amber night
@@ -137,6 +148,16 @@ const SKY_FRAG = /* glsl */ `
       float band = exp(-pow(d.x * 5.0, 2.0)) * smoothstep(0.0, 0.4, -d.z) * smoothstep(0.0, 0.3, d.y);
       dsky += vec3(0.3, 0.26, 0.36) * band * (0.6 + 0.4 * fbm(d.xy * 18.0)) * 0.35;
       col = mix(col, dsky, dawn);
+    }
+    // the ending's night (refs/ending-film-*.jpg): green-black overhead with a few stars, and a low
+    // orange haze on the horizon, strongest toward the lotus (-z)
+    if (vigil > 0.0) {
+      vec3 hz = normalize(vec3(d.x, 0.0, d.z) + 1e-4);
+      float toward = pow(max(dot(hz, vec3(0.0, 0.0, -1.0)), 0.0), 1.5);
+      vec3 vs = mix(vec3(0.016, 0.026, 0.02), vec3(0.009, 0.015, 0.011), smoothstep(0.0, 0.6, d.y));
+      vs += vec3(0.8, 0.85, 1.0) * star * 0.32 * smoothstep(0.1, 0.4, d.y);
+      vs += vec3(0.5, 0.2, 0.06) * pow(1.0 - up, 10.0) * (0.2 + 0.8 * toward) + vec3(0.09, 0.04, 0.018) * pow(1.0 - up, 4.0) * toward;
+      col = mix(col, vs, vigil);
     }
     gl_FragColor = vec4(col, 1.0);
   }`;
@@ -169,7 +190,7 @@ export const buildWorld = (scene, renderer) => {
     side: THREE.BackSide,
     depthWrite: false,
     fog: false,
-    uniforms: { time: { value: 0 }, moonDir: { value: moonDir }, horizon: { value: new THREE.Vector3(FOG.r, FOG.g, FOG.b) }, teal: { value: 0 }, dusk: { value: 0 }, warm: { value: 0 }, stars: { value: 1 }, lake: { value: 0 }, dawn: { value: 0 } },
+    uniforms: { time: { value: 0 }, moonDir: { value: moonDir }, horizon: { value: new THREE.Vector3(FOG.r, FOG.g, FOG.b) }, teal: { value: 0 }, dusk: { value: 0 }, warm: { value: 0 }, stars: { value: 1 }, lake: { value: 0 }, dawn: { value: 0 }, vigil: { value: 0 }, treeDir: { value: new THREE.Vector3(0, 0, -1) } },
     vertexShader: SKY_VERT,
     fragmentShader: SKY_FRAG,
   });
@@ -251,7 +272,8 @@ export const buildWorld = (scene, renderer) => {
   // The moon is behind everything you walk toward, so on its own it leaves only silhouettes.
   // The mist scatters its light back: a soft, shadowless fill from behind the walker, as in the key art.
   const mistFill = new THREE.DirectionalLight(0xaeb8ca, 0.8);
-  mistFill.position.set(20, 22, 100);
+  const MIST_FROM = new THREE.Vector3(20, 22, 100);
+  mistFill.position.copy(MIST_FROM);
   scene.add(mistFill);
 
   /* ── terrain ── */
@@ -344,7 +366,11 @@ export const buildWorld = (scene, renderer) => {
   scene.add(water);
 
   /* ── the three monuments (see monuments.js) ── */
-  const ctx = { scene, glowTex, stoneMaterial, normalMap, updaters, colliders };
+  // lights that the fog does not touch (rings, halos, the avenue's lamps) are dimmed by hand where the air is thick
+  const farDim = { value: 1 };
+  // in the ending the other places' own lights (the tower's cold rings, the forest's veins) are hushed
+  const hush = { value: 1 };
+  const ctx = { scene, glowTex, stoneMaterial, normalMap, updaters, colliders, farDim, hush };
   const spire = buildSpire({ ...ctx, pos: SPIRE });
   const lotus = buildLotus({ ...ctx, pos: LOTUS });
   const forest = buildTree({ ...ctx, pos: TREE });
@@ -369,7 +395,7 @@ export const buildWorld = (scene, renderer) => {
   const symbolFor = (k) => (symbols[k] ??= stoneSymbol(k));
   const addStele = (x, z, faceYaw, lines, opts = {}) => {
     const g = new THREE.Group();
-    const y = Math.max(heightAt(x, z), -0.1);
+    const y = Math.max(heightAt(x, z), forest.groundAt(x, z), -0.1);
     g.position.set(x, y, z);
     g.rotation.y = faceYaw;
     const steleStone = new THREE.MeshStandardMaterial({ color: 0xb4b2ac, map: rockMap, bumpMap: rockBump, bumpScale: 3, roughness: 0.92, metalness: 0 });
@@ -441,7 +467,7 @@ export const buildWorld = (scene, renderer) => {
 
   // everything solid casts moon shadows; the sky, moon, glows and water do not
   scene.traverse((o) => {
-    if (o.isMesh && o !== terrain && o !== water && o !== sky && o !== moon && o.material.blending === THREE.NormalBlending && !o.material.transparent && !o.material.isShaderMaterial && !o.material.isMeshBasicMaterial) {
+    if (o.isMesh && !o.userData.noShadow && o !== terrain && o !== water && o !== sky && o !== moon && o.material.blending === THREE.NormalBlending && !o.material.transparent && !o.material.isShaderMaterial && !o.material.isMeshBasicMaterial) {
       o.castShadow = true;
       o.receiveShadow = true;
     }
@@ -449,10 +475,15 @@ export const buildWorld = (scene, renderer) => {
   const shadowTexel = 64 / 2048;
 
   let forestAmt = 0;
+  // in the forest the light comes from the bright mist round the hollow, toward the way in
+  const FOREST_FROM = forest.out.clone().multiplyScalar(-100).setY(28);
+  const FOREST_LIGHT = new THREE.Color(0.3, 0.95, 0.8);
+  const _treeAt = new THREE.Vector3();
   let spireAmt = 0;
   let lotusAmt = 0;
   let lotusInAmt = 0;
   let dawn = 0;
+  let vigil = 0;
   const world = {
     /** The ambient light of the place you are in, for things that are not lit by the scene's lamps. */
     crowdLight: new THREE.Color(0.5, 0.56, 0.66),
@@ -484,12 +515,23 @@ export const buildWorld = (scene, renderer) => {
     get lotusInAmt() {
       return lotusInAmt;
     },
+    /** How far inside the forest the eye is, 0 to 1. */
+    get forestAmt() {
+      return forestAmt;
+    },
     /** The finale's dawn, 0 (night) to 1. */
     get dawn() {
       return dawn;
     },
     set dawn(v) {
       dawn = v;
+    },
+    /** The ending's night, 0 to 1 (finale.js asks for it). */
+    get vigil() {
+      return vigil;
+    },
+    set vigil(v) {
+      vigil = v;
     },
     /** Re-render the environment map from the sky as it is now (a brief hitch: call it rarely). */
     refreshEnv() {
@@ -502,14 +544,13 @@ export const buildWorld = (scene, renderer) => {
       // how far inside the forest the camera is: near the root tree, or along the path out of it
       {
         const tx = TREE.x, tz = TREE.z;
-        const ox = 0 - tx, oz = 34 - tz;
-        const ol = Math.hypot(ox, oz);
-        const ux = ox / ol, uz = oz / ol;
+        const ux = forest.out.x, uz = forest.out.z;
         const px = camera.position.x - tx, pz = camera.position.z - tz;
         const along = Math.max(0, Math.min(95, px * ux + pz * uz));
         const d = Math.hypot(px - ux * along, pz - uz * along);
         const inRing = Math.hypot(px, pz);
-        const f = Math.max(1 - smoothstep(14, 34, d), 1 - smoothstep(50, 70, inRing));
+        // (the wood is some 40 m wide on each side of its channel)
+        const f = Math.max(1 - smoothstep(32, 50, d), 1 - smoothstep(50, 70, inRing));
         forestAmt += (f - forestAmt) * (1 - Math.exp(-dt * 1.5));
         // the tower's zone: its dais and the stepping stones toward the plain
         const sx = 0 - SPIRE.x, sz = 34 - SPIRE.z;
@@ -537,19 +578,24 @@ export const buildWorld = (scene, renderer) => {
         // over the lake the pillar is the only great light: no moon
         moon.visible = halo.visible = !inLotus;
         hemi.color.lerp(LOTUS_HEMI, lotusAmt * 0.8);
-        mistFill.color.copy(MIST_FILL).lerp(LOTUS_HEMI, lotusAmt);
+        mistFill.color.copy(MIST_FILL).lerp(LOTUS_HEMI, lotusAmt).lerp(FOREST_LIGHT, forestAmt);
+        mistFill.position.lerpVectors(MIST_FROM, FOREST_FROM, forestAmt);
         skyMat.uniforms.dusk.value = spireAmt;
         halo.material.opacity = 0.07 * (1 - spireAmt * 0.8);
         scene.background.copy(scene.fog.color);
         skyMat.uniforms.horizon.value.set(scene.fog.color.r, scene.fog.color.g, scene.fog.color.b);
         skyMat.uniforms.teal.value = forestAmt;
+        farDim.value = 1 - smoothstep(0.1, 0.65, forestAmt);
+        skyMat.uniforms.treeDir.value.copy(_treeAt.copy(forest.doorPos).setY(4)).sub(camera.position).normalize();
+        // the forest's water is not the plain's mirror: it moves a little, and breaks what it reflects
+        waterObj.uniforms.calm.value = 0.016 + 0.12 * forestAmt;
         hemi.color.copy(HEMI).lerp(HEMI_FOREST, forestAmt * 0.8);
         // inside the tower: a warm, dusty dark; no open sky
         const inside = interior.contains(camera.position) ? 1 : 0;
         scene.fog.color.lerp(INSIDE_FOG, inside);
-        scene.fog.density = inside ? 0.011 : 0.0046 - 0.0024 * lotusInAmt;
+        scene.fog.density = inside ? 0.011 : 0.0046 + (FOREST_DENSITY - 0.0046) * forestAmt * forestAmt - 0.0024 * lotusInAmt;
         hemi.intensity = inside ? 0.28 : 1.5;
-        mistFill.intensity = inside ? 0 : 0.8;
+        mistFill.intensity = inside ? 0 : 0.8 + 0.25 * forestAmt;
         if (inside) interior.update(t, dt, camera.position);
         if (inLotus) {
           lotusIn.update(t, dt, camera.position);
@@ -564,20 +610,36 @@ export const buildWorld = (scene, renderer) => {
           hemi.color.lerp(new THREE.Color(0xb08a90), dawn * 0.6);
         }
         skyMat.uniforms.dawn.value = dawn;
-        moonMat.uniforms.fade.value = Math.min(1, dawn / 0.6);
-        halo.material.opacity *= 1 - Math.min(1, dawn / 0.6);
+        // the ending's night: the pillar is the only great light
+        if (vigil > 0) {
+          scene.fog.color.lerp(VIGIL_FOG, vigil);
+          scene.fog.density += (0.003 - scene.fog.density) * vigil;
+          scene.background.copy(scene.fog.color);
+          skyMat.uniforms.horizon.value.set(scene.fog.color.r, scene.fog.color.g, scene.fog.color.b);
+          hemi.color.lerp(VIGIL_HEMI, vigil * 0.85);
+          hemi.intensity *= 1 - 0.45 * vigil;
+          mistFill.intensity *= 1 - 0.7 * vigil;
+        }
+        skyMat.uniforms.vigil.value = vigil;
+        hush.value = 1 - 0.97 * vigil;
+        lotus.setLit(vigil);
+        avenue.setLow(vigil);
+        // the moon is gone at dawn and in the ending's night, and hidden by the mist in the forest
+        const noMoon = Math.max(Math.min(1, dawn / 0.6), smoothstep(0.15, 0.75, forestAmt), vigil);
+        moonMat.uniforms.fade.value = noMoon;
+        halo.material.opacity *= 1 - noMoon;
         // the thread scene: only its own lights; no sky, moon or mist reach it
         const cin = cutscene.active;
         hemi.intensity = cin ? 0.03 : hemi.intensity;
         mistFill.intensity = cin ? 0 : mistFill.intensity;
-        moonLight.intensity = cin ? 0 : 2.5;
+        moonLight.intensity = cin ? 0 : 2.5 * (1 - 0.9 * forestAmt) * (1 - 0.8 * vigil);
         scene.environmentIntensity = cin ? 0.04 : 0.7;
         if (cin) scene.fog.density = 0.0005;
       }
-      world.crowdLight.copy(hemi.color).multiplyScalar((2.3 * hemi.intensity) / 1.5);
+      world.crowdLight.copy(hemi.color).multiplyScalar(((2.3 * hemi.intensity) / 1.5) * (1 - 0.4 * vigil));
       sky.position.copy(camera.position);
       if (!world.noRender) waterObj.update(renderer, t, dt, camera.position.x, camera.position.z);
-      for (const u of updaters) u(t, dt);
+      for (const u of updaters) u(t, dt, camera);
     },
   };
   return world;

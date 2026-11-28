@@ -16,12 +16,13 @@ const FinishShader = {
     aspect: { value: 1 },
     lake: { value: 0 },
     dawn: { value: 0 },
+    forest: { value: 0 },
   },
   vertexShader: /* glsl */ `
     varying vec2 vUv;
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D tDiffuse; uniform float time; uniform float sleep; uniform float aspect; uniform float lake; uniform float dawn;
+    uniform sampler2D tDiffuse; uniform float time; uniform float sleep; uniform float aspect; uniform float lake; uniform float dawn; uniform float forest;
     varying vec2 vUv;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
@@ -43,7 +44,9 @@ const FinishShader = {
       float mnc = min(col.r, min(col.g, col.b));
       float vivid = smoothstep(0.45, 0.8, (mx - mnc) / max(mx, 1e-4)) * smoothstep(0.02, 0.12, mx);
       float keep = max(max(warm, vivid), smoothstep(0.35, 1.1, mx));
-      col = mix(vec3(lum) * vec3(0.95, 1.0, 1.07), col, mix(mix(mix(0.5, 1.0, keep), 1.25, lake), 1.1, dawn));
+      col = mix(vec3(lum) * vec3(0.95, 1.0, 1.07), col, mix(mix(mix(mix(0.5, 1.0, keep), 1.25, lake), 1.1, dawn), 1.12, forest));
+      // in the forest (the owner's film): the darks green-black, the mist teal
+      col = mix(col, col * mix(vec3(0.72, 1.0, 0.8), vec3(0.94, 1.03, 1.0), smoothstep(0.01, 0.2, lum)), forest * 0.8);
       // over the lotus's lake (refs/lotus-beam.webp): an ember grade, the light amber, the shadows teal-black
       col = mix(col, col * mix(vec3(0.75, 0.9, 1.0), vec3(1.15, 0.78, 0.5), smoothstep(0.02, 0.5, lum)), lake * 0.8);
       // lifted, slightly cool blacks, like haze in front of the lens
